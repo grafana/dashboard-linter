@@ -42,5 +42,6 @@ type Rule interface {
 func NewRules() []Rule {
 	return []Rule{
 		NewMetaLogoURLRule(),
+		NewMetaSupportedPlatformsRule(),
 	}
 }
