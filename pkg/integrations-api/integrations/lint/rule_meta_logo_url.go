@@ -15,13 +15,18 @@ func (r *MetaLogoURLRule) Description() string {
 	return fmt.Sprintf("%s Checks the logo_url in the integration's metadata.", r.name)
 }
 
+func (r *MetaLogoURLRule) Name() string {
+	return r.name
+}
+
 func (r *MetaLogoURLRule) Lint(i *integrations.Integration) []Result {
 	if i.Meta.LogoURL == "" {
 		return []Result{
 			{
 				Severity:    Warning,
 				Message:     "Metadata logo_url not set.",
-				integration: i,
+				Integration: i,
+				Rule:        r,
 			},
 		}
 	}
@@ -31,7 +36,8 @@ func (r *MetaLogoURLRule) Lint(i *integrations.Integration) []Result {
 			{
 				Severity:    Error,
 				Message:     err.Error(),
-				integration: i,
+				Integration: i,
+				Rule:        r,
 			},
 		}
 	}
@@ -41,7 +47,8 @@ func (r *MetaLogoURLRule) Lint(i *integrations.Integration) []Result {
 			{
 				Severity:    Error,
 				Message:     fmt.Sprintf("Failed to load %s with status code %d", i.Meta.LogoURL, resp.StatusCode),
-				integration: i,
+				Integration: i,
+				Rule:        r,
 			},
 		}
 	}
@@ -49,7 +56,8 @@ func (r *MetaLogoURLRule) Lint(i *integrations.Integration) []Result {
 		{
 			Severity:    Success,
 			Message:     "OK",
-			integration: i,
+			Integration: i,
+			Rule:        r,
 		},
 	}
 }

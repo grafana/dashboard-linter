@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations/lint"
 )
 
@@ -19,31 +20,36 @@ var lintCmd = &cobra.Command{
 	},
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cleanRun := true
+		var warns []error
 		minSeverity := lint.Error
 		slug := viper.GetString(listSpecificSlugFlag)
 		path := viper.GetString(integrationsPathFlag)
+		rs := lint.NewRuleSet()
 		is := loadIntegrations(path)
-		rules := lint.NewRules()
+		if slug != "" {
+			if i, ok := is[slug]; ok {
+				warns = rs.AddIntegrations(map[string]*integrations.Integration{slug: i})
+			}
+		} else {
+			warns = rs.AddIntegrations(is)
+		}
+
+		for _, w := range warns {
+			fmt.Printf("WARN - Failed to load lint configuration: %s\n", w)
+		}
 
 		if viper.GetBool("strict") {
 			minSeverity = lint.Warning
 		}
-		for _, r := range rules {
-			fmt.Println(r.Description())
-			for _, i := range is {
-				if slug != "" && i.Meta.Slug != slug {
-					continue
-				}
-				for _, res := range r.Lint(i) {
-					res.TtyPrint()
-					if res.Severity >= minSeverity {
-						cleanRun = false
-					}
-				}
-			}
+
+		res := rs.Lint()
+		if viper.GetBool("by-integration") {
+			res.ReportByIntegration()
+		} else {
+			res.ReportByRule()
 		}
-		if !cleanRun {
+
+		if res.MaximumSeverity() >= minSeverity {
 			return fmt.Errorf("There were linting errors, please see previous output")
 		}
 		return nil
@@ -68,5 +74,10 @@ func init() {
 		"strict",
 		false,
 		"fail upon linting error or warning",
+	)
+	lintCmd.PersistentFlags().Bool(
+		"by-integration",
+		false,
+		"print results grouped by integration, rather than by rule",
 	)
 }
