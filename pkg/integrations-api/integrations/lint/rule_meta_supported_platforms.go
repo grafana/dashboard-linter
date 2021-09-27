@@ -18,37 +18,24 @@ func (r *MetaSupportedPlatformsRule) Name() string {
 	return r.name
 }
 
-func (r *MetaSupportedPlatformsRule) Lint(i *integrations.Integration) []Result {
+func (r *MetaSupportedPlatformsRule) LintIntegration(i *integrations.Integration) Result {
 	// If the supported platforms contained an invalid value, it would fail to load
 	// in the first place. Maybe make that check reusable so it can be done here as well?
 	if len(i.Meta.SupportedPlatforms) == 0 {
 		if i.Meta.Visible {
-			return []Result{
-				{
-					Severity:    Error,
-					Message:     "Metadata supported_platforms not set.",
-					Integration: i,
-					Rule:        r,
-				},
+			return Result{
+				Severity: Error,
+				Message:  "Metadata supported_platforms not set.",
 			}
 		}
-
-		return []Result{
-			{
-				Severity:    Warning,
-				Message:     "Metadata supported_platforms not set, but integration is not visible.",
-				Integration: i,
-				Rule:        r,
-			},
+		return Result{
+			Severity: Warning,
+			Message:  "Metadata supported_platforms not set, but integration is not visible.",
 		}
 	}
-	return []Result{
-		{
-			Severity:    Success,
-			Message:     "OK",
-			Integration: i,
-			Rule:        r,
-		},
+	return Result{
+		Severity: Success,
+		Message:  "OK",
 	}
 }
 

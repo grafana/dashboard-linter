@@ -18,10 +18,15 @@ func TestMetaSupportedPlatforms(t *testing.T) {
 			},
 		}
 
-		r := linter.Lint(integration)
+		r := &ResultSet{}
+		r.AddResult(ResultContext{
+			Result:      linter.LintIntegration(integration),
+			Integration: integration,
+			Rule:        linter,
+		})
 
-		require.Len(t, r, 1)
-		require.Equal(t, r[0].Severity, Success)
+		require.Len(t, r.results, 1)
+		require.Equal(t, r.results[0].Result.Severity, Success)
 	})
 	t.Run("warning when supported_platforms empty but invisible", func(t *testing.T) {
 		linter := NewMetaSupportedPlatformsRule()
@@ -31,10 +36,15 @@ func TestMetaSupportedPlatforms(t *testing.T) {
 			},
 		}
 
-		r := linter.Lint(integration)
+		r := &ResultSet{}
+		r.AddResult(ResultContext{
+			Result:      linter.LintIntegration(integration),
+			Integration: integration,
+			Rule:        linter,
+		})
 
-		require.Len(t, r, 1)
-		require.Equal(t, r[0].Severity, Warning)
+		require.Len(t, r.results, 1)
+		require.Equal(t, r.results[0].Result.Severity, Warning)
 	})
 	t.Run("error when supported_platforms empty and visible", func(t *testing.T) {
 		linter := NewMetaSupportedPlatformsRule()
@@ -44,9 +54,14 @@ func TestMetaSupportedPlatforms(t *testing.T) {
 			},
 		}
 
-		r := linter.Lint(integration)
+		r := &ResultSet{}
+		r.AddResult(ResultContext{
+			Result:      linter.LintIntegration(integration),
+			Integration: integration,
+			Rule:        linter,
+		})
 
-		require.Len(t, r, 1)
-		require.Equal(t, r[0].Severity, Error)
+		require.Len(t, r.results, 1)
+		require.Equal(t, r.results[0].Result.Severity, Error)
 	})
 }

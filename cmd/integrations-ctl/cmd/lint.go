@@ -6,9 +6,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations/lint"
 )
+
+var lintStrictFlag, lintByIntegrationFlag bool
 
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
@@ -26,31 +27,51 @@ var lintCmd = &cobra.Command{
 		path := viper.GetString(integrationsPathFlag)
 		rs := lint.NewRuleSet()
 		is := loadIntegrations(path)
+		config := lint.NewConfiguration()
 		if slug != "" {
 			if i, ok := is[slug]; ok {
-				warns = rs.AddIntegrations(map[string]*integrations.Integration{slug: i})
+				rs.AddIntegration(i)
+				cf, err := lint.LoadIntegrationLintConfig(i)
+				if err != nil {
+					warns = append(warns, err)
+				} else {
+					fmt.Println(cf)
+					config.AddConfiguration(slug, cf)
+				}
 			}
 		} else {
-			warns = rs.AddIntegrations(is)
+			for _, i := range is {
+				rs.AddIntegration(i)
+				cf, err := lint.LoadIntegrationLintConfig(i)
+				if err != nil {
+					warns = append(warns, err)
+				} else {
+					config.AddConfiguration(i.Meta.Slug, cf)
+				}
+			}
 		}
 
 		for _, w := range warns {
 			fmt.Printf("WARN - Failed to load lint configuration: %s\n", w)
 		}
 
-		if viper.GetBool("strict") {
+		if lintStrictFlag {
 			minSeverity = lint.Warning
 		}
 
-		res := rs.Lint()
-		if viper.GetBool("by-integration") {
+		res, errs := rs.Lint()
+		for _, e := range errs {
+			fmt.Printf("WARN - Problems during lint execution: %s\n", e)
+		}
+		res.Configure(config)
+		if lintByIntegrationFlag {
 			res.ReportByIntegration()
 		} else {
 			res.ReportByRule()
 		}
 
 		if res.MaximumSeverity() >= minSeverity {
-			return fmt.Errorf("There were linting errors, please see previous output")
+			return fmt.Errorf("there were linting errors, please see previous output")
 		}
 		return nil
 	},
@@ -70,12 +91,14 @@ func init() {
 		"",
 		"integrations folder path",
 	)
-	lintCmd.PersistentFlags().Bool(
+	lintCmd.Flags().BoolVar(
+		&lintStrictFlag,
 		"strict",
 		false,
 		"fail upon linting error or warning",
 	)
-	lintCmd.PersistentFlags().Bool(
+	lintCmd.Flags().BoolVar(
+		&lintByIntegrationFlag,
 		"by-integration",
 		false,
 		"print results grouped by integration, rather than by rule",
