@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
