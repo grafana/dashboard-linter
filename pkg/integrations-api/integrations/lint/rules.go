@@ -70,25 +70,26 @@ func (s *RuleSet) Lint() (*ResultSet, []error) {
 				})
 			}
 			panels := dash.GetPanels()
-			for _, p := range panels {
+			for p := range panels {
 				for _, pr := range s.panelRules {
 					resSet.AddResult(ResultContext{
-						Result:      pr.LintPanel(i, dash, p),
+						Result:      pr.LintPanel(i, dash, panels[p]),
 						Integration: i,
 						Rule:        pr,
 						Dashboard:   &dash,
-						Panel:       &p,
+						Panel:       &panels[p],
 					})
 				}
-				for _, t := range p.Targets {
+				targets := panels[p].Targets
+				for t := range targets {
 					for _, tr := range s.targetRules {
 						resSet.AddResult(ResultContext{
-							Result:      tr.LintTarget(i, dash, p, t),
+							Result:      tr.LintTarget(i, dash, panels[p], targets[t]),
 							Integration: i,
 							Rule:        tr,
 							Dashboard:   &dash,
-							Panel:       &p,
-							Target:      &t,
+							Panel:       &panels[p],
+							Target:      &targets[t],
 						})
 					}
 				}
