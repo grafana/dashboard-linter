@@ -1,6 +1,8 @@
 package lint
 
 import (
+	"fmt"
+
 	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
@@ -58,7 +60,13 @@ func (s *RuleSet) Lint() (*ResultSet, []error) {
 		for _, d := range i.Dashboards {
 			dash, err := NewDashboardFromGrafanaDashboard(d)
 			if err != nil {
-				errs = append(errs, err)
+				dTitle := "unknown"
+				if dtif, found := d.Dashboard["title"]; found {
+					if dts, ok := dtif.(string); ok {
+						dTitle = dts
+					}
+				}
+				errs = append(errs, fmt.Errorf("the dashboard %s of integration %s will not be linted; %v", dTitle, i.Meta.Slug, err))
 				continue
 			}
 			for _, dr := range s.dashboardRules {
