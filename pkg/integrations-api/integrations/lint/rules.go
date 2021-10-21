@@ -156,5 +156,6 @@ func NewDashboardRules() []DashboardRule {
 func NewPanelRules() []PanelRule {
 	return []PanelRule{
 		NewPanelDatasourceRule(),
+		NewPanelPromQLRule(),
 	}
 }
