@@ -21,9 +21,31 @@ type DashboardRule interface {
 	LintDashboard(*integrations.Integration, Dashboard) Result
 }
 
+type DashboardRuleFunc struct {
+	name, description string
+	fn                func(*integrations.Integration, Dashboard) Result
+}
+
+func (f DashboardRuleFunc) Name() string        { return f.name }
+func (f DashboardRuleFunc) Description() string { return f.description }
+func (f DashboardRuleFunc) LintDashboard(i *integrations.Integration, d Dashboard) Result {
+	return f.fn(i, d)
+}
+
 type PanelRule interface {
 	Rule
 	LintPanel(*integrations.Integration, Dashboard, Panel) Result
+}
+
+type PanelRuleFunc struct {
+	name, description string
+	fn                func(*integrations.Integration, Dashboard, Panel) Result
+}
+
+func (f PanelRuleFunc) Name() string        { return f.name }
+func (f PanelRuleFunc) Description() string { return f.description }
+func (f PanelRuleFunc) LintPanel(i *integrations.Integration, d Dashboard, p Panel) Result {
+	return f.fn(i, d, p)
 }
 
 type TargetRule interface {
@@ -45,8 +67,7 @@ func (s *RuleSet) Integrations() []*integrations.Integration {
 	return s.integrations
 }
 
-func (s *RuleSet) Lint() (*ResultSet, []error) {
-	var errs []error
+func (s *RuleSet) Lint() (*ResultSet, error) {
 	resSet := &ResultSet{config: &Configuration{}}
 	for _, i := range s.integrations {
 		for _, ir := range s.integrationRules {
@@ -66,8 +87,7 @@ func (s *RuleSet) Lint() (*ResultSet, []error) {
 						dTitle = dts
 					}
 				}
-				errs = append(errs, fmt.Errorf("the dashboard %s of integration %s will not be linted; %v", dTitle, i.Meta.Slug, err))
-				continue
+				return nil, fmt.Errorf("the dashboard %s of integration %s will not be linted; %w", dTitle, i.Meta.Slug, err)
 			}
 			for _, dr := range s.dashboardRules {
 				resSet.AddResult(ResultContext{
@@ -105,7 +125,7 @@ func (s *RuleSet) Lint() (*ResultSet, []error) {
 		}
 		// One day rules, and alerts
 	}
-	return resSet, errs
+	return resSet, nil
 }
 
 func (s *RuleSet) AddIntegration(i *integrations.Integration) {
@@ -115,6 +135,8 @@ func (s *RuleSet) AddIntegration(i *integrations.Integration) {
 func NewRuleSet() RuleSet {
 	return RuleSet{
 		integrationRules: NewIntegrationRules(),
+		dashboardRules:   NewDashboardRules(),
+		panelRules:       NewPanelRules(),
 	}
 }
 
@@ -122,5 +144,17 @@ func NewIntegrationRules() []IntegrationRule {
 	return []IntegrationRule{
 		NewMetaLogoURLRule(),
 		NewMetaSupportedPlatformsRule(),
+	}
+}
+
+func NewDashboardRules() []DashboardRule {
+	return []DashboardRule{
+		NewTemplateDatasourceRule(),
+	}
+}
+
+func NewPanelRules() []PanelRule {
+	return []PanelRule{
+		NewPanelDatasourceRule(),
 	}
 }

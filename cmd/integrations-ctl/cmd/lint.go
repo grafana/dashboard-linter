@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -59,10 +60,11 @@ var lintCmd = &cobra.Command{
 			minSeverity = lint.Warning
 		}
 
-		res, errs := rs.Lint()
-		for _, e := range errs {
-			fmt.Printf("WARN - Problems during lint execution: %s\n", e)
+		res, err := rs.Lint()
+		if err != nil {
+			log.Fatalln("Problems during lint execution:", err)
 		}
+
 		res.Configure(config)
 		if lintByIntegrationFlag {
 			res.ReportByIntegration()

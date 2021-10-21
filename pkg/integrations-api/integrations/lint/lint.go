@@ -16,6 +16,43 @@ const (
 	Error
 )
 
+// Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
+// The properties which are extracted from JSON are only those used for linting purposes.
+type Template struct {
+	Name  string `json:"name"`
+	Label string `json:"label"`
+	Type  string `json:"type"`
+	Query string `json:"query"`
+}
+
+func (t *Template) UnmarshalJSON(buf []byte) error {
+	var raw struct {
+		Name  string      `json:"name"`
+		Label string      `json:"label"`
+		Type  string      `json:"type"`
+		Query interface{} `json:"query"`
+	}
+
+	if err := json.Unmarshal(buf, &raw); err != nil {
+		return err
+	}
+
+	t.Name = raw.Name
+	t.Label = raw.Label
+	t.Type = raw.Type
+
+	switch v := raw.Query.(type) {
+	case string:
+		t.Query = v
+	case map[string]interface{}:
+		t.Query = v["query"].(string)
+	default:
+		return fmt.Errorf("invalid type for field 'query': %v", v)
+	}
+
+	return nil
+}
+
 // Target is a deliberately incomplete representation of the Dashboard -> Panel -> Target type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Target struct {
@@ -26,8 +63,10 @@ type Target struct {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Title   string   `json:"title"`
-	Targets []Target `json:"targets,omitempty"`
+	Title      string   `json:"title"`
+	Targets    []Target `json:"targets,omitempty"`
+	Datasource string   `json:"datasource"`
+	Type       string   `json:"type"`
 }
 
 // Row is a deliberately incomplete representation of the Dashboard -> Row type in grafana.
@@ -39,7 +78,10 @@ type Row struct {
 // Dashboard is a deliberately incomplete representation of the Dashboard type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Dashboard struct {
-	Title  string  `json:"title,omitempty"`
+	Title      string `json:"title,omitempty"`
+	Templating struct {
+		List []Template `json:"list"`
+	} `json:"templating"`
 	Rows   []Row   `json:"rows,omitempty"`
 	Panels []Panel `json:"panels,omitempty"`
 }
