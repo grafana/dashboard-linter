@@ -157,5 +157,6 @@ func NewPanelRules() []PanelRule {
 	return []PanelRule{
 		NewPanelDatasourceRule(),
 		NewPanelPromQLRule(),
+		NewPanelRateIntervalRule(),
 	}
 }

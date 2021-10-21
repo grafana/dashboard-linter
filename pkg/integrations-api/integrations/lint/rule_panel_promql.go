@@ -10,8 +10,8 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-var rangeVectorRegexp = regexp.MustCompile(`\[\$\w+\]`)
-var subqueryRegexp = regexp.MustCompile(`\[\$\w+:(.+)?\]`)
+var rangeVectorRegexp = regexp.MustCompile(`\[([^:]+)\]`)
+var subqueryRegexp = regexp.MustCompile(`\[([^:]+):(.+)?\]`)
 
 // NewPanelPromQLRule builds a lint rule for panels with Prometheus queries which checks:
 // - the query is valid PromQL
