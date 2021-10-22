@@ -150,6 +150,7 @@ func NewIntegrationRules() []IntegrationRule {
 func NewDashboardRules() []DashboardRule {
 	return []DashboardRule{
 		NewTemplateDatasourceRule(),
+		NewTemplateJobRule(),
 	}
 }
 
