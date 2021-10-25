@@ -14,6 +14,7 @@ import (
 // Configuration contains a map of ConfigurationFile, where the key is the integration slug
 type Configuration struct {
 	configs map[string]ConfigurationFile
+	verbose bool
 }
 
 // ConfigurationFile contains a map for rule exclusions, and warnings, where the key is the
@@ -69,45 +70,58 @@ func (c *Configuration) AddConfiguration(slug string, cf ConfigurationFile) {
 }
 
 func (c *Configuration) Apply(res ResultContext) ResultContext {
-	if cByIntegration, ok := c.configs[res.Integration.Meta.Slug]; ok {
-		if ces, ok := cByIntegration.Exclusions[res.Rule.Name()]; ok {
-			matched := false
-			if ces != nil {
-				for _, ce := range ces.Entries {
-					if ce.IsMatch(res) {
-						matched = true
-					}
-				}
-				if len(ces.Entries) == 0 {
+	cByIntegration, ok := c.configs[res.Integration.Meta.Slug]
+	if !ok {
+		return res
+	}
+
+	{
+		exclusions, ok := cByIntegration.Exclusions[res.Rule.Name()]
+		matched := false
+		if exclusions != nil {
+			for _, ce := range exclusions.Entries {
+				if ce.IsMatch(res) {
 					matched = true
 				}
-			} else {
+			}
+			if len(exclusions.Entries) == 0 {
 				matched = true
 			}
-			if matched {
-				res.Result.Severity = Exclude
-				res.Result.Message = res.Result.Message + " (Excluded)"
-			}
+		} else if ok {
+			matched = true
 		}
-		if ces, ok := cByIntegration.Warnings[res.Rule.Name()]; ok {
-			matched := false
-			if ces != nil {
-				for _, ce := range ces.Entries {
-					if ce.IsMatch(res) {
-						matched = true
-					}
-				}
-				if len(ces.Entries) == 0 {
-					matched = true
-				}
-			} else {
-				matched = true
-			}
-			if matched {
-				res.Result.Severity = Warning
-			}
+		if matched {
+			res.Result.Severity = Exclude
+			res.Result.Message = res.Result.Message + " (Excluded)"
 		}
 	}
+
+	{
+		warnings, ok := cByIntegration.Warnings[res.Rule.Name()]
+		matched := false
+		if warnings != nil {
+			for _, ce := range warnings.Entries {
+				if ce.IsMatch(res) {
+					matched = true
+				}
+			}
+			if len(warnings.Entries) == 0 {
+				matched = true
+			}
+		} else if ok {
+			matched = true
+		}
+		if matched {
+			res.Result.Severity = Warning
+		}
+	}
+
+	{
+		if !c.verbose && res.Result.Severity == Success {
+			res.Result.Severity = Quiet
+		}
+	}
+
 	return res
 }
 
@@ -121,10 +135,10 @@ func LoadIntegrationLintConfig(i *integrations.Integration) (ConfigurationFile, 
 		}
 		return cf, err
 	}
+	defer f.Close()
 
 	dec := yaml.NewDecoder(f)
-	err = dec.Decode(&cf)
-	if err != nil {
+	if err = dec.Decode(&cf); err != nil {
 		return cf, fmt.Errorf("could not unmarshal lint configuration %s: %w", lintFilePath, err)
 	}
 	return cf, nil
@@ -134,4 +148,8 @@ func NewConfiguration() *Configuration {
 	return &Configuration{
 		configs: make(map[string]ConfigurationFile),
 	}
+}
+
+func (c *Configuration) SetVerbose(verbose bool) {
+	c.verbose = verbose
 }

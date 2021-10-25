@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations/lint"
 )
 
-var lintStrictFlag, lintByIntegrationFlag bool
+var lintStrictFlag, lintByIntegrationFlag, lintVerboseFlag bool
 
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
@@ -29,6 +29,7 @@ var lintCmd = &cobra.Command{
 		rs := lint.NewRuleSet()
 		is := loadIntegrations(path)
 		config := lint.NewConfiguration()
+		config.SetVerbose(lintVerboseFlag)
 		if slug != "" {
 			if i, ok := is[slug]; ok {
 				rs.AddIntegration(i)
@@ -104,5 +105,11 @@ func init() {
 		"by-integration",
 		false,
 		"print results grouped by integration, rather than by rule",
+	)
+	lintCmd.Flags().BoolVar(
+		&lintVerboseFlag,
+		"verbose",
+		false,
+		"show more information about linting",
 	)
 }

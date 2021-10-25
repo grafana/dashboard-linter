@@ -14,6 +14,7 @@ const (
 	Exclude
 	Warning
 	Error
+	Quiet
 )
 
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.

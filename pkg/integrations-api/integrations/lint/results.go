@@ -33,6 +33,8 @@ func (r ResultContext) TtyPrint() {
 		sym = "⚠️"
 	case Error:
 		sym = "❌"
+	case Quiet:
+		return
 	}
 
 	fmt.Printf("[%s] Integration: %s - %s\n", sym, r.Integration.Meta.Slug, r.Result.Message)
