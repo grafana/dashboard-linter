@@ -43,11 +43,60 @@ func TestJobDatasource(t *testing.T) {
 				},
 			},
 		},
+		// Wrong datasource.
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test' job template should use datasource '$datasource'",
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "job",
+							Datasource: "foo",
+						},
+					},
+				},
+			},
+		},
+		// Wrong type.
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test' job template should be a Prometheus query",
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "job",
+							Datasource: "$datasource",
+							Type:       "bar",
+						},
+					},
+				},
+			},
+		},
 		// Wrong job label.
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test' job template should be a labelled 'Job'",
+				Message:  "Dashboard 'test' job template should be a labelled 'job'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -60,62 +109,10 @@ func TestJobDatasource(t *testing.T) {
 							Query: "prometheus",
 						},
 						{
-							Name: "job",
-							Type: "prometheus",
-						},
-					},
-				},
-			},
-		},
-		// Missing instance template.
-		{
-			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'test' is missing the instance template",
-			},
-			dashboard: Dashboard{
-				Title: "test",
-				Templating: struct {
-					List []Template `json:"list"`
-				}{
-					List: []Template{
-						{
-							Type:  "datasource",
-							Query: "prometheus",
-						},
-						{
-							Name:  "job",
-							Label: "Job",
-							Type:  "prometheus",
-						},
-					},
-				},
-			},
-		},
-		// Missing instance template.
-		{
-			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'test' instance template should be a labelled 'Instance'",
-			},
-			dashboard: Dashboard{
-				Title: "test",
-				Templating: struct {
-					List []Template `json:"list"`
-				}{
-					List: []Template{
-						{
-							Type:  "datasource",
-							Query: "prometheus",
-						},
-						{
-							Name:  "job",
-							Label: "Job",
-							Type:  "prometheus",
-						},
-						{
-							Name: "instance",
-							Type: "prometheus",
+							Name:       "job",
+							Datasource: "$datasource",
+							Type:       "query",
+							Label:      "bar",
 						},
 					},
 				},
@@ -138,14 +135,20 @@ func TestJobDatasource(t *testing.T) {
 							Query: "prometheus",
 						},
 						{
-							Name:  "job",
-							Label: "Job",
-							Type:  "prometheus",
+							Name:       "job",
+							Datasource: "$datasource",
+							Type:       "query",
+							Label:      "job",
+							Multi:      true,
+							AllValue:   ".+",
 						},
 						{
-							Name:  "instance",
-							Label: "Instance",
-							Type:  "prometheus",
+							Name:       "instance",
+							Datasource: "$datasource",
+							Type:       "query",
+							Label:      "instance",
+							Multi:      true,
+							AllValue:   ".+",
 						},
 					},
 				},

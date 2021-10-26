@@ -20,18 +20,24 @@ const (
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Template struct {
-	Name  string `json:"name"`
-	Label string `json:"label"`
-	Type  string `json:"type"`
-	Query string `json:"query"`
+	Name       string `json:"name"`
+	Label      string `json:"label"`
+	Type       string `json:"type"`
+	Query      string `json:"query"`
+	Datasource string `json:"datasource"`
+	Multi      bool   `json:"multi"`
+	AllValue   string `json:"allValue"`
 }
 
 func (t *Template) UnmarshalJSON(buf []byte) error {
 	var raw struct {
-		Name  string      `json:"name"`
-		Label string      `json:"label"`
-		Type  string      `json:"type"`
-		Query interface{} `json:"query"`
+		Name       string      `json:"name"`
+		Label      string      `json:"label"`
+		Type       string      `json:"type"`
+		Query      interface{} `json:"query"`
+		Datasource string      `json:"datasource"`
+		Multi      bool        `json:"multi"`
+		AllValue   string      `json:"allValue"`
 	}
 
 	if err := json.Unmarshal(buf, &raw); err != nil {
@@ -41,6 +47,9 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	t.Name = raw.Name
 	t.Label = raw.Label
 	t.Type = raw.Type
+	t.Datasource = raw.Datasource
+	t.Multi = raw.Multi
+	t.AllValue = raw.AllValue
 
 	switch v := raw.Query.(type) {
 	case string:

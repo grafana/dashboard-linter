@@ -19,52 +19,12 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 				}
 			}
 
-			{
-				jobTemplate := getTemplate(d, "job")
-				if jobTemplate == nil {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s' is missing the job template", d.Title),
-					}
-				}
-
-				if jobTemplate.Type != "prometheus" {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s' job template should be a Prometheus query", d.Title),
-					}
-				}
-
-				if jobTemplate.Label != "Job" {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s' job template should be a labelled 'Job'", d.Title),
-					}
-				}
+			if r := checkTemplate(d, "job"); r != nil {
+				return *r
 			}
 
-			{
-				instanceTemplate := getTemplate(d, "instance")
-				if instanceTemplate == nil {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s' is missing the instance template", d.Title),
-					}
-				}
-
-				if instanceTemplate.Type != "prometheus" {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s' instance template should be a Prometheus query", d.Title),
-					}
-				}
-
-				if instanceTemplate.Label != "Instance" {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s' instance template should be a labelled 'Instance'", d.Title),
-					}
-				}
+			if r := checkTemplate(d, "instance"); r != nil {
+				return *r
 			}
 
 			return Result{
@@ -72,6 +32,56 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 				Message:  "OK",
 			}
 		},
+	}
+}
+
+func checkTemplate(d Dashboard, name string) *Result {
+	t := getTemplate(d, name)
+	if t == nil {
+		return &Result{
+			Severity: Error,
+			Message:  fmt.Sprintf("Dashboard '%s' is missing the %s template", d.Title, name),
+		}
+	}
+
+	if t.Datasource != "$datasource" {
+		return &Result{
+			Severity: Error,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource '$datasource'", d.Title, name),
+		}
+	}
+
+	if t.Type != "query" {
+		return &Result{
+			Severity: Error,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a Prometheus query", d.Title, name),
+		}
+	}
+
+	if t.Label != name {
+		return &Result{
+			Severity: Error,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a labelled '%s'", d.Title, name, name),
+		}
+	}
+
+	if t.Multi != true {
+		return &Result{
+			Severity: Error,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a multi select", d.Title, name),
+		}
+	}
+
+	if t.AllValue != ".+" {
+		return &Result{
+			Severity: Error,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template allValue should be '.+'", d.Title, name),
+		}
+	}
+
+	return &Result{
+		Severity: Success,
+		Message:  "OK",
 	}
 }
 
