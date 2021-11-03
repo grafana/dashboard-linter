@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
 type TestRule struct {
@@ -21,65 +19,48 @@ func (r *TestRule) Name() string {
 	return r.name
 }
 
-func (r *TestRule) Lint(i *integrations.Integration) []Result {
-	return make([]Result, 0)
-}
-
-func appendConfigExclude(t *testing.T, rule string, integration string, dashboard string, panel string, targetIdx string, config *Configuration) {
+func appendConfigExclude(t *testing.T, rule string, dashboard string, panel string, targetIdx string, config *ConfigurationFile) {
 	t.Helper()
-	var ce *ConfigurationEntry
+
+	entries := config.Exclusions[rule]
+	if entries == nil {
+		entries = &ConfigurationRuleEntries{}
+	}
+
 	if dashboard != "" || panel != "" || targetIdx != "" {
-		ce = &ConfigurationEntry{
+		entries.Entries = append(entries.Entries, ConfigurationEntry{
 			Dashboard: dashboard,
 			Panel:     panel,
 			TargetIdx: targetIdx,
-		}
+		})
 	}
-	if _, ok := config.configs[integration]; !ok {
-		config.configs[integration] = ConfigurationFile{
-			Warnings: map[string]*ConfigurationRuleEntries{},
-			Exclusions: map[string]*ConfigurationRuleEntries{
-				rule: {},
-			},
-		}
-	}
-	if ce != nil {
-		config.configs[integration].Exclusions[rule].AddEntry(*ce)
-	}
+	config.Exclusions[rule] = entries
 }
 
-func appendConfigWarning(t *testing.T, rule string, integration string, dashboard string, panel string, targetIdx string, config *Configuration) {
+func appendConfigWarning(t *testing.T, rule string, dashboard string, panel string, targetIdx string, config *ConfigurationFile) {
 	t.Helper()
-	var ce *ConfigurationEntry
+
+	entries := config.Warnings[rule]
+	if entries == nil {
+		entries = &ConfigurationRuleEntries{}
+	}
+
 	if dashboard != "" || panel != "" || targetIdx != "" {
-		ce = &ConfigurationEntry{
+		entries.Entries = append(entries.Entries, ConfigurationEntry{
 			Dashboard: dashboard,
 			Panel:     panel,
 			TargetIdx: targetIdx,
-		}
+		})
 	}
-	if _, ok := config.configs[integration]; !ok {
-		config.configs[integration] = ConfigurationFile{
-			Exclusions: map[string]*ConfigurationRuleEntries{},
-			Warnings: map[string]*ConfigurationRuleEntries{
-				rule: {},
-			},
-		}
-	}
-	if ce != nil {
-		config.configs[integration].Warnings[rule].AddEntry(*ce)
-	}
+	config.Warnings[rule] = entries
 }
 
-func newResultContext(t *testing.T, rule string, integration string, dashboard string, panel string, targetIdx string, result Severity) ResultContext {
+func newResultContext(t *testing.T, rule string, dashboard string, panel string, targetIdx string, result Severity) ResultContext {
 	ret := ResultContext{
 		Result: Result{Severity: result, Message: "foo"},
 	}
 	if rule != "" {
 		ret.Rule = &TestRule{name: rule}
-	}
-	if integration != "" {
-		ret.Integration = &integrations.Integration{Meta: &integrations.Metadata{Slug: integration}}
 	}
 	if dashboard != "" {
 		ret.Dashboard = &Dashboard{Title: dashboard}
@@ -112,10 +93,8 @@ func TestResultSet(t *testing.T) {
 	t.Run("ByRule", func(t *testing.T) {
 		r := ResultSet{
 			results: []ResultContext{
-				newResultContext(t, "rule1", "Bintegration", "", "", "", Success),
-				newResultContext(t, "rule1", "Aintegration", "", "", "", Success),
-				newResultContext(t, "rule2", "Bintegration", "", "", "", Success),
-				newResultContext(t, "rule2", "Aintegration", "", "", "", Success),
+				newResultContext(t, "rule1", "", "", "", Success),
+				newResultContext(t, "rule2", "", "", "", Success),
 			},
 		}
 
@@ -124,34 +103,18 @@ func TestResultSet(t *testing.T) {
 		require.Len(t, byRule, 2)
 		require.Contains(t, byRule, "rule1")
 		require.Contains(t, byRule, "rule2")
-		require.Len(t, byRule["rule1"], 2)
-		require.Len(t, byRule["rule2"], 2)
-		require.Equal(t, "Aintegration", byRule["rule1"][0].Integration.Meta.Slug)
-	})
-
-	t.Run("ByIntegration", func(t *testing.T) {
-		r := ResultSet{
-			results: []ResultContext{
-				newResultContext(t, "", "Aintegration", "", "", "", Success),
-				newResultContext(t, "", "Bintegration", "", "", "", Success),
-			},
-		}
-
-		byIntegration := r.ByIntegration()
-
-		require.Len(t, byIntegration, 2)
-		require.Contains(t, byIntegration, "Aintegration")
-		require.Contains(t, byIntegration, "Bintegration")
+		require.Len(t, byRule["rule1"], 1)
+		require.Len(t, byRule["rule2"], 1)
 	})
 }
 
 func TestConfiguration(t *testing.T) {
-	t.Run("Excludes Integration", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigExclude(t, "rule1", "Aintegration", "", "", "", c)
+	t.Run("Excludes Rule", func(t *testing.T) {
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "", "", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "", "", "", Error)
-		r2 := newResultContext(t, "rule1", "Bintegration", "", "", "", Error)
+		r1 := newResultContext(t, "rule1", "", "", "", Error)
+		r2 := newResultContext(t, "rule2", "", "", "", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Exclude, rc1.Result.Severity)
@@ -160,12 +123,12 @@ func TestConfiguration(t *testing.T) {
 		require.Equal(t, Error, rc2.Result.Severity)
 	})
 
-	t.Run("Warns Integration", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigWarning(t, "rule1", "Aintegration", "", "", "", c)
+	t.Run("Warns Rule", func(t *testing.T) {
+		c := NewConfigurationFile()
+		appendConfigWarning(t, "rule1", "", "", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "", "", "", Error)
-		r2 := newResultContext(t, "rule1", "Bintegration", "", "", "", Error)
+		r1 := newResultContext(t, "rule1", "", "", "", Error)
+		r2 := newResultContext(t, "rule2", "", "", "", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Warning, rc1.Result.Severity)
@@ -175,12 +138,12 @@ func TestConfiguration(t *testing.T) {
 	})
 
 	t.Run("Excludes More Specific Config", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigExclude(t, "rule1", "Aintegration", "", "", "", c)
-		appendConfigExclude(t, "rule1", "Aintegration", "dash1", "", "", c)
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "", "", "", c)
+		appendConfigExclude(t, "rule1", "dash1", "", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "", "", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash2", "", "", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "", "", Error)
+		r2 := newResultContext(t, "rule1", "dash2", "", "", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Exclude, rc1.Result.Severity)
@@ -190,15 +153,13 @@ func TestConfiguration(t *testing.T) {
 	})
 
 	t.Run("Excludes all when rule defined but entries empty", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigExclude(t, "rule1", "Aintegration", "", "", "", c)
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "", "", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "0", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "1", Error)
-		r3 := newResultContext(t, "rule1", "Aintegration", "dash2", "panel2", "0", Error)
-		r4 := newResultContext(t, "rule1", "Aintegration", "dash2", "panel2", "1", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "panel1", "0", Error)
+		r2 := newResultContext(t, "rule1", "dash1", "panel1", "1", Error)
 
-		rs := []ResultContext{r1, r2, r3, r4}
+		rs := []ResultContext{r1, r2}
 		for _, r := range rs {
 			rc := c.Apply(r)
 			require.Equal(t, Exclude, rc.Result.Severity)
@@ -207,11 +168,11 @@ func TestConfiguration(t *testing.T) {
 
 	// Dashboards
 	t.Run("Excludes Dashboard", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigExclude(t, "rule1", "Aintegration", "dash1", "", "", c)
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "dash1", "", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "", "", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash2", "", "", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "", "", Error)
+		r2 := newResultContext(t, "rule1", "dash2", "", "", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Exclude, rc1.Result.Severity)
@@ -221,11 +182,11 @@ func TestConfiguration(t *testing.T) {
 	})
 
 	t.Run("Warns Dashboard", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigWarning(t, "rule1", "Aintegration", "dash1", "", "", c)
+		c := NewConfigurationFile()
+		appendConfigWarning(t, "rule1", "dash1", "", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "", "", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash2", "", "", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "", "", Error)
+		r2 := newResultContext(t, "rule1", "dash2", "", "", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Warning, rc1.Result.Severity)
@@ -236,11 +197,11 @@ func TestConfiguration(t *testing.T) {
 
 	// Panels
 	t.Run("Excludes Panels", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigExclude(t, "rule1", "Aintegration", "dash1", "panel1", "", c)
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "dash1", "panel1", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel2", "", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "panel1", "", Error)
+		r2 := newResultContext(t, "rule1", "dash1", "panel2", "", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Exclude, rc1.Result.Severity)
@@ -250,11 +211,11 @@ func TestConfiguration(t *testing.T) {
 	})
 
 	t.Run("Warns Panels", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigWarning(t, "rule1", "Aintegration", "dash1", "panel1", "", c)
+		c := NewConfigurationFile()
+		appendConfigWarning(t, "rule1", "dash1", "panel1", "", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel2", "", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "panel1", "", Error)
+		r2 := newResultContext(t, "rule1", "dash1", "panel2", "", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Warning, rc1.Result.Severity)
@@ -265,11 +226,11 @@ func TestConfiguration(t *testing.T) {
 
 	// Targets
 	t.Run("Excludes Targets", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigExclude(t, "rule1", "Aintegration", "dash1", "panel1", "0", c)
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "dash1", "panel1", "0", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "0", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "1", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "panel1", "0", Error)
+		r2 := newResultContext(t, "rule1", "dash1", "panel1", "1", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Exclude, rc1.Result.Severity)
@@ -279,11 +240,11 @@ func TestConfiguration(t *testing.T) {
 	})
 
 	t.Run("Warns Targets", func(t *testing.T) {
-		c := NewConfiguration()
-		appendConfigWarning(t, "rule1", "Aintegration", "dash1", "panel1", "0", c)
+		c := NewConfigurationFile()
+		appendConfigWarning(t, "rule1", "dash1", "panel1", "0", c)
 
-		r1 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "0", Error)
-		r2 := newResultContext(t, "rule1", "Aintegration", "dash1", "panel1", "1", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "panel1", "0", Error)
+		r2 := newResultContext(t, "rule1", "dash1", "panel1", "1", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Warning, rc1.Result.Severity)

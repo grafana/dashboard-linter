@@ -9,12 +9,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Configuration contains a map of ConfigurationFile, where the key is the integration slug
-type Configuration struct {
-	configs map[string]ConfigurationFile
-	verbose bool
-}
-
 // ConfigurationFile contains a map for rule exclusions, and warnings, where the key is the
 // rule name to be excluded or downgraded to a warning
 type ConfigurationFile struct {
@@ -63,18 +57,9 @@ func (ce *ConfigurationEntry) IsMatch(r ResultContext) bool {
 	return ret
 }
 
-func (c *Configuration) AddConfiguration(slug string, cf ConfigurationFile) {
-	c.configs[slug] = cf
-}
-
-func (c *Configuration) Apply(res ResultContext) ResultContext {
-	cByIntegration, ok := c.configs[res.Integration.Meta.Slug]
-	if !ok {
-		return res
-	}
-
+func (cf *ConfigurationFile) Apply(res ResultContext) ResultContext {
 	{
-		exclusions, ok := cByIntegration.Exclusions[res.Rule.Name()]
+		exclusions, ok := cf.Exclusions[res.Rule.Name()]
 		matched := false
 		if exclusions != nil {
 			for _, ce := range exclusions.Entries {
@@ -95,7 +80,7 @@ func (c *Configuration) Apply(res ResultContext) ResultContext {
 	}
 
 	{
-		warnings, ok := cByIntegration.Warnings[res.Rule.Name()]
+		warnings, ok := cf.Warnings[res.Rule.Name()]
 		matched := false
 		if warnings != nil {
 			for _, ce := range warnings.Entries {
@@ -114,40 +99,29 @@ func (c *Configuration) Apply(res ResultContext) ResultContext {
 		}
 	}
 
-	{
-		if !c.verbose && res.Result.Severity == Success {
-			res.Result.Severity = Quiet
-		}
-	}
-
 	return res
 }
 
-func LoadIntegrationLintConfig(path string) (ConfigurationFile, error) {
-	var cf ConfigurationFile
+func NewConfigurationFile() *ConfigurationFile {
+	return &ConfigurationFile{
+		Exclusions: map[string]*ConfigurationRuleEntries{},
+		Warnings:   map[string]*ConfigurationRuleEntries{},
+	}
+}
+
+func (cf *ConfigurationFile) Load(path string) error {
 	lintFilePath := filepath.Join(path, ".lint")
 	f, err := os.Open(lintFilePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return cf, nil
-		}
-		return cf, err
+	if err != nil && os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
 	}
 	defer f.Close()
 
 	dec := yaml.NewDecoder(f)
-	if err = dec.Decode(&cf); err != nil {
-		return cf, fmt.Errorf("could not unmarshal lint configuration %s: %w", lintFilePath, err)
+	if err = dec.Decode(cf); err != nil {
+		return fmt.Errorf("could not unmarshal lint configuration %s: %w", lintFilePath, err)
 	}
-	return cf, nil
-}
-
-func NewConfiguration() *Configuration {
-	return &Configuration{
-		configs: make(map[string]ConfigurationFile),
-	}
-}
-
-func (c *Configuration) SetVerbose(verbose bool) {
-	c.verbose = verbose
+	return nil
 }

@@ -3,8 +3,6 @@ package lint
 import (
 	"fmt"
 	"sort"
-
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
 type Result struct {
@@ -14,12 +12,11 @@ type Result struct {
 
 // ResultContext is used by ResultSet to keep all the state data about a lint execution and it's results.
 type ResultContext struct {
-	Result      Result
-	Rule        Rule
-	Integration *integrations.Integration
-	Dashboard   *Dashboard
-	Panel       *Panel
-	Target      *Target
+	Result    Result
+	Rule      Rule
+	Dashboard *Dashboard
+	Panel     *Panel
+	Target    *Target
 }
 
 func (r ResultContext) TtyPrint() {
@@ -37,16 +34,11 @@ func (r ResultContext) TtyPrint() {
 		return
 	}
 
-	fmt.Printf("[%s] Integration: %s - %s\n", sym, r.Integration.Meta.Slug, r.Result.Message)
+	fmt.Printf("[%s] %s\n", sym, r.Result.Message)
 }
 
 type ResultSet struct {
 	results []ResultContext
-	config  *Configuration
-}
-
-func (rs *ResultSet) Configure(c *Configuration) {
-	rs.config = c
 }
 
 func (rs *ResultSet) AddResult(r ResultContext) {
@@ -70,44 +62,17 @@ func (rs *ResultSet) ByRule() map[string][]ResultContext {
 	}
 	for _, rule := range ret {
 		sort.SliceStable(rule, func(i, j int) bool {
-			return rule[i].Integration.Meta.Slug < rule[j].Integration.Meta.Slug
+			return rule[i].Dashboard.Title < rule[j].Dashboard.Title
 		})
 	}
 	return ret
 }
 
-func (rs *ResultSet) ByIntegration() map[string][]ResultContext {
-	ret := make(map[string][]ResultContext)
-	for _, res := range rs.results {
-		ret[res.Integration.Meta.Slug] = append(ret[res.Integration.Meta.Slug], res)
-	}
-	return ret
-}
-
-func (rs *ResultSet) ReportByRule() {
+func (rs *ResultSet) ReportByRule(config *ConfigurationFile) {
 	for _, res := range rs.ByRule() {
 		fmt.Println(res[0].Rule.Description())
 		for _, r := range res {
-			rs.config.Apply(r).TtyPrint()
-		}
-	}
-}
-
-func (rs *ResultSet) ReportByIntegration() {
-	byIntegration := rs.ByIntegration()
-	keys := make([]string, 0, len(byIntegration))
-	for k := range byIntegration {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, slug := range keys {
-		fmt.Printf("Integration: %s\n", slug)
-		res := byIntegration[slug]
-		for _, r := range res {
-			fmt.Printf("  %s\n", r.Rule.Description())
-			fmt.Print("    ")
-			rs.config.Apply(r).TtyPrint()
+			config.Apply(r).TtyPrint()
 		}
 	}
 }

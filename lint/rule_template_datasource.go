@@ -2,15 +2,13 @@ package lint
 
 import (
 	"fmt"
-
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
 func NewTemplateDatasourceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-datasource-rule",
 		description: "template-datasource-rule Checks that the dashboard has a templated datasource.",
-		fn: func(i *integrations.Integration, d Dashboard) Result {
+		fn: func(d Dashboard) Result {
 			template := getTemplateDatasource(d)
 			if template == nil {
 				return Result{

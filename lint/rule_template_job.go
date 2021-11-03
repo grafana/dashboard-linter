@@ -2,15 +2,13 @@ package lint
 
 import (
 	"fmt"
-
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
 func NewTemplateJobRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-job-rule",
 		description: "template-job-rule Checks that the dashboard has a templated job and instance.",
-		fn: func(i *integrations.Integration, d Dashboard) Result {
+		fn: func(d Dashboard) Result {
 			template := getTemplateDatasource(d)
 			if template == nil || template.Query != "prometheus" {
 				return Result{
@@ -65,7 +63,7 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	if t.Multi != true {
+	if !t.Multi {
 		return &Result{
 			Severity: Error,
 			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a multi select", d.Title, name),

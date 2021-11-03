@@ -2,8 +2,6 @@ package lint
 
 import (
 	"fmt"
-
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
 // NewPanelRateIntervalRule builds a lint rule for panels with Prometheus queries which checks
@@ -12,7 +10,7 @@ func NewPanelRateIntervalRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-rate-interval-rule",
 		description: "panel-rate-interval-rule Checks that each panel uses $__rate_interval.",
-		fn: func(i *integrations.Integration, d Dashboard, p Panel) Result {
+		fn: func(d Dashboard, p Panel) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
 				// Missing template datasources is a separate rule.
 				return Result{

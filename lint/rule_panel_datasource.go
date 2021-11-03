@@ -2,15 +2,13 @@ package lint
 
 import (
 	"fmt"
-
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
 func NewPanelDatasourceRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-datasource-rule",
 		description: "panel-datasource-rule Checks that each panel uses the templated datasource.",
-		fn: func(i *integrations.Integration, d Dashboard, p Panel) Result {
+		fn: func(d Dashboard, p Panel) Result {
 
 			switch p.Type {
 			case "singlestat", "graph", "table":

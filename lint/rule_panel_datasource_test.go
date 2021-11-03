@@ -35,6 +35,6 @@ func TestPanelDatasource(t *testing.T) {
 			},
 		},
 	} {
-		require.Equal(t, tc.result, linter.LintPanel(nil, Dashboard{Title: "test"}, tc.panel))
+		require.Equal(t, tc.result, linter.LintPanel(Dashboard{Title: "test"}, tc.panel))
 	}
 }

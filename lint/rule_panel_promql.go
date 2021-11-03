@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
-
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -20,7 +18,7 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-promql-rule",
 		description: "panel-promql-rule Checks that each panel uses a valid PromQL query.",
-		fn: func(i *integrations.Integration, d Dashboard, p Panel) Result {
+		fn: func(d Dashboard, p Panel) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
 				// Missing template datasources is a separate rule.
 				return Result{

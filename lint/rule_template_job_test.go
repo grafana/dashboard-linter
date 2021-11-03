@@ -155,6 +155,6 @@ func TestJobDatasource(t *testing.T) {
 			},
 		},
 	} {
-		require.Equal(t, tc.result, linter.LintDashboard(nil, tc.dashboard))
+		require.Equal(t, tc.result, linter.LintDashboard(tc.dashboard))
 	}
 }

@@ -134,6 +134,6 @@ func TestPanelPromQLRule(t *testing.T) {
 			},
 		},
 	} {
-		require.Equal(t, tc.result, linter.LintPanel(nil, dashboard, tc.panel))
+		require.Equal(t, tc.result, linter.LintPanel(dashboard, tc.panel))
 	}
 }

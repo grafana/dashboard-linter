@@ -3,8 +3,6 @@ package lint
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/grafana/cloud-onboarding/pkg/clients/grafana"
 )
 
 type Severity int
@@ -113,14 +111,9 @@ func (d *Dashboard) GetPanels() []Panel {
 	return p
 }
 
-func NewDashboardFromGrafanaDashboard(d grafana.GrafanaBoard) (Dashboard, error) {
+func NewDashboard(buf []byte) (Dashboard, error) {
 	var dash Dashboard
-	jsDash, err := json.Marshal(d.Dashboard)
-	if err != nil {
-		return dash, fmt.Errorf("unable to marshal dashboard back to json string: %w", err)
-	}
-	err = json.Unmarshal(jsDash, &dash)
-	if err != nil {
+	if err := json.Unmarshal(buf, &dash); err != nil {
 		return dash, err
 	}
 	return dash, nil
