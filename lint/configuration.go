@@ -7,8 +7,6 @@ import (
 	"strconv"
 
 	"gopkg.in/yaml.v3"
-
-	"github.com/grafana/cloud-onboarding/pkg/integrations-api/integrations"
 )
 
 // Configuration contains a map of ConfigurationFile, where the key is the integration slug
@@ -125,9 +123,9 @@ func (c *Configuration) Apply(res ResultContext) ResultContext {
 	return res
 }
 
-func LoadIntegrationLintConfig(i *integrations.Integration) (ConfigurationFile, error) {
+func LoadIntegrationLintConfig(path string) (ConfigurationFile, error) {
 	var cf ConfigurationFile
-	lintFilePath := filepath.Join(i.Meta.FilePath(), ".lint")
+	lintFilePath := filepath.Join(path, ".lint")
 	f, err := os.Open(lintFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {

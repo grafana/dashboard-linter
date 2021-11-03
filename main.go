@@ -113,3 +113,44 @@ func init() {
 		"show more information about linting",
 	)
 }
+
+var rootCmd = &cobra.Command{
+	Use:   "integrations-ctl",
+	Short: "A command-line application to interact with integrations",
+	Run: func(cmd *cobra.Command, args []string) {
+		_ = cmd.Help()
+		os.Exit(0)
+	},
+}
+
+func loadIntegrations(path string) integrations.Integrations {
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	is, err := integrations.LoadAll(logger, path)
+	if err != nil {
+		exitWithErr(fmt.Sprintf("Failed to load all integrations: %s", err))
+	}
+	return is
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func exitWithErr(s string) {
+	fmt.Fprintln(os.Stderr, s)
+	os.Exit(1)
+}
+
+func prettyPrint(x interface{}) string {
+	s, _ := json.MarshalIndent(x, "", "\t")
+	return string(s)
+}
+
+
+func main() {
+	cmd.Execute()
+}
+
