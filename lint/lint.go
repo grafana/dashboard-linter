@@ -33,7 +33,7 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 		Label      string      `json:"label"`
 		Type       string      `json:"type"`
 		Query      interface{} `json:"query"`
-		Datasource string      `json:"datasource"`
+		Datasource interface{} `json:"datasource"`
 		Multi      bool        `json:"multi"`
 		AllValue   string      `json:"allValue"`
 	}
@@ -45,9 +45,17 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	t.Name = raw.Name
 	t.Label = raw.Label
 	t.Type = raw.Type
-	t.Datasource = raw.Datasource
 	t.Multi = raw.Multi
 	t.AllValue = raw.AllValue
+
+	switch v := raw.Datasource.(type) {
+	case string:
+		t.Datasource = v
+	case map[string]interface{}:
+		t.Datasource = v["uid"].(string)
+	default:
+		return fmt.Errorf("invalid type for field 'datasource': %v", v)
+	}
 
 	switch v := raw.Query.(type) {
 	case string:
