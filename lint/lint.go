@@ -49,6 +49,8 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	t.AllValue = raw.AllValue
 
 	switch v := raw.Datasource.(type) {
+	case nil:
+		t.Datasource = ""
 	case string:
 		t.Datasource = v
 	case map[string]interface{}:
