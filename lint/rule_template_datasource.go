@@ -7,7 +7,7 @@ import (
 func NewTemplateDatasourceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-datasource-rule",
-		description: "template-datasource-rule Checks that the dashboard has a templated datasource.",
+		description: "Checks that the dashboard has a templated datasource.",
 		fn: func(d Dashboard) Result {
 			template := getTemplateDatasource(d)
 			if template == nil {
