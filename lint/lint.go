@@ -18,13 +18,13 @@ const (
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Template struct {
-	Name       string `json:"name"`
-	Label      string `json:"label"`
-	Type       string `json:"type"`
-	Query      string `json:"query"`
-	Datasource string `json:"datasource"`
-	Multi      bool   `json:"multi"`
-	AllValue   string `json:"allValue"`
+	Name       string     `json:"name"`
+	Label      string     `json:"label"`
+	Type       string     `json:"type"`
+	Query      string     `json:"query"`
+	Datasource Datasource `json:"datasource"`
+	Multi      bool       `json:"multi"`
+	AllValue   string     `json:"allValue"`
 }
 
 func (t *Template) UnmarshalJSON(buf []byte) error {
@@ -33,7 +33,7 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 		Label      string      `json:"label"`
 		Type       string      `json:"type"`
 		Query      interface{} `json:"query"`
-		Datasource string      `json:"datasource"`
+		Datasource Datasource  `json:"datasource"`
 		Multi      bool        `json:"multi"`
 		AllValue   string      `json:"allValue"`
 	}
@@ -61,6 +61,28 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	return nil
 }
 
+type Datasource string
+
+func (d *Datasource) UnmarshalJSON(buf []byte) error {
+	var raw interface{}
+	if err := json.Unmarshal(buf, &raw); err != nil {
+		return err
+	}
+
+	switch v := raw.(type) {
+	case nil:
+		*d = ""
+	case string:
+		*d = Datasource(v)
+	case map[string]interface{}:
+		*d = Datasource(v["uid"].(string))
+	default:
+		return fmt.Errorf("invalid type for field 'datasource': %v", v)
+	}
+
+	return nil
+}
+
 // Target is a deliberately incomplete representation of the Dashboard -> Panel -> Target type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Target struct {
@@ -71,10 +93,10 @@ type Target struct {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Title      string   `json:"title"`
-	Targets    []Target `json:"targets,omitempty"`
-	Datasource string   `json:"datasource"`
-	Type       string   `json:"type"`
+	Title      string     `json:"title"`
+	Targets    []Target   `json:"targets,omitempty"`
+	Datasource Datasource `json:"datasource"`
+	Type       string     `json:"type"`
 }
 
 // Row is a deliberately incomplete representation of the Dashboard -> Row type in grafana.
