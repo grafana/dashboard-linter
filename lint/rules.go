@@ -59,6 +59,7 @@ func NewRuleSet() RuleSet {
 			NewPanelDatasourceRule(),
 			NewPanelPromQLRule(),
 			NewPanelRateIntervalRule(),
+			NewPanelJobInstanceRule(),
 		},
 	}
 }

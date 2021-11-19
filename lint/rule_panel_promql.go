@@ -4,12 +4,32 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
 var rangeVectorRegexp = regexp.MustCompile(`\[([^:]+)\]`)
 var subqueryRegexp = regexp.MustCompile(`\[([^:]+):(.+)?\]`)
+
+// panelHasQueries returns true is the panel has queries we should try and
+// validate.  We allow-list panels here to prevent false positives with
+// new panel types we don't understand.
+func panelHasQueries(p Panel) bool {
+	types := []string{"singlestat", "graph", "table", "stat", "state-timeline"}
+	for _, t := range types {
+		if p.Type == t {
+			return true
+		}
+	}
+	return false
+}
+
+// parsePromQL returns the parsed PromQL statement from a panel,
+// replacing eg [$__rate_interval] with [5m] so queries parse correctly.
+func parsePromQL(t Target) (parser.Expr, error) {
+	expr := rangeVectorRegexp.ReplaceAllString(t.Expr, "[5m]")
+	expr = subqueryRegexp.ReplaceAllString(expr, "[5m:]")
+	return parser.ParseExpr(expr)
+}
 
 // NewPanelPromQLRule builds a lint rule for panels with Prometheus queries which checks:
 // - the query is valid PromQL
@@ -27,34 +47,18 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 				}
 			}
 
-			switch p.Type {
-			case "singlestat", "graph", "table":
-				for _, target := range p.Targets {
-					// Hack in replace [$__rate_interval] with [5m] so queries parse correctly.
-					expr := rangeVectorRegexp.ReplaceAllString(target.Expr, "[5m]")
-					expr = subqueryRegexp.ReplaceAllString(expr, "[5m:]")
-					node, err := parser.ParseExpr(expr)
-					if err != nil {
-						return Result{
-							Severity: Error,
-							Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, target.Expr, err),
-						}
-					}
+			if !panelHasQueries(p) {
+				return Result{
+					Severity: Success,
+					Message:  "OK",
+				}
+			}
 
-					for _, selector := range parser.ExtractSelectors(node) {
-						if err := checkForMatcher(selector, "job", labels.MatchRegexp, "$job"); err != nil {
-							return Result{
-								Severity: Error,
-								Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, target.Expr, err),
-							}
-						}
-
-						if err := checkForMatcher(selector, "instance", labels.MatchRegexp, "$instance"); err != nil {
-							return Result{
-								Severity: Error,
-								Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, target.Expr, err),
-							}
-						}
+			for _, target := range p.Targets {
+				if _, err := parsePromQL(target); err != nil {
+					return Result{
+						Severity: Error,
+						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, target.Expr, err),
 					}
 				}
 			}
@@ -65,24 +69,4 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 			}
 		},
 	}
-}
-
-func checkForMatcher(selector []*labels.Matcher, name string, ty labels.MatchType, value string) error {
-	for _, matcher := range selector {
-		if matcher.Name != name {
-			continue
-		}
-
-		if matcher.Type != ty {
-			return fmt.Errorf("%s selector is %s, not %s", name, matcher.Type, ty)
-		}
-
-		if matcher.Value != value {
-			return fmt.Errorf("%s selector is %s, not %s", name, matcher.Value, value)
-		}
-
-		return nil
-	}
-
-	return fmt.Errorf("%s selector not found", name)
 }
