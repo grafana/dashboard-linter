@@ -55,8 +55,22 @@ var lintCmd = &cobra.Command{
 	},
 }
 
+var rulesCmd = &cobra.Command{
+	Use:          "rules",
+	Short:        "Print documentation about each lint rule.",
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		rules := lint.NewRuleSet()
+		for _, rule := range rules.Rules() {
+			fmt.Printf("* `%s` - %s\n", rule.Name(), rule.Description())
+		}
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(lintCmd)
+	rootCmd.AddCommand(rulesCmd)
 	lintCmd.Flags().BoolVar(
 		&lintStrictFlag,
 		"strict",
@@ -69,6 +83,7 @@ func init() {
 		false,
 		"show more information about linting",
 	)
+
 }
 
 var rootCmd = &cobra.Command{

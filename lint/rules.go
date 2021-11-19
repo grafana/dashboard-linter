@@ -63,6 +63,20 @@ func NewRuleSet() RuleSet {
 	}
 }
 
+func (s *RuleSet) Rules() []Rule {
+	var result []Rule
+	for i := range s.dashboardRules {
+		result = append(result, s.dashboardRules[i])
+	}
+	for i := range s.panelRules {
+		result = append(result, s.panelRules[i])
+	}
+	for i := range s.targetRules {
+		result = append(result, s.targetRules[i])
+	}
+	return result
+}
+
 func (s *RuleSet) Lint(dashboards []Dashboard) (*ResultSet, error) {
 	resSet := &ResultSet{}
 

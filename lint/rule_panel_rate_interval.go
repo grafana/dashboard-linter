@@ -9,7 +9,7 @@ import (
 func NewPanelRateIntervalRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-rate-interval-rule",
-		description: "panel-rate-interval-rule Checks that each panel uses $__rate_interval.",
+		description: "Checks that each panel uses $__rate_interval.",
 		fn: func(d Dashboard, p Panel) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
 				// Missing template datasources is a separate rule.

@@ -17,7 +17,7 @@ var subqueryRegexp = regexp.MustCompile(`\[([^:]+):(.+)?\]`)
 func NewPanelPromQLRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-promql-rule",
-		description: "panel-promql-rule Checks that each panel uses a valid PromQL query.",
+		description: "Checks that each panel uses a valid PromQL query.",
 		fn: func(d Dashboard, p Panel) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
 				// Missing template datasources is a separate rule.

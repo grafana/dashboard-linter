@@ -7,7 +7,7 @@ import (
 func NewPanelDatasourceRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-datasource-rule",
-		description: "panel-datasource-rule Checks that each panel uses the templated datasource.",
+		description: "Checks that each panel uses the templated datasource.",
 		fn: func(d Dashboard, p Panel) Result {
 
 			switch p.Type {
