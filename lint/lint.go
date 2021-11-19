@@ -75,7 +75,15 @@ func (d *Datasource) UnmarshalJSON(buf []byte) error {
 	case string:
 		*d = Datasource(v)
 	case map[string]interface{}:
-		*d = Datasource(v["uid"].(string))
+		uid, ok := v["uid"]
+		if !ok {
+			return fmt.Errorf("invalid type for field 'datasource': missing uid field")
+		}
+		uidStr, ok := uid.(string)
+		if !ok {
+			return fmt.Errorf("invalid type for field 'datasource': invalid uid field type, should be string")
+		}
+		*d = Datasource(uidStr)
 	default:
 		return fmt.Errorf("invalid type for field 'datasource': %v", v)
 	}
