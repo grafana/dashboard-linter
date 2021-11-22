@@ -114,6 +114,7 @@ type Dashboard struct {
 	} `json:"templating"`
 	Rows   []Row   `json:"rows,omitempty"`
 	Panels []Panel `json:"panels,omitempty"`
+	Raw    []byte  `json:"-"`
 }
 
 // GetPanels returns the all panels whether they are nested in the (now deprecated) "rows" property or
@@ -138,5 +139,6 @@ func NewDashboard(buf []byte) (Dashboard, error) {
 	if err := json.Unmarshal(buf, &dash); err != nil {
 		return dash, err
 	}
+	dash.Raw = buf
 	return dash, nil
 }
