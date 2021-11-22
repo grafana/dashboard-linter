@@ -22,9 +22,6 @@ func getBaseSchema() (schema.CueSchema, error) {
 	var err error
 	baseOnce.Do(func() {
 		basesch, err = load.BaseDashboardFamily(load.GetDefaultLoadPaths())
-		if err != nil {
-			panic(err)
-		}
 	})
 	return basesch, err
 }
@@ -33,9 +30,6 @@ func getDistSchema() (schema.CueSchema, error) {
 	var err error
 	distOnce.Do(func() {
 		distsch, err = load.DistDashboardFamily(load.GetDefaultLoadPaths())
-		if err != nil {
-			panic(err)
-		}
 	})
 	return distsch, err
 }
