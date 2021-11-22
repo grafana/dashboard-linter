@@ -49,7 +49,11 @@ func NewDashboardValidateRule() *DashboardRuleFunc {
 			// 1) there's only a single schema version so far and 2) the API is going to
 			// change when it moves from github.com/grafana/grafana/pkg/schema
 			// to github.com/grafana/scuemata.
-			err := basesch.Validate(schema.Resource{
+			sch, err := getBaseSchema()
+			if err != nil {
+				panic(err)
+			}
+			err = sch.Validate(schema.Resource{
 				Value: d.Raw,
 			})
 
@@ -77,7 +81,11 @@ func NewDashboardValidateDistRule() *DashboardRuleFunc {
 			// 1) there's only a single schema version so far and 2) the API is going to
 			// change when it moves from github.com/grafana/grafana/pkg/schema
 			// to github.com/grafana/scuemata.
-			err := distsch.Validate(schema.Resource{
+			sch, err := getDistSchema()
+			if err != nil {
+				panic(err)
+			}
+			err = sch.Validate(schema.Resource{
 				Value: d.Raw,
 			})
 
