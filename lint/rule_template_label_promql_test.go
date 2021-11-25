@@ -52,7 +52,7 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 						{
 							Name:       "namespaces",
 							Datasource: "$datasource",
-							Query:      "label_values(up{job=~\"$job\"})",
+							Query:      "label_values(up{job=~\"$job\"}, namespace)",
 							Type:       "query",
 							Label:      "job",
 						},
@@ -64,7 +64,7 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'test', template 'namespaces' invalid PromQL query 'label_values(up{, namespace)': 1:17: parse error: unexpected "," in label matching, expected identifier or "}"`,
+				Message:  `Dashboard 'test', template 'namespaces' invalid templated label 'label_values(up{, namespace)': 1:4: parse error: unexpected "," in label matching, expected identifier or "}"`,
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -80,6 +80,60 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 							Name:       "namespaces",
 							Datasource: "$datasource",
 							Query:      "label_values(up{, namespace)",
+							Type:       "query",
+							Label:      "job",
+						},
+					},
+				},
+			},
+		},
+		// Invalid function.
+		{
+			result: Result{
+				Severity: Error,
+				Message:  `Dashboard 'test', template 'namespaces' invalid templated label 'foo(up, namespace)': invalid 'function': foo`,
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "namespaces",
+							Datasource: "$datasource",
+							Query:      "foo(up, namespace)",
+							Type:       "query",
+							Label:      "job",
+						},
+					},
+				},
+			},
+		},
+		// Invalid query expression.
+		{
+			result: Result{
+				Severity: Error,
+				Message:  `Dashboard 'test', template 'namespaces' invalid templated label 'foo': invalid 'query': foo`,
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "namespaces",
+							Datasource: "$datasource",
+							Query:      "foo",
 							Type:       "query",
 							Label:      "job",
 						},
