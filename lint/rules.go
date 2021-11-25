@@ -54,6 +54,7 @@ func NewRuleSet() RuleSet {
 		dashboardRules: []DashboardRule{
 			NewTemplateDatasourceRule(),
 			NewTemplateJobRule(),
+			NewTemplateLabelPromQLRule(),
 		},
 		panelRules: []PanelRule{
 			NewPanelDatasourceRule(),
