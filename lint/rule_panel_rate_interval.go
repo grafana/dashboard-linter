@@ -2,7 +2,10 @@ package lint
 
 import (
 	"fmt"
+	"regexp"
 )
+
+var rangeVectorRegexp = regexp.MustCompile(`\[([^:]+)\]`)
 
 // NewPanelRateIntervalRule builds a lint rule for panels with Prometheus queries which checks
 // all range vector selectors use $__rate_interval.
