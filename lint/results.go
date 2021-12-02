@@ -39,10 +39,25 @@ func (r ResultContext) TtyPrint() {
 
 type ResultSet struct {
 	results []ResultContext
+	config  *ConfigurationFile
 }
 
+// Configure adds, and applies the provided configuration to all results currently in the ResultSet
+func (rs *ResultSet) Configure(c *ConfigurationFile) {
+	rs.config = c
+	for i := range rs.results {
+		rs.results[i] = rs.config.Apply(rs.results[i])
+	}
+}
+
+// AddResult adds a result to the ResultSet, applying the current configuration if set
 func (rs *ResultSet) AddResult(r ResultContext) {
-	rs.results = append(rs.results, r)
+	if rs.config != nil {
+		rs.results = append(rs.results, rs.config.Apply(r))
+	} else {
+		rs.results = append(rs.results, r)
+	}
+
 }
 
 func (rs *ResultSet) MaximumSeverity() Severity {
@@ -68,11 +83,11 @@ func (rs *ResultSet) ByRule() map[string][]ResultContext {
 	return ret
 }
 
-func (rs *ResultSet) ReportByRule(config *ConfigurationFile) {
+func (rs *ResultSet) ReportByRule() {
 	for _, res := range rs.ByRule() {
 		fmt.Println(res[0].Rule.Description())
 		for _, r := range res {
-			config.Apply(r).TtyPrint()
+			r.TtyPrint()
 		}
 	}
 }
