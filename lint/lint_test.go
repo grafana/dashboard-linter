@@ -106,6 +106,30 @@ func TestResultSet(t *testing.T) {
 		require.Len(t, byRule["rule1"], 1)
 		require.Len(t, byRule["rule2"], 1)
 	})
+
+	t.Run("Honors Configuration given config present before results added", func(t *testing.T) {
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "", "", "", c)
+
+		r := ResultSet{}
+		r.Configure(c)
+		r.AddResult(newResultContext(t, "rule1", "", "", "", Error))
+
+		require.Equal(t, Exclude, r.MaximumSeverity())
+		require.Equal(t, Exclude, r.ByRule()["rule1"][0].Result.Severity)
+	})
+
+	t.Run("Honors Configuration given config added after results added", func(t *testing.T) {
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "", "", "", c)
+
+		r := ResultSet{}
+		r.AddResult(newResultContext(t, "rule1", "", "", "", Error))
+		r.Configure(c)
+
+		require.Equal(t, Exclude, r.MaximumSeverity())
+		require.Equal(t, Exclude, r.ByRule()["rule1"][0].Result.Severity)
+	})
 }
 
 func TestConfiguration(t *testing.T) {
