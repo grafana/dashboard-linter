@@ -53,11 +53,9 @@ func (rs *ResultSet) Configure(c *ConfigurationFile) {
 // AddResult adds a result to the ResultSet, applying the current configuration if set
 func (rs *ResultSet) AddResult(r ResultContext) {
 	if rs.config != nil {
-		rs.results = append(rs.results, rs.config.Apply(r))
-	} else {
-		rs.results = append(rs.results, r)
+	        r = rs.config.Apply(r)
 	}
-
+	rs.results = append(rs.results, r)
 }
 
 func (rs *ResultSet) MaximumSeverity() Severity {
