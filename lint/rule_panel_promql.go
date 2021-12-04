@@ -2,13 +2,10 @@ package lint
 
 import (
 	"fmt"
-	"regexp"
+	"strings"
 
 	"github.com/prometheus/prometheus/promql/parser"
 )
-
-var rangeVectorRegexp = regexp.MustCompile(`\[([^:]+)\]`)
-var subqueryRegexp = regexp.MustCompile(`\[([^:]+):(.+)?\]`)
 
 // panelHasQueries returns true is the panel has queries we should try and
 // validate.  We allow-list panels here to prevent false positives with
@@ -25,9 +22,22 @@ func panelHasQueries(p Panel) bool {
 
 // parsePromQL returns the parsed PromQL statement from a panel,
 // replacing eg [$__rate_interval] with [5m] so queries parse correctly.
+// We also replace various other Grafana global variables.
 func parsePromQL(t Target) (parser.Expr, error) {
-	expr := rangeVectorRegexp.ReplaceAllString(t.Expr, "[5m]")
-	expr = subqueryRegexp.ReplaceAllString(expr, "[5m:]")
+	expr := t.Expr
+	for _, pattern := range []struct {
+		variable     string
+		replacesment string
+	}{
+		{"$__rate_interval", "8869990787ms"},
+		{"$__interval", "4867856611ms"},
+		{"$__interval_ms", "7781188786"},
+		{"$__range_ms", "6737667980"},
+		{"$__range_s", "9397795485"},
+		{"$__range", "6069770749ms"},
+	} {
+		expr = strings.ReplaceAll(expr, pattern.variable, pattern.replacesment)
+	}
 	return parser.ParseExpr(expr)
 }
 

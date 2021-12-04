@@ -69,6 +69,22 @@ func TestPanelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Variable substitutions
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `sum(rate(foo[$__rate_interval])) * $__range_s`,
+					},
+				},
+			},
+		},
 	} {
 		require.Equal(t, tc.result, linter.LintPanel(dashboard, tc.panel))
 	}
