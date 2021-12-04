@@ -29,10 +29,12 @@ func parsePromQL(t Target) (parser.Expr, error) {
 		variable     string
 		replacesment string
 	}{
-		{"$__range_s", "18000"},
-		{"$__range_ms", "18000000"},
-		{"$__range", "5m"},
-		{"$__rate_interval", "5m"},
+		{"$__rate_interval", "8869990787ms"},
+		{"$__interval", "4867856611ms"},
+		{"$__interval_ms", "7781188786"},
+		{"$__range_ms", "6737667980"},
+		{"$__range_s", "9397795485"},
+		{"$__range", "6069770749ms"},
 	} {
 		expr = strings.ReplaceAll(expr, pattern.variable, pattern.replacesment)
 	}
