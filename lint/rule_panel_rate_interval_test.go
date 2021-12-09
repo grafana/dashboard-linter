@@ -53,6 +53,22 @@ func TestPanelRateIntervalRule(t *testing.T) {
 				},
 			},
 		},
+                // This is what a valid panel looks like.
+                {
+                        result: Result{
+                                Severity: Success,
+                                Message:  "OK",
+                        },
+                        panel: Panel{
+                                Title: "panel",
+                                Type:  "singlestat",
+                                Targets: []Target{
+                                        {
+                                                Expr: `sum(rate(foo{job=~"$job",instance=~"$instance"}[$__rate_interval]))/sum(rate(bar{job=~"$job",instance=~"$instance"}[$__rate_interval]))`,
+                                        },
+                                },
+                        },
+                },
 		// Invalid query
 		{
 			result: Result{
