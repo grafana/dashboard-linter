@@ -88,8 +88,8 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "integrations-ctl",
-	Short: "A command-line application to interact with integrations",
+	Use:   "dashboard-linter",
+	Short: "A command-line application to lint Grafana dashboards.",
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Help()
 		os.Exit(0)
