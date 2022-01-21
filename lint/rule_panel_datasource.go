@@ -11,7 +11,7 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 		fn: func(d Dashboard, p Panel) Result {
 
 			switch p.Type {
-			case "singlestat", "graph", "table":
+			case "singlestat", "graph", "table", "timeseries":
 				if p.Datasource != "$datasource" && p.Datasource != "${datasource}" {
 					return Result{
 						Severity: Error,
