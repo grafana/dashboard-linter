@@ -141,6 +141,33 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Support main grafana variables.
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "namespaces",
+							Datasource: "$datasource",
+							Query:      "query_result(max by(namespaces) (max_over_time(memory{}[$__range])))",
+							Type:       "query",
+							Label:      "job",
+						},
+					},
+				},
+			},
+		},
 	} {
 		require.Equal(t, tc.result, linter.LintDashboard(tc.dashboard))
 	}

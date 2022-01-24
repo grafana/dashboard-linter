@@ -3,8 +3,6 @@ package lint
 import (
 	"fmt"
 	"regexp"
-
-	"github.com/prometheus/prometheus/promql/parser"
 )
 
 var templatedLabelRegexp = regexp.MustCompile(`([a-z_]+)\((.+)\)`)
@@ -34,7 +32,7 @@ func parseTemplatedLabelPromQL(t Template) error {
 	if !labelHasValidDataSourceFunction(tokens[1]) {
 		return fmt.Errorf("invalid 'function': %v", tokens[1])
 	}
-	expr, err := parser.ParseExpr(tokens[2])
+	expr, err := parsePromQL(tokens[2])
 	if expr != nil {
 		return nil
 	}
