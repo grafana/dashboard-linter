@@ -2,7 +2,6 @@ package lint
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -24,28 +23,7 @@ func panelHasQueries(p Panel) bool {
 // replacing eg [$__rate_interval] with [5m] so queries parse correctly.
 // We also replace various other Grafana global variables.
 func parsePromQL(expr string) (parser.Expr, error) {
-	replacements := make([]string, 0, 37)
-	for _, pattern := range []struct {
-		variable    string
-		replacement string
-	}{
-		{"__rate_interval", "8869990787ms"},
-		{"__interval", "4867856611ms"},
-		{"__interval_ms", "7781188786"},
-		{"__range_ms", "6737667980"},
-		{"__range_s", "9397795485"},
-		{"__range", "6069770749ms"},
-	} {
-		replacements = append(
-			replacements,
-			[]string{
-				"$" + pattern.variable, pattern.replacement,
-				"${" + pattern.variable + "}", pattern.replacement,
-				"[[" + pattern.variable + "]]", pattern.replacement,
-			}...,
-		)
-	}
-	return parser.ParseExpr(strings.NewReplacer(replacements...).Replace(expr))
+	return parser.ParseExpr(expandVariables(expr))
 }
 
 // NewPanelPromQLRule builds a lint rule for panels with Prometheus queries which checks:
