@@ -2,27 +2,19 @@ package lint
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
-)
-
-const (
-	stateInit = iota
-	stateQuotedString
-	stateVariable
-	stateVariableCurly
-	stateVariableSquareFirst
-	stateVariableSquare
-	stateError
 )
 
 // https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/
 var globalVariables = map[string]interface{}{
-	"__rate_interval": 8869990787 * time.Millisecond,
-	"__interval":      4867856611 * time.Millisecond,
-	"__interval_ms":   7781188786,
-	"__range_ms":      6737667980,
-	"__range_s":       9397795485,
-	"__range":         6069770749 * time.Millisecond,
+	"__rate_interval": "8869990787ms",
+	"__interval":      "4867856611ms",
+	"__interval_ms":   "7781188786",
+	"__range_ms":      "6737667980",
+	"__range_s":       "9397795485",
+	"__range":         "6069770749ms",
 	"__dashboard":     "AwREbnft",
 	"__from":          time.Date(2020, 7, 13, 20, 19, 9, 254000000, time.UTC),
 	"__to":            time.Date(2020, 7, 13, 20, 19, 9, 254000000, time.UTC),
@@ -37,44 +29,16 @@ var globalVariables = map[string]interface{}{
 }
 
 func expandVariables(expr string) string {
-	out := make([]rune, 0, len(expr))
-	state := stateInit // init
-	for _, c := range expr {
-		if state == -1 {
-			return ""
+	re := regexp.MustCompile(`\$[[:word:]]+`)
+	parts := strings.Split(expr, "\"")
+	for i := range parts {
+		if i%2 == 1 {
+			continue
 		}
-		fmt.Println(string(c), state)
-		switch c {
-		case '$':
-			switch state {
-			case stateInit:
-				state = stateVariable
-			default:
-				state = stateError
-			}
-		case '"':
-			switch state {
-			case stateInit:
-				state = stateQuotedString
-			case stateQuotedString:
-				state = stateInit
-			}
-			out = append(out, c)
-		case '{':
-			switch state {
-			case stateInit:
-				state = stateVariableCurly
-			}
-		case '}':
-			switch state {
-			case stateVariableCurly:
-				state = stateInit
-			}
-		default:
-			if state == stateInit || state == stateQuotedString {
-				out = append(out, c)
-			}
-		}
+		parts[i] = re.ReplaceAllStringFunc(parts[i], func(s string) string {
+			return fmt.Sprintf("%s", globalVariables[strings.TrimLeft(s, "$")])
+		})
 	}
-	return string(out)
+	fmt.Println(">>>>", strings.Join(parts, "\""))
+	return strings.Join(parts, "\"")
 }
