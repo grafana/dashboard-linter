@@ -53,22 +53,22 @@ func TestPanelRateIntervalRule(t *testing.T) {
 				},
 			},
 		},
-                // This is what a valid panel looks like.
-                {
-                        result: Result{
-                                Severity: Success,
-                                Message:  "OK",
-                        },
-                        panel: Panel{
-                                Title: "panel",
-                                Type:  "singlestat",
-                                Targets: []Target{
-                                        {
-                                                Expr: `sum(rate(foo{job=~"$job",instance=~"$instance"}[$__rate_interval]))/sum(rate(bar{job=~"$job",instance=~"$instance"}[$__rate_interval]))`,
-                                        },
-                                },
-                        },
-                },
+		// This is what a valid panel looks like.
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `sum(rate(foo{job=~"$job",instance=~"$instance"}[$__rate_interval]))/sum(rate(bar{job=~"$job",instance=~"$instance"}[$__rate_interval]))`,
+					},
+				},
+			},
+		},
 		// Invalid query
 		{
 			result: Result{
@@ -78,6 +78,22 @@ func TestPanelRateIntervalRule(t *testing.T) {
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `sum(rate(foo{job=~"$job",instance=~"$instance"}[5m]))`,
+					},
+				},
+			},
+		},
+		// Timeseries support
+		{
+			result: Result{
+				Severity: Error,
+				Message:  `Dashboard 'dashboard', panel 'panel' invalid PromQL query 'sum(rate(foo{job=~"$job",instance=~"$instance"}[5m]))': should use $__rate_interval`,
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "timeseries",
 				Targets: []Target{
 					{
 						Expr: `sum(rate(foo{job=~"$job",instance=~"$instance"}[5m]))`,
