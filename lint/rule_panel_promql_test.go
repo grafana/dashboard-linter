@@ -85,6 +85,22 @@ func TestPanelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Grafana variable substitutions
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `rate(http_requests_total[$interval:$resolution])`,
+					},
+				},
+			},
+		},
 	} {
 		require.Equal(t, tc.result, linter.LintPanel(dashboard, tc.panel))
 	}

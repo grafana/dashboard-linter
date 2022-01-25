@@ -2,10 +2,13 @@ package lint
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/prometheus/prometheus/promql/parser"
 )
+
+var rangeVectorRegex = regexp.MustCompile(`\[(.+)\]`)
 
 // panelHasQueries returns true is the panel has queries we should try and
 // validate.  We allow-list panels here to prevent false positives with
@@ -38,6 +41,7 @@ func parsePromQL(t Target) (parser.Expr, error) {
 	} {
 		expr = strings.ReplaceAll(expr, pattern.variable, pattern.replacesment)
 	}
+	expr = rangeVectorRegex.ReplaceAllString(expr, "[5000m]")
 	return parser.ParseExpr(expr)
 }
 
