@@ -10,7 +10,7 @@ import (
 // validate.  We allow-list panels here to prevent false positives with
 // new panel types we don't understand.
 func panelHasQueries(p Panel) bool {
-	types := []string{"singlestat", "graph", "table", "stat", "state-timeline"}
+	types := []string{"singlestat", "graph", "table", "stat", "state-timeline", "timeseries"}
 	for _, t := range types {
 		if p.Type == t {
 			return true

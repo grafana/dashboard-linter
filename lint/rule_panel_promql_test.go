@@ -69,6 +69,22 @@ func TestPanelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Timeseries support
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'dashboard', panel 'panel' invalid PromQL query 'foo(bar.baz)': 1:8: parse error: unexpected character: '.'",
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "timeseries",
+				Targets: []Target{
+					{
+						Expr: `foo(bar.baz)`,
+					},
+				},
+			},
+		},
 		// Variable substitutions
 		{
 			result: Result{
