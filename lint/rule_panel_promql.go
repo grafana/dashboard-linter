@@ -2,7 +2,6 @@ package lint
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -23,20 +22,10 @@ func panelHasQueries(p Panel) bool {
 // parsePromQL returns the parsed PromQL statement from a panel,
 // replacing eg [$__rate_interval] with [5m] so queries parse correctly.
 // We also replace various other Grafana global variables.
-func parsePromQL(t Target) (parser.Expr, error) {
-	expr := t.Expr
-	for _, pattern := range []struct {
-		variable     string
-		replacesment string
-	}{
-		{"$__rate_interval", "8869990787ms"},
-		{"$__interval", "4867856611ms"},
-		{"$__interval_ms", "7781188786"},
-		{"$__range_ms", "6737667980"},
-		{"$__range_s", "9397795485"},
-		{"$__range", "6069770749ms"},
-	} {
-		expr = strings.ReplaceAll(expr, pattern.variable, pattern.replacesment)
+func parsePromQL(expr string) (parser.Expr, error) {
+	expr, err := expandVariables(expr)
+	if err != nil {
+		return nil, fmt.Errorf("could not expand variables: %w", err)
 	}
 	return parser.ParseExpr(expr)
 }
@@ -65,7 +54,7 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 			}
 
 			for _, target := range p.Targets {
-				if _, err := parsePromQL(target); err != nil {
+				if _, err := parsePromQL(target.Expr); err != nil {
 					return Result{
 						Severity: Error,
 						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, target.Expr, err),

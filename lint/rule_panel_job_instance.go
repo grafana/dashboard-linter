@@ -30,7 +30,7 @@ func NewPanelJobInstanceRule() *PanelRuleFunc {
 			}
 
 			for _, target := range p.Targets {
-				node, err := parsePromQL(target)
+				node, err := parsePromQL(target.Expr)
 				if err != nil {
 					// Invalid PromQL is another rule.
 					return Result{
