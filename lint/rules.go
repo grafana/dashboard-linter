@@ -79,6 +79,18 @@ func (s *RuleSet) Rules() []Rule {
 	return result
 }
 
+func (s *RuleSet) Add(rule Rule) {
+	if dashboardRule, ok := rule.(DashboardRule); ok {
+		s.dashboardRules = append(s.dashboardRules, dashboardRule)
+	}
+	if panelRule, ok := rule.(PanelRule); ok {
+		s.panelRules = append(s.panelRules, panelRule)
+	}
+	if targetRule, ok := rule.(TargetRule); ok {
+		s.targetRules = append(s.targetRules, targetRule)
+	}
+}
+
 func (s *RuleSet) Lint(dashboards []Dashboard) (*ResultSet, error) {
 	resSet := &ResultSet{}
 
