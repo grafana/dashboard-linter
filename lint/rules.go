@@ -11,6 +11,10 @@ type DashboardRuleFunc struct {
 	fn                func(Dashboard) Result
 }
 
+func NewDashboardRuleFunc(name, description string, fn func(Dashboard) Result) Rule {
+	return &DashboardRuleFunc{name, description, fn}
+}
+
 func (f DashboardRuleFunc) Name() string        { return f.name }
 func (f DashboardRuleFunc) Description() string { return f.description }
 func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
@@ -24,6 +28,10 @@ func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
 type PanelRuleFunc struct {
 	name, description string
 	fn                func(Dashboard, Panel) Result
+}
+
+func NewPanelRuleFunc(name, description string, fn func(Dashboard, Panel) Result) Rule {
+	return &PanelRuleFunc{name, description, fn}
 }
 
 func (f PanelRuleFunc) Name() string        { return f.name }
@@ -42,6 +50,10 @@ func (f PanelRuleFunc) Lint(d Dashboard, s *ResultSet) {
 type TargetRuleFunc struct {
 	name, description string
 	fn                func(Dashboard, Panel, Target) Result
+}
+
+func NewTargetRuleFunc(name, description string, fn func(Dashboard, Panel, Target) Result) Rule {
+	return &TargetRuleFunc{name, description, fn}
 }
 
 func (f TargetRuleFunc) Name() string        { return f.name }
@@ -88,11 +100,11 @@ func (s *RuleSet) Add(r Rule) {
 }
 
 func (s *RuleSet) Lint(dashboards []Dashboard) (*ResultSet, error) {
-	resSet := ResultSet{}
+	resSet := &ResultSet{}
 	for _, d := range dashboards {
 		for _, r := range s.rules {
-			r.Lint(d, &resSet)
+			r.Lint(d, resSet)
 		}
 	}
-	return &resSet, nil
+	return resSet, nil
 }

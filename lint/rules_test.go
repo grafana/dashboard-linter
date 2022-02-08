@@ -1,8 +1,9 @@
-package lint
+package lint_test
 
 import (
 	"testing"
 
+	"github.com/grafana/dashboard-linter/lint"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,45 +52,47 @@ const dashboard = `{
 func TestCustomRules(t *testing.T) {
 	for _, tc := range []struct {
 		desc string
-		rule Rule
+		rule lint.Rule
 	}{
 		{
 			desc: "Should allow addition of dashboard rule",
-			rule: DashboardRuleFunc{
-				fn: func(Dashboard) Result {
-					return Result{Severity: Error, Message: "Error found"}
+			rule: lint.NewDashboardRuleFunc(
+				"test-dashboard-rule", "Test dashboard rule",
+				func(lint.Dashboard) lint.Result {
+					return lint.Result{Severity: lint.Error, Message: "Error found"}
 				},
-			},
+			),
 		},
 		{
 			desc: "Should allow addition of panel rule",
-			rule: PanelRuleFunc{
-				fn: func(Dashboard, Panel) Result {
-					return Result{Severity: Error, Message: "Error found"}
+			rule: lint.NewPanelRuleFunc(
+				"test-panel-rule", "Test panel rule",
+				func(lint.Dashboard, lint.Panel) lint.Result {
+					return lint.Result{Severity: lint.Error, Message: "Error found"}
 				},
-			},
+			),
 		},
 		{
 			desc: "Should allow addition of target rule",
-			rule: TargetRuleFunc{
-				fn: func(Dashboard, Panel, Target) Result {
-					return Result{Severity: Error, Message: "Error found"}
+			rule: lint.NewTargetRuleFunc(
+				"test-target-rule", "Test target rule",
+				func(lint.Dashboard, lint.Panel, lint.Target) lint.Result {
+					return lint.Result{Severity: lint.Error, Message: "Error found"}
 				},
-			},
+			),
 		},
 	} {
-		rules := RuleSet{
-			rules: []Rule{tc.rule},
-		}
+		rules := lint.RuleSet{}
+		rules.Add(tc.rule)
 
-		dashboard, err := NewDashboard([]byte(dashboard))
+		dashboard, err := lint.NewDashboard([]byte(dashboard))
 		assert.NoError(t, err, tc.desc)
 
-		results, err := rules.Lint([]Dashboard{dashboard})
+		results, err := rules.Lint([]lint.Dashboard{dashboard})
 		assert.NoError(t, err, tc.desc)
 
 		// Validate the error was added
-		assert.Len(t, results.results, 1)
-		assert.Equal(t, results.results[0].Result, Result{Severity: Error, Message: "Error found"})
+		assert.Len(t, results.ByRule()[tc.rule.Name()], 1)
+		assert.Equal(t, results.ByRule()[tc.rule.Name()][0].Result, lint.Result{Severity: lint.Error, Message: "Error found"})
 	}
 }
