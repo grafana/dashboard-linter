@@ -8,6 +8,7 @@ import (
 )
 
 type TestRule struct {
+	Rule
 	name string
 }
 

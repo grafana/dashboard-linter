@@ -2,8 +2,6 @@ package lint
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateLabelPromQLRule(t *testing.T) {
@@ -169,6 +167,6 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 			},
 		},
 	} {
-		require.Equal(t, tc.result, linter.LintDashboard(tc.dashboard))
+		testRule(t, linter, tc.dashboard, tc.result)
 	}
 }
