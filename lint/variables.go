@@ -119,7 +119,7 @@ func variableSampleValue(s string) (string, error) {
 		kind = parts[1]
 		format = parts[2]
 	default:
-		return "", fmt.Errorf("Unknown variable format: %s", s)
+		return "", fmt.Errorf("unknown variable format: %s", s)
 	}
 	// If it is part of the globals, return a string representation of a sample value
 	if value, ok := globalVariables[name]; ok {

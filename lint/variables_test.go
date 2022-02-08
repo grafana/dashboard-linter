@@ -140,7 +140,7 @@ func TestVariableExpansion(t *testing.T) {
 		{
 			desc: "Should return an error for unknown syntax",
 			expr: "max by(${a:b:c:d}) (rate(cpu{}[$__rate_interval]))",
-			err:  fmt.Errorf("Unknown variable format: a:b:c:d"),
+			err:  fmt.Errorf("unknown variable format: a:b:c:d"),
 		},
 	} {
 		s, err := expandVariables(tc.expr)

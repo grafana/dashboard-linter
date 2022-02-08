@@ -3,11 +3,7 @@ package lint
 type Rule interface {
 	Description() string
 	Name() string
-}
-
-type DashboardRule interface {
-	Rule
-	LintDashboard(Dashboard) Result
+	Lint(Dashboard, *ResultSet)
 }
 
 type DashboardRuleFunc struct {
@@ -17,13 +13,12 @@ type DashboardRuleFunc struct {
 
 func (f DashboardRuleFunc) Name() string        { return f.name }
 func (f DashboardRuleFunc) Description() string { return f.description }
-func (f DashboardRuleFunc) LintDashboard(d Dashboard) Result {
-	return f.fn(d)
-}
-
-type PanelRule interface {
-	Rule
-	LintPanel(Dashboard, Panel) Result
+func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
+	s.AddResult(ResultContext{
+		Result:    f.fn(d),
+		Rule:      f,
+		Dashboard: &d,
+	})
 }
 
 type PanelRuleFunc struct {
@@ -33,30 +28,49 @@ type PanelRuleFunc struct {
 
 func (f PanelRuleFunc) Name() string        { return f.name }
 func (f PanelRuleFunc) Description() string { return f.description }
-func (f PanelRuleFunc) LintPanel(d Dashboard, p Panel) Result {
-	return f.fn(d, p)
+func (f PanelRuleFunc) Lint(d Dashboard, s *ResultSet) {
+	for _, p := range d.GetPanels() {
+		s.AddResult(ResultContext{
+			Result:    f.fn(d, p),
+			Rule:      f,
+			Dashboard: &d,
+			Panel:     &p,
+		})
+	}
 }
 
-type TargetRule interface {
-	Rule
-	LintTarget(Dashboard, Panel, Target) Result
+type TargetRuleFunc struct {
+	name, description string
+	fn                func(Dashboard, Panel, Target) Result
+}
+
+func (f TargetRuleFunc) Name() string        { return f.name }
+func (f TargetRuleFunc) Description() string { return f.description }
+func (f TargetRuleFunc) Lint(d Dashboard, s *ResultSet) {
+	for _, p := range d.GetPanels() {
+		for _, t := range p.Targets {
+			s.AddResult(ResultContext{
+				Result:    f.fn(d, p, t),
+				Rule:      f,
+				Dashboard: &d,
+				Panel:     &p,
+				Target:    &t,
+			})
+		}
+	}
 }
 
 // RuleSet contains a list of linting rules.
 type RuleSet struct {
-	dashboardRules []DashboardRule
-	panelRules     []PanelRule
-	targetRules    []TargetRule
+	rules []Rule
 }
 
 func NewRuleSet() RuleSet {
 	return RuleSet{
-		dashboardRules: []DashboardRule{
+		rules: []Rule{
 			NewTemplateDatasourceRule(),
 			NewTemplateJobRule(),
 			NewTemplateLabelPromQLRule(),
-		},
-		panelRules: []PanelRule{
 			NewPanelDatasourceRule(),
 			NewPanelPromQLRule(),
 			NewPanelRateIntervalRule(),
@@ -66,66 +80,19 @@ func NewRuleSet() RuleSet {
 }
 
 func (s *RuleSet) Rules() []Rule {
-	var result []Rule
-	for i := range s.dashboardRules {
-		result = append(result, s.dashboardRules[i])
-	}
-	for i := range s.panelRules {
-		result = append(result, s.panelRules[i])
-	}
-	for i := range s.targetRules {
-		result = append(result, s.targetRules[i])
-	}
-	return result
+	return s.rules
 }
 
-func (s *RuleSet) Add(rule Rule) {
-	if dashboardRule, ok := rule.(DashboardRule); ok {
-		s.dashboardRules = append(s.dashboardRules, dashboardRule)
-	}
-	if panelRule, ok := rule.(PanelRule); ok {
-		s.panelRules = append(s.panelRules, panelRule)
-	}
-	if targetRule, ok := rule.(TargetRule); ok {
-		s.targetRules = append(s.targetRules, targetRule)
-	}
+func (s *RuleSet) Add(r Rule) {
+	s.rules = append(s.rules, r)
 }
 
 func (s *RuleSet) Lint(dashboards []Dashboard) (*ResultSet, error) {
-	resSet := &ResultSet{}
-
-	// Dashboards
-	for _, dashboard := range dashboards {
-		for _, dr := range s.dashboardRules {
-			resSet.AddResult(ResultContext{
-				Result:    dr.LintDashboard(dashboard),
-				Rule:      dr,
-				Dashboard: &dashboard,
-			})
-		}
-		panels := dashboard.GetPanels()
-		for p := range panels {
-			for _, pr := range s.panelRules {
-				resSet.AddResult(ResultContext{
-					Result:    pr.LintPanel(dashboard, panels[p]),
-					Rule:      pr,
-					Dashboard: &dashboard,
-					Panel:     &panels[p],
-				})
-			}
-			targets := panels[p].Targets
-			for t := range targets {
-				for _, tr := range s.targetRules {
-					resSet.AddResult(ResultContext{
-						Result:    tr.LintTarget(dashboard, panels[p], targets[t]),
-						Rule:      tr,
-						Dashboard: &dashboard,
-						Panel:     &panels[p],
-						Target:    &targets[t],
-					})
-				}
-			}
+	resSet := ResultSet{}
+	for _, d := range dashboards {
+		for _, r := range s.rules {
+			r.Lint(d, &resSet)
 		}
 	}
-	return resSet, nil
+	return &resSet, nil
 }

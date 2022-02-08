@@ -2,8 +2,6 @@ package lint
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateDatasource(t *testing.T) {
@@ -104,6 +102,6 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 	} {
-		require.Equal(t, tc.result, linter.LintDashboard(tc.dashboard))
+		testRule(t, linter, tc.dashboard, tc.result)
 	}
 }

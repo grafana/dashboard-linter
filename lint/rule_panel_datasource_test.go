@@ -35,6 +35,15 @@ func TestPanelDatasource(t *testing.T) {
 			},
 		},
 	} {
-		require.Equal(t, tc.result, linter.LintPanel(Dashboard{Title: "test"}, tc.panel))
+		testRule(t, linter, Dashboard{Title: "test", Panels: []Panel{tc.panel}}, tc.result)
 	}
+}
+
+// testRule is a small helper that tests a lint rule and expects it to only return
+// a single result.
+func testRule(t *testing.T, rule Rule, d Dashboard, result Result) {
+	var rs ResultSet
+	rule.Lint(d, &rs)
+	require.Len(t, rs.results, 1)
+	require.Equal(t, result, rs.results[0].Result)
 }

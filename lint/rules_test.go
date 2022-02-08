@@ -1,9 +1,8 @@
-package lint_test
+package lint
 
 import (
 	"testing"
 
-	"github.com/grafana/dashboard-linter/lint"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,73 +48,48 @@ const dashboard = `{
 	"title": "Sample dashboard"
 }`
 
-type Rule struct {
-	RuleName string
-}
-
-func (rule *Rule) Name() string {
-	return rule.RuleName
-}
-
-func (rule *Rule) Description() string {
-	return "Test rule"
-}
-
-type CustomDashboardRule struct {
-	Rule
-}
-
-func (rule *CustomDashboardRule) LintDashboard(dashboard lint.Dashboard) lint.Result {
-	return lint.Result{Severity: lint.Error, Message: "Error found"}
-}
-
-type CustomPanelRule struct {
-	Rule
-}
-
-func (rule *CustomPanelRule) LintPanel(dashboard lint.Dashboard, panel lint.Panel) lint.Result {
-	return lint.Result{Severity: lint.Error, Message: "Error found"}
-}
-
-type CustomTargetRule struct {
-	Rule
-}
-
-func (rule *CustomTargetRule) LintTarget(dashboard lint.Dashboard, panel lint.Panel, target lint.Target) lint.Result {
-	return lint.Result{Severity: lint.Error, Message: "Error found"}
-}
-
 func TestCustomRules(t *testing.T) {
 	for _, tc := range []struct {
 		desc string
-		rule lint.Rule
+		rule Rule
 	}{
 		{
 			desc: "Should allow addition of dashboard rule",
-			rule: &CustomDashboardRule{Rule: Rule{RuleName: "test-dashboard-rule"}},
+			rule: DashboardRuleFunc{
+				fn: func(Dashboard) Result {
+					return Result{Severity: Error, Message: "Error found"}
+				},
+			},
 		},
 		{
 			desc: "Should allow addition of panel rule",
-			rule: &CustomPanelRule{Rule: Rule{RuleName: "test-panel-rule"}},
+			rule: PanelRuleFunc{
+				fn: func(Dashboard, Panel) Result {
+					return Result{Severity: Error, Message: "Error found"}
+				},
+			},
 		},
 		{
 			desc: "Should allow addition of target rule",
-			rule: &CustomTargetRule{Rule: Rule{RuleName: "test-target-rule"}},
+			rule: TargetRuleFunc{
+				fn: func(Dashboard, Panel, Target) Result {
+					return Result{Severity: Error, Message: "Error found"}
+				},
+			},
 		},
 	} {
-		rules := lint.NewRuleSet()
-		// Add custom rule
-		rules.Add(tc.rule)
-		// Lint
-		dashboard, err := lint.NewDashboard([]byte(dashboard))
-		assert.NoError(t, err, tc.desc)
-		result, err := rules.Lint([]lint.Dashboard{dashboard})
-		assert.NoError(t, err, tc.desc)
-		// Validate the error was added
-		results := result.ByRule()
-		assert.Len(t, results[tc.rule.Name()], 1)
-		for _, result := range results[tc.rule.Name()] {
-			assert.Equal(t, result.Result, lint.Result{Severity: lint.Error, Message: "Error found"})
+		rules := RuleSet{
+			rules: []Rule{tc.rule},
 		}
+
+		dashboard, err := NewDashboard([]byte(dashboard))
+		assert.NoError(t, err, tc.desc)
+
+		results, err := rules.Lint([]Dashboard{dashboard})
+		assert.NoError(t, err, tc.desc)
+
+		// Validate the error was added
+		assert.Len(t, results.results, 1)
+		assert.Equal(t, results.results[0].Result, Result{Severity: Error, Message: "Error found"})
 	}
 }

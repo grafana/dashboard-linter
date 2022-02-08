@@ -2,25 +2,10 @@ package lint
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestPanelRateIntervalRule(t *testing.T) {
 	linter := NewPanelRateIntervalRule()
-	dashboard := Dashboard{
-		Title: "dashboard",
-		Templating: struct {
-			List []Template `json:"list"`
-		}{
-			List: []Template{
-				{
-					Type:  "datasource",
-					Query: "prometheus",
-				},
-			},
-		},
-	}
 
 	for _, tc := range []struct {
 		result Result
@@ -102,6 +87,21 @@ func TestPanelRateIntervalRule(t *testing.T) {
 			},
 		},
 	} {
-		require.Equal(t, tc.result, linter.LintPanel(dashboard, tc.panel))
+		dashboard := Dashboard{
+			Title: "dashboard",
+			Templating: struct {
+				List []Template `json:"list"`
+			}{
+				List: []Template{
+					{
+						Type:  "datasource",
+						Query: "prometheus",
+					},
+				},
+			},
+			Panels: []Panel{tc.panel},
+		}
+
+		testRule(t, linter, dashboard, tc.result)
 	}
 }
