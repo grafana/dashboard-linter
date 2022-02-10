@@ -118,6 +118,22 @@ func TestPanelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Template variables substitutions
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `sum (rate(foo[$interval:$resolution]))`,
+					},
+				},
+			},
+		},
 	} {
 		dashboard := Dashboard{
 			Title: "dashboard",
@@ -128,6 +144,21 @@ func TestPanelPromQLRule(t *testing.T) {
 					{
 						Type:  "datasource",
 						Query: "prometheus",
+					},
+					{
+						Type: "interval",
+						Name: "interval",
+						Options: []TemplateOption{
+							{TemplateValue: TemplateValue{Value: "1h"}, Selected: true},
+						},
+					},
+					{
+						Type: "resolution",
+						Name: "resolution",
+						Options: []TemplateOption{
+							{TemplateValue: TemplateValue{Value: "1h"}, Selected: true},
+							{TemplateValue: TemplateValue{Value: "1h"}},
+						},
 					},
 				},
 			},

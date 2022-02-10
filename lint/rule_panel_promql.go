@@ -22,8 +22,8 @@ func panelHasQueries(p Panel) bool {
 // parsePromQL returns the parsed PromQL statement from a panel,
 // replacing eg [$__rate_interval] with [5m] so queries parse correctly.
 // We also replace various other Grafana global variables.
-func parsePromQL(expr string) (parser.Expr, error) {
-	expr, err := expandVariables(expr)
+func parsePromQL(expr string, variables []Template) (parser.Expr, error) {
+	expr, err := expandVariables(expr, variables)
 	if err != nil {
 		return nil, fmt.Errorf("could not expand variables: %w", err)
 	}
@@ -54,7 +54,7 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 			}
 
 			for _, target := range p.Targets {
-				if _, err := parsePromQL(target.Expr); err != nil {
+				if _, err := parsePromQL(target.Expr, d.Templating.List); err != nil {
 					return Result{
 						Severity: Error,
 						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, target.Expr, err),
