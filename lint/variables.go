@@ -102,7 +102,7 @@ func stringValue(name string, value interface{}, kind, format string) (string, e
 	}
 }
 
-func variableSampleValue(s string) (string, error) {
+func variableSampleValue(s string, variables []Template) (string, error) {
 	var name, kind, format string
 	parts := strings.Split(s, ":")
 	switch len(parts) {
@@ -125,6 +125,20 @@ func variableSampleValue(s string) (string, error) {
 	if value, ok := globalVariables[name]; ok {
 		return stringValue(name, value, kind, format)
 	}
+	// If it is a template variable and we have a value, we use it
+	for _, v := range variables {
+		if v.Name != name {
+			continue
+		}
+		// if it has a current value, use it
+		if v.Current.Value != "" {
+			return v.Current.Value, nil
+		}
+		// If it has options, use the first option
+		if len(v.Options) > 0 {
+			return v.Options[0].Value, nil
+		}
+	}
 	// Assume variable type is a string
 	return stringValue(name, name, kind, format)
 }
@@ -137,7 +151,7 @@ var variableRegexp = regexp.MustCompile(
 	}, "|"),
 )
 
-func expandVariables(expr string) (string, error) {
+func expandVariables(expr string, variables []Template) (string, error) {
 	parts := strings.Split(expr, "\"")
 	for i, part := range parts {
 		if i%2 == 1 {
@@ -158,7 +172,7 @@ func expandVariables(expr string) (string, error) {
 					continue
 				}
 				// Replace the match with sample value
-				val, err := variableSampleValue(part[v[j]:v[j+1]])
+				val, err := variableSampleValue(part[v[j]:v[j+1]], variables)
 				if err != nil {
 					return "", err
 				}

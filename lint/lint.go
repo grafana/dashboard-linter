@@ -18,13 +18,25 @@ const (
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Template struct {
-	Name       string     `json:"name"`
-	Label      string     `json:"label"`
-	Type       string     `json:"type"`
-	Query      string     `json:"query"`
-	Datasource Datasource `json:"datasource"`
-	Multi      bool       `json:"multi"`
-	AllValue   string     `json:"allValue"`
+	Name       string           `json:"name"`
+	Label      string           `json:"label"`
+	Type       string           `json:"type"`
+	Query      string           `json:"query"`
+	Datasource Datasource       `json:"datasource"`
+	Multi      bool             `json:"multi"`
+	AllValue   string           `json:"allValue"`
+	Current    TemplateValue    `json:"current"`
+	Options    []TemplateOption `json:"options"`
+}
+
+type TemplateValue struct {
+	Text  string `json:"text"`
+	Value string `json:"value"`
+}
+
+type TemplateOption struct {
+	TemplateValue
+	Selected bool `json:"selected"`
 }
 
 func (t *Template) UnmarshalJSON(buf []byte) error {

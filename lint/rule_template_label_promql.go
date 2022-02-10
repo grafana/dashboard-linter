@@ -21,7 +21,7 @@ func labelHasValidDataSourceFunction(name string) bool {
 // parseTemplatedLabelPromQL returns error in case
 // 1) The given PromQL expressions is invalid
 // 2) Use of invalid label function
-func parseTemplatedLabelPromQL(t Template) error {
+func parseTemplatedLabelPromQL(t Template, variables []Template) error {
 	// regex capture must return slice of 3 strings.
 	// 1) given query 2) function name 3) function arg.
 	tokens := templatedLabelRegexp.FindStringSubmatch(t.Query)
@@ -32,7 +32,7 @@ func parseTemplatedLabelPromQL(t Template) error {
 	if !labelHasValidDataSourceFunction(tokens[1]) {
 		return fmt.Errorf("invalid 'function': %v", tokens[1])
 	}
-	expr, err := parsePromQL(tokens[2])
+	expr, err := parsePromQL(tokens[2], variables)
 	if expr != nil {
 		return nil
 	}
@@ -55,7 +55,7 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 				if template.Type != "query" {
 					continue
 				}
-				if err := parseTemplatedLabelPromQL(template); err != nil {
+				if err := parseTemplatedLabelPromQL(template, d.Templating.List); err != nil {
 					return Result{
 						Severity: Error,
 						Message:  fmt.Sprintf("Dashboard '%s', template '%s' invalid templated label '%s': %v", d.Title, template.Name, template.Query, err),

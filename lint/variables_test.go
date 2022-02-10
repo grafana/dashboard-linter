@@ -9,10 +9,11 @@ import (
 
 func TestVariableExpansion(t *testing.T) {
 	for _, tc := range []struct {
-		desc   string
-		expr   string
-		result string
-		err    error
+		desc      string
+		expr      string
+		variables []Template
+		result    string
+		err       error
 	}{
 		{
 			desc:   "Should not replace variables in quoted strings",
@@ -142,8 +143,18 @@ func TestVariableExpansion(t *testing.T) {
 			expr: "max by(${a:b:c:d}) (rate(cpu{}[$__rate_interval]))",
 			err:  fmt.Errorf("unknown variable format: a:b:c:d"),
 		},
+		{
+			desc: "Should replace variables present in the templating",
+			expr: "max by($var) (rate(cpu{}[$interval:$resolution]))",
+			variables: []Template{
+				{Name: "interval", Options: []TemplateOption{{TemplateValue: TemplateValue{Value: "4h"}, Selected: true}}},
+				{Name: "resolution", Options: []TemplateOption{{TemplateValue: TemplateValue{Value: "5m"}, Selected: true}}},
+				{Name: "var", Type: "query", Current: TemplateValue{Value: "value"}},
+			},
+			result: "max by(value) (rate(cpu{}[4h:5m]))",
+		},
 	} {
-		s, err := expandVariables(tc.expr)
+		s, err := expandVariables(tc.expr, tc.variables)
 		require.Equal(t, tc.err, err)
 		require.Equal(t, tc.result, s, tc.desc)
 	}
