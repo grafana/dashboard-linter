@@ -117,12 +117,31 @@ type Panel struct {
 	Targets    []Target   `json:"targets,omitempty"`
 	Datasource Datasource `json:"datasource"`
 	Type       string     `json:"type"`
+	Panels     []Panel    `json:"panels,omitempty"`
+}
+
+// GetPanels returns the all panels nested inside the panel (inc the current panel)
+func (p *Panel) GetPanels() []Panel {
+	panels := []Panel{*p}
+	for _, panel := range p.Panels {
+		panels = append(panels, panel.GetPanels()...)
+	}
+	return panels
 }
 
 // Row is a deliberately incomplete representation of the Dashboard -> Row type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Row struct {
 	Panels []Panel `json:"panels,omitempty"`
+}
+
+// GetPanels returns the all panels nested inside the row
+func (r *Row) GetPanels() []Panel {
+	var panels []Panel
+	for _, panel := range r.Panels {
+		panels = append(panels, panel.GetPanels()...)
+	}
+	return panels
 }
 
 // Dashboard is a deliberately incomplete representation of the Dashboard type in grafana.
@@ -142,9 +161,11 @@ type Dashboard struct {
 func (d *Dashboard) GetPanels() []Panel {
 	var p []Panel
 	for _, row := range d.Rows {
-		p = append(p, row.Panels...)
+		p = append(p, row.GetPanels()...)
 	}
-	p = append(p, d.Panels...)
+	for _, panel := range d.Panels {
+		p = append(p, panel.GetPanels()...)
+	}
 	for pi, pa := range p {
 		for ti := range pa.Targets {
 			p[pi].Targets[ti].Idx = ti

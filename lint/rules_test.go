@@ -1,55 +1,17 @@
 package lint_test
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/grafana/dashboard-linter/lint"
 	"github.com/stretchr/testify/assert"
 )
 
-const dashboard = `{
-	"panels": [
-		{
-			"type": "timeseries",
-			"title": "Timeseries",
-			"targets": [
-				{
-					"expr": "up{job=\"$job\"}"
-				}
-			]
-		}
-	],
-	"templating": {
-		"list": [
-			{
-				"current": {
-					"text": "default",
-					"value": "default"
-				},
-				"hide": 0,
-				"label": "Data Source",
-				"name": "datasource",
-				"options": [ ],
-				"query": "prometheus",
-				"refresh": 1,
-				"regex": "",
-				"type": "datasource"
-			},
-			{
-				"name": "job",
-				"label": "job",
-				"datasource": "$datasource",
-				"type": "query",
-				"query": "query_result(up{})",
-				"multi": true,
-				"allValue": ".+"
-			}
-		]
-	},
-	"title": "Sample dashboard"
-}`
-
 func TestCustomRules(t *testing.T) {
+	sampleDashboard, err := ioutil.ReadFile("testdata/dashboard.json")
+	assert.NoError(t, err)
+
 	for _, tc := range []struct {
 		desc string
 		rule lint.Rule
@@ -67,7 +29,7 @@ func TestCustomRules(t *testing.T) {
 			desc: "Should allow addition of panel rule",
 			rule: lint.NewPanelRuleFunc(
 				"test-panel-rule", "Test panel rule",
-				func(lint.Dashboard, lint.Panel) lint.Result {
+				func(d lint.Dashboard, p lint.Panel) lint.Result {
 					return lint.Result{Severity: lint.Error, Message: "Error found"}
 				},
 			),
@@ -85,14 +47,14 @@ func TestCustomRules(t *testing.T) {
 		rules := lint.RuleSet{}
 		rules.Add(tc.rule)
 
-		dashboard, err := lint.NewDashboard([]byte(dashboard))
+		dashboard, err := lint.NewDashboard(sampleDashboard)
 		assert.NoError(t, err, tc.desc)
 
 		results, err := rules.Lint([]lint.Dashboard{dashboard})
 		assert.NoError(t, err, tc.desc)
 
 		// Validate the error was added
-		assert.Len(t, results.ByRule()[tc.rule.Name()], 1)
+		assert.GreaterOrEqual(t, len(results.ByRule()[tc.rule.Name()]), 1)
 		assert.Equal(t, results.ByRule()[tc.rule.Name()][0].Result, lint.Result{Severity: lint.Error, Message: "Error found"})
 	}
 }
