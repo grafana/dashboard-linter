@@ -1,0 +1,71 @@
+{
+  "rows": [
+    {
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Timeseries",
+          "targets": [
+            {
+              "expr": "up{job=\"$job\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Timeseries",
+      "targets": [
+        {
+          "expr": "up{job=\"$job\"}"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Dashboard row",
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Timeseries",
+          "targets": [
+            {
+              "expr": "up{job=\"$job\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 0,
+        "label": "Data Source",
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "name": "job",
+        "label": "job",
+        "datasource": "$datasource",
+        "type": "query",
+        "query": "query_result(up{})",
+        "multi": true,
+        "allValue": ".+"
+      }
+    ]
+  },
+  "title": "Sample dashboard"
+}

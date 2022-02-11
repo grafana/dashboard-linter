@@ -3,8 +3,10 @@ package lint
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,4 +42,14 @@ func TestParseDatasource(t *testing.T) {
 		require.Equal(t, tc.err, err)
 		require.Equal(t, tc.expected, actual)
 	}
+}
+
+func TestParseDashboard(t *testing.T) {
+	sampleDashboard, err := ioutil.ReadFile("testdata/dashboard.json")
+	assert.NoError(t, err)
+	t.Run("Row panels", func(t *testing.T) {
+		dashboard, err := NewDashboard(sampleDashboard)
+		assert.NoError(t, err)
+		assert.Len(t, dashboard.GetPanels(), 4)
+	})
 }
