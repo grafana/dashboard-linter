@@ -42,7 +42,7 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	if t.Datasource != "$datasource" {
+	if t.Datasource != "$datasource" && t.Datasource != "${datasource}" {
 		return &Result{
 			Severity: Error,
 			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource '$datasource'", d.Title, name),
@@ -77,10 +77,7 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	return &Result{
-		Severity: Success,
-		Message:  "OK",
-	}
+	return nil
 }
 
 func getTemplate(d Dashboard, name string) *Template {

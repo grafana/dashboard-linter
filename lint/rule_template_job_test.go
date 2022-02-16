@@ -116,6 +116,34 @@ func TestJobDatasource(t *testing.T) {
 				},
 			},
 		},
+		// Missing instance templates.
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test' is missing the instance template",
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "job",
+							Datasource: "$datasource",
+							Type:       "query",
+							Label:      "job",
+							Multi:      true,
+							AllValue:   ".+",
+						},
+					},
+				},
+			},
+		},
 		// What success looks like.
 		{
 			result: Result{
@@ -142,7 +170,7 @@ func TestJobDatasource(t *testing.T) {
 						},
 						{
 							Name:       "instance",
-							Datasource: "$datasource",
+							Datasource: "${datasource}",
 							Type:       "query",
 							Label:      "instance",
 							Multi:      true,
