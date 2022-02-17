@@ -45,7 +45,7 @@ func TestJobDatasource(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test' job template should use datasource '$datasource'",
+				Message:  "Dashboard 'test' job template should use datasource '$datasource', is currently 'foo'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -69,7 +69,7 @@ func TestJobDatasource(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test' job template should be a Prometheus query",
+				Message:  "Dashboard 'test' job template should be a Prometheus query, is currently 'bar'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -94,7 +94,7 @@ func TestJobDatasource(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test' job template should be a labelled 'job'",
+				Message:  "Dashboard 'test' job template should be a labelled 'job', is currently 'bar'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
