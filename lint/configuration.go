@@ -14,6 +14,7 @@ import (
 type ConfigurationFile struct {
 	Exclusions map[string]*ConfigurationRuleEntries `yaml:"exclusions"`
 	Warnings   map[string]*ConfigurationRuleEntries `yaml:"warnings"`
+	Verbose    bool                                 `yaml:"-"`
 }
 
 type ConfigurationRuleEntries struct {
@@ -96,6 +97,12 @@ func (cf *ConfigurationFile) Apply(res ResultContext) ResultContext {
 		}
 		if matched {
 			res.Result.Severity = Warning
+		}
+	}
+
+	{
+		if !cf.Verbose && res.Result.Severity == Success {
+			res.Result.Severity = Quiet
 		}
 	}
 
