@@ -39,6 +39,7 @@ var lintCmd = &cobra.Command{
 		if err := config.Load(path.Dir(filename)); err != nil {
 			return fmt.Errorf("failed to load lint config: %v", err)
 		}
+		config.Verbose = lintVerboseFlag
 
 		rules := lint.NewRuleSet()
 		results, err := rules.Lint([]lint.Dashboard{dashboard})
