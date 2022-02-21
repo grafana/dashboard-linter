@@ -86,6 +86,38 @@ func TestPanelRateIntervalRule(t *testing.T) {
 				},
 			},
 		},
+		// Non-rate functions should not make the linter fail
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `sum(increase(foo{job=~"$job",instance=~"$instance"}[$__range]))`,
+					},
+				},
+			},
+		},
+		// irate should be checked too
+		{
+			result: Result{
+				Severity: Error,
+				Message:  `Dashboard 'dashboard', panel 'panel' invalid PromQL query 'sum(irate(foo{job=~"$job",instance=~"$instance"}[$__interval]))': should use $__rate_interval`,
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `sum(irate(foo{job=~"$job",instance=~"$instance"}[$__interval]))`,
+					},
+				},
+			},
+		},
 	} {
 		dashboard := Dashboard{
 			Title: "dashboard",
