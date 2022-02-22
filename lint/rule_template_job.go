@@ -11,10 +11,7 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 		fn: func(d Dashboard) Result {
 			template := getTemplateDatasource(d)
 			if template == nil || template.Query != "prometheus" {
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 
 			if r := checkTemplate(d, "job"); r != nil {
@@ -25,10 +22,7 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 				return *r
 			}
 
-			return Result{
-				Severity: Success,
-				Message:  "OK",
-			}
+			return ResultSuccess
 		},
 	}
 }

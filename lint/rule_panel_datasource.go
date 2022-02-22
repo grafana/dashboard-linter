@@ -20,10 +20,7 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 				}
 			}
 
-			return Result{
-				Severity: Success,
-				Message:  "OK",
-			}
+			return ResultSuccess
 		},
 	}
 }

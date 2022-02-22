@@ -16,27 +16,18 @@ func NewPanelJobInstanceRule() *PanelRuleFunc {
 		fn: func(d Dashboard, p Panel) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
 				// Missing template datasources is a separate rule.
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 
 			if !panelHasQueries(p) {
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 
 			for _, target := range p.Targets {
 				node, err := parsePromQL(target.Expr, d.Templating.List)
 				if err != nil {
 					// Invalid PromQL is another rule.
-					return Result{
-						Severity: Success,
-						Message:  "OK",
-					}
+					return ResultSuccess
 				}
 
 				for _, selector := range parser.ExtractSelectors(node) {
@@ -56,10 +47,7 @@ func NewPanelJobInstanceRule() *PanelRuleFunc {
 				}
 			}
 
-			return Result{
-				Severity: Success,
-				Message:  "OK",
-			}
+			return ResultSuccess
 		},
 	}
 }

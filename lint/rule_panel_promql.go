@@ -40,17 +40,11 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 		fn: func(d Dashboard, p Panel) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
 				// Missing template datasources is a separate rule.
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 
 			if !panelHasQueries(p) {
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 
 			for _, target := range p.Targets {
@@ -62,10 +56,7 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 				}
 			}
 
-			return Result{
-				Severity: Success,
-				Message:  "OK",
-			}
+			return ResultSuccess
 		},
 	}
 }
