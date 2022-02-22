@@ -38,6 +38,7 @@ func (f PanelRuleFunc) Name() string        { return f.name }
 func (f PanelRuleFunc) Description() string { return f.description }
 func (f PanelRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	for _, p := range d.GetPanels() {
+		p := p // capture loop variable
 		s.AddResult(ResultContext{
 			Result:    f.fn(d, p),
 			Rule:      f,
@@ -60,7 +61,9 @@ func (f TargetRuleFunc) Name() string        { return f.name }
 func (f TargetRuleFunc) Description() string { return f.description }
 func (f TargetRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	for _, p := range d.GetPanels() {
+		p := p // capture loop variable
 		for _, t := range p.Targets {
+			t := t // capture loop variable
 			s.AddResult(ResultContext{
 				Result:    f.fn(d, p, t),
 				Rule:      f,

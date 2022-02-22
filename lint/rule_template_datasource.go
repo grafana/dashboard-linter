@@ -31,7 +31,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				}
 			}
 
-			if template.Query != "prometheus" && template.Query != "loki" {
+			if template.Query != Prometheus && template.Query != "loki" {
 				return Result{
 					Severity: Error,
 					Message:  fmt.Sprintf("Dashboard '%s' templated datasource variable query is '%s', should be 'prometheus' or 'loki'", d.Title, template.Query),

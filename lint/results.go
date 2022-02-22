@@ -2,6 +2,7 @@ package lint
 
 import (
 	"fmt"
+	"os"
 	"sort"
 )
 
@@ -34,7 +35,7 @@ func (r ResultContext) TtyPrint() {
 		return
 	}
 
-	fmt.Printf("[%s] %s\n", sym, r.Result.Message)
+	fmt.Fprintf(os.Stdout, "[%s] %s\n", sym, r.Result.Message)
 }
 
 type ResultSet struct {
@@ -53,7 +54,7 @@ func (rs *ResultSet) Configure(c *ConfigurationFile) {
 // AddResult adds a result to the ResultSet, applying the current configuration if set
 func (rs *ResultSet) AddResult(r ResultContext) {
 	if rs.config != nil {
-	        r = rs.config.Apply(r)
+		r = rs.config.Apply(r)
 	}
 	rs.results = append(rs.results, r)
 }
@@ -83,7 +84,7 @@ func (rs *ResultSet) ByRule() map[string][]ResultContext {
 
 func (rs *ResultSet) ReportByRule() {
 	for _, res := range rs.ByRule() {
-		fmt.Println(res[0].Rule.Description())
+		fmt.Fprintln(os.Stdout, res[0].Rule.Description())
 		for _, r := range res {
 			r.TtyPrint()
 		}

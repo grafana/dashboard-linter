@@ -1,0 +1,29 @@
+linters:
+  enable:
+    - bodyclose
+    - deadcode
+    - errcheck
+    - goconst
+    - gocritic
+    - gofmt
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - nolintlint
+    - prealloc
+    - exportloopref
+    - staticcheck
+    - structcheck
+    - unconvert
+    - unused
+    - varcheck
+    - whitespace
+    - gocognit
+    - godox
+    - ifshort
+    - importas
+    - forbidigo
