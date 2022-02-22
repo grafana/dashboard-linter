@@ -38,7 +38,7 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 		name:        "panel-promql-rule",
 		description: "Checks that each panel uses a valid PromQL query.",
 		fn: func(d Dashboard, p Panel) Result {
-			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
+			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
 				return Result{
 					Severity: Success,

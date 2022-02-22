@@ -45,7 +45,7 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 		description: "Checks that the dashboard templated labels have proper PromQL expressions.",
 		fn: func(d Dashboard) Result {
 			template := getTemplateDatasource(d)
-			if template == nil || template.Query != "prometheus" {
+			if template == nil || template.Query != Prometheus {
 				return Result{
 					Severity: Success,
 					Message:  "OK",

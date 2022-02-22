@@ -64,7 +64,7 @@ var rulesCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		rules := lint.NewRuleSet()
 		for _, rule := range rules.Rules() {
-			fmt.Printf("* `%s` - %s\n", rule.Name(), rule.Description())
+			fmt.Fprintf(os.Stdout, "* `%s` - %s\n", rule.Name(), rule.Description())
 		}
 		return nil
 	},
@@ -85,7 +85,6 @@ func init() {
 		false,
 		"show more information about linting",
 	)
-
 }
 
 var rootCmd = &cobra.Command{

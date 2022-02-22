@@ -76,7 +76,7 @@ func (cf *ConfigurationFile) Apply(res ResultContext) ResultContext {
 		}
 		if matched {
 			res.Result.Severity = Exclude
-			res.Result.Message = res.Result.Message + " (Excluded)"
+			res.Result.Message += " (Excluded)"
 		}
 	}
 
