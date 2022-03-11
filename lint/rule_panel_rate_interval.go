@@ -16,18 +16,12 @@ func NewPanelRateIntervalRule() *PanelRuleFunc {
 		fn: func(d Dashboard, p Panel) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 
 			if !panelHasQueries(p) {
 				// Don't lint certain types of panels.
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 
 			for _, target := range p.Targets {
@@ -42,10 +36,7 @@ func NewPanelRateIntervalRule() *PanelRuleFunc {
 				}
 			}
 
-			return Result{
-				Severity: Success,
-				Message:  "OK",
-			}
+			return ResultSuccess
 		},
 	}
 }

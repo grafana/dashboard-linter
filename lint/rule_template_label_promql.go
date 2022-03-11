@@ -46,10 +46,7 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 		fn: func(d Dashboard) Result {
 			template := getTemplateDatasource(d)
 			if template == nil || template.Query != Prometheus {
-				return Result{
-					Severity: Success,
-					Message:  "OK",
-				}
+				return ResultSuccess
 			}
 			for _, template := range d.Templating.List {
 				if template.Type != "query" {
@@ -63,10 +60,7 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 				}
 			}
 
-			return Result{
-				Severity: Success,
-				Message:  "OK",
-			}
+			return ResultSuccess
 		},
 	}
 }

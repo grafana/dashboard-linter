@@ -38,10 +38,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				}
 			}
 
-			return Result{
-				Severity: Success,
-				Message:  "OK",
-			}
+			return ResultSuccess
 		},
 	}
 }

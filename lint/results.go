@@ -6,6 +6,11 @@ import (
 	"sort"
 )
 
+var ResultSuccess = Result{
+	Severity: Success,
+	Message:  "OK",
+}
+
 type Result struct {
 	Severity Severity
 	Message  string
