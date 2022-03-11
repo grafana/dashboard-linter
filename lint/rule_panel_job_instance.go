@@ -14,7 +14,7 @@ func NewPanelJobInstanceRule() *PanelRuleFunc {
 		name:        "panel-job-instance-rule",
 		description: "Checks that every PromQL query has job and instance matchers.",
 		fn: func(d Dashboard, p Panel) Result {
-			if t := getTemplateDatasource(d); t == nil || t.Query != "prometheus" {
+			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
 				return ResultSuccess
 			}

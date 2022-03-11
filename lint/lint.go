@@ -13,6 +13,8 @@ const (
 	Warning
 	Error
 	Quiet
+
+	Prometheus = "prometheus"
 )
 
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
