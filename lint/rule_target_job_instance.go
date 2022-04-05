@@ -7,10 +7,10 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-func NewTargetJobRule() *TargetRuleFunc {
+func newTargetRequiredMatcherRule(matcher string) *TargetRuleFunc {
 	return &TargetRuleFunc{
-		name:        "target-job-rule",
-		description: "Checks that every PromQL query has a job matcher.",
+		name:        fmt.Sprintf("target-%s-rule", matcher),
+		description: fmt.Sprintf("Checks that every PromQL query has a %s matcher.", matcher),
 		fn: func(d Dashboard, p Panel, t Target) Result {
 			// TODO: The RuleSet should be responsible for routing rule checks based on their query type (prometheus, loki, mysql, etc)
 			// and for ensuring that the datasource is set.
@@ -27,7 +27,7 @@ func NewTargetJobRule() *TargetRuleFunc {
 			}
 
 			for _, selector := range parser.ExtractSelectors(node) {
-				if err := checkForMatcher(selector, "job", labels.MatchRegexp, "$job"); err != nil {
+				if err := checkForMatcher(selector, matcher, labels.MatchRegexp, fmt.Sprintf("$%s", matcher)); err != nil {
 					return Result{
 						Severity: Error,
 						Message:  fmt.Sprintf("Dashboard '%s', panel '%s', target idx '%d' invalid PromQL query '%s': %v", d.Title, p.Title, t.Idx, t.Expr, err),
@@ -38,4 +38,12 @@ func NewTargetJobRule() *TargetRuleFunc {
 			return ResultSuccess
 		},
 	}
+}
+
+func NewTargetJobRule() *TargetRuleFunc {
+	return newTargetRequiredMatcherRule("job")
+}
+
+func NewTargetInstanceRule() *TargetRuleFunc {
+	return newTargetRequiredMatcherRule("instance")
 }
