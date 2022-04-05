@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestPanelRateIntervalRule(t *testing.T) {
-	linter := NewPanelRateIntervalRule()
+func TestTargetRateIntervalRule(t *testing.T) {
+	linter := NewTargetRateIntervalRule()
 
 	for _, tc := range []struct {
 		result Result
@@ -13,21 +13,20 @@ func TestPanelRateIntervalRule(t *testing.T) {
 	}{
 		// Don't fail non-prometheus panels.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title:      "panel",
 				Datasource: "foo",
+				Targets: []Target{
+					{
+						Expr: `sum(rate(foo[5m]))`,
+					},
+				},
 			},
 		},
 		// This is what a valid panel looks like.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -40,10 +39,7 @@ func TestPanelRateIntervalRule(t *testing.T) {
 		},
 		// This is what a valid panel looks like.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
