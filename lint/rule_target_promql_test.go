@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestPanelPromQLRule(t *testing.T) {
-	linter := NewPanelPromQLRule()
+func TestTargetPromQLRule(t *testing.T) {
+	linter := NewTargetPromQLRule()
 
 	for _, tc := range []struct {
 		result Result
@@ -13,21 +13,20 @@ func TestPanelPromQLRule(t *testing.T) {
 	}{
 		// Don't fail non-prometheus panels.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title:      "panel",
 				Datasource: "foo",
+				Targets: []Target{
+					{
+						Expr: `sum(rate(foo[5m]))`,
+					},
+				},
 			},
 		},
 		// This is what a valid panel looks like.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -40,16 +39,13 @@ func TestPanelPromQLRule(t *testing.T) {
 		},
 		// Invalid query
 		{
-			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel' invalid PromQL query 'foo(bar.baz)': 1:8: parse error: unexpected character: '.'",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
 				Targets: []Target{
 					{
-						Expr: `foo(bar.baz)`,
+						Expr: `sum(rate(foo[5m]))`,
 					},
 				},
 			},
@@ -72,10 +68,7 @@ func TestPanelPromQLRule(t *testing.T) {
 		},
 		// Variable substitutions
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -88,10 +81,7 @@ func TestPanelPromQLRule(t *testing.T) {
 		},
 		// Variable substitutions with ${...}
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -104,10 +94,7 @@ func TestPanelPromQLRule(t *testing.T) {
 		},
 		// Variable substitutions inside by clause
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -120,10 +107,7 @@ func TestPanelPromQLRule(t *testing.T) {
 		},
 		// Template variables substitutions
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",

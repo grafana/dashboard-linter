@@ -30,14 +30,14 @@ func parsePromQL(expr string, variables []Template) (parser.Expr, error) {
 	return parser.ParseExpr(expr)
 }
 
-// NewPanelPromQLRule builds a lint rule for panels with Prometheus queries which checks:
+// NewTargetPromQLRule builds a lint rule for panels with Prometheus queries which checks:
 // - the query is valid PromQL
 // - the query contains two matchers within every selector - `{job=~"$job", instance=~"$instance"}`
-func NewPanelPromQLRule() *PanelRuleFunc {
-	return &PanelRuleFunc{
-		name:        "panel-promql-rule",
-		description: "Checks that each panel uses a valid PromQL query.",
-		fn: func(d Dashboard, p Panel) Result {
+func NewTargetPromQLRule() *TargetRuleFunc {
+	return &TargetRuleFunc{
+		name:        "target-promql-rule",
+		description: "Checks that each target uses a valid PromQL query.",
+		fn: func(d Dashboard, p Panel, t Target) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
 				return ResultSuccess
@@ -47,12 +47,10 @@ func NewPanelPromQLRule() *PanelRuleFunc {
 				return ResultSuccess
 			}
 
-			for _, target := range p.Targets {
-				if _, err := parsePromQL(target.Expr, d.Templating.List); err != nil {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, target.Expr, err),
-					}
+			if _, err := parsePromQL(t.Expr, d.Templating.List); err != nil {
+				return Result{
+					Severity: Error,
+					Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid PromQL query '%s': %v", d.Title, p.Title, t.Expr, err),
 				}
 			}
 
