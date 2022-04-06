@@ -15,9 +15,11 @@ The linter implements the following rules:
 
 * `template-datasource-rule` - Checks that the dashboard has a templated datasource.
 * `template-job-rule` - Checks that the dashboard has a templated job and instance.
+* `template-label-promql-rule` - Checks that the dashboard templated labels have proper PromQL expressions.
 * `panel-datasource-rule` - Checks that each panel uses the templated datasource.
 * `panel-promql-rule` - Checks that each panel uses a valid PromQL query.
 * `panel-rate-interval-rule` - Checks that each panel uses $__rate_interval.
+* `panel-job-instance-rule` - Checks that every PromQL query has job and instance matchers.
 
 ## Exceptions
 
