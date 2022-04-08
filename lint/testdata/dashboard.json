@@ -64,6 +64,13 @@
         "query": "query_result(up{})",
         "multi": true,
         "allValue": ".+"
+      },
+      {
+        "filters": [],
+        "hide": 0,
+        "name": "query0",
+        "skipUrlSync": false,
+        "type": "adhoc"
       }
     ]
   },
