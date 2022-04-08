@@ -29,6 +29,7 @@ type Template struct {
 	AllValue   string           `json:"allValue"`
 	Current    TemplateValue    `json:"current"`
 	Options    []TemplateOption `json:"options"`
+	// If you add properties here don't forget to add them to the raw struct, and assign them from raw to actual in UnmarshalJSON below!
 }
 
 type TemplateValue struct {
@@ -43,13 +44,15 @@ type TemplateOption struct {
 
 func (t *Template) UnmarshalJSON(buf []byte) error {
 	var raw struct {
-		Name       string      `json:"name"`
-		Label      string      `json:"label"`
-		Type       string      `json:"type"`
-		Query      interface{} `json:"query"`
-		Datasource Datasource  `json:"datasource"`
-		Multi      bool        `json:"multi"`
-		AllValue   string      `json:"allValue"`
+		Name       string           `json:"name"`
+		Label      string           `json:"label"`
+		Type       string           `json:"type"`
+		Query      interface{}      `json:"query"`
+		Datasource Datasource       `json:"datasource"`
+		Multi      bool             `json:"multi"`
+		AllValue   string           `json:"allValue"`
+		Current    TemplateValue    `json:"current"`
+		Options    []TemplateOption `json:"options"`
 	}
 
 	if err := json.Unmarshal(buf, &raw); err != nil {
@@ -62,6 +65,8 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	t.Datasource = raw.Datasource
 	t.Multi = raw.Multi
 	t.AllValue = raw.AllValue
+	t.Current = raw.Current
+	t.Options = raw.Options
 
 	// the 'adhoc' variable type does not have a field `Query`, so we can't perform these checks for the `adhoc` type
 	if t.Type != "adhoc" {
