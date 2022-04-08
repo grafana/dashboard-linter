@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // ConfigurationFile contains a map for rule exclusions, and warnings, where the key is the
