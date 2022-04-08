@@ -63,13 +63,16 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	t.Multi = raw.Multi
 	t.AllValue = raw.AllValue
 
-	switch v := raw.Query.(type) {
-	case string:
-		t.Query = v
-	case map[string]interface{}:
-		t.Query = v["query"].(string)
-	default:
-		return fmt.Errorf("invalid type for field 'query': %v", v)
+	// the 'adhoc' variable type does not have a field `Query`, so we can't perform these checks for the `adhoc` type
+	if t.Type != "adhoc" {
+		switch v := raw.Query.(type) {
+		case string:
+			t.Query = v
+		case map[string]interface{}:
+			t.Query = v["query"].(string)
+		default:
+			return fmt.Errorf("invalid type for field 'query': %v", v)
+		}
 	}
 
 	return nil
