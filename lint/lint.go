@@ -176,6 +176,14 @@ func (d *Dashboard) GetPanels() []Panel {
 	return p
 }
 
+//GetTemplates returns the list of all templates in the dashboard
+func (d *Dashboard) GetTemplates() []Template {
+
+	var templates []Template
+	templates = append(templates, d.Templating.List...)
+	return templates
+}
+
 func NewDashboard(buf []byte) (Dashboard, error) {
 	var dash Dashboard
 	if err := json.Unmarshal(buf, &dash); err != nil {

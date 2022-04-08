@@ -21,6 +21,7 @@ type ResultContext struct {
 	Result    Result
 	Rule      Rule
 	Dashboard *Dashboard
+	Template  *Template
 	Panel     *Panel
 	Target    *Target
 }

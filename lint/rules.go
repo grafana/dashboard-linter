@@ -25,6 +25,29 @@ func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	})
 }
 
+type TemplateRuleFunc struct {
+	name, description string
+	fn                func(Dashboard, Template) Result
+}
+
+func NewTemplateRuleFunc(name, description string, fn func(Dashboard, Template) Result) Rule {
+	return &TemplateRuleFunc{name, description, fn}
+}
+
+func (f TemplateRuleFunc) Name() string        { return f.name }
+func (f TemplateRuleFunc) Description() string { return f.description }
+func (f TemplateRuleFunc) Lint(d Dashboard, s *ResultSet) {
+	for _, t := range d.GetTemplates() {
+		t := t // capture loop variable
+		s.AddResult(ResultContext{
+			Result:    f.fn(d, t),
+			Rule:      f,
+			Dashboard: &d,
+			Template:  &t,
+		})
+	}
+}
+
 type PanelRuleFunc struct {
 	name, description string
 	fn                func(Dashboard, Panel) Result
