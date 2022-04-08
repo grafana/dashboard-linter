@@ -16,7 +16,7 @@ func TestPanelDatasource(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test', panel 'bar' does not use templates datasource, uses 'foo'",
+				Message:  "Dashboard 'test', panel 'bar' does not use $datasource for datasource, uses 'foo'",
 			},
 			panel: Panel{
 				Type:       "singlestat",
@@ -35,7 +35,81 @@ func TestPanelDatasource(t *testing.T) {
 			},
 		},
 	} {
-		testRule(t, linter, Dashboard{Title: "test", Panels: []Panel{tc.panel}}, tc.result)
+		testRule(t, linter, Dashboard{Title: "test",
+			Templating: struct {
+				List []Template `json:"list"`
+			}{
+				List: []Template{
+					{
+						Type:  "datasource",
+						Query: "prometheus",
+						Name:  "datasource",
+					},
+				},
+			},
+
+			Panels: []Panel{tc.panel}}, tc.result)
+	}
+}
+
+func TestPanelMultiDatasource(t *testing.T) {
+	linter := NewPanelDatasourceRule()
+
+	for _, tc := range []struct {
+		result Result
+		panel  Panel
+	}{
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test', panel 'bar' does not use $prometheus_datasource or $loki_datasource for datasource, uses '$datasource'",
+			},
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "$datasource",
+				Title:      "bar",
+			},
+		},
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "$prometheus_datasource",
+			},
+		},
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "$loki_datasource",
+			},
+		},
+	} {
+		testRule(t, linter, Dashboard{Title: "test",
+			Templating: struct {
+				List []Template `json:"list"`
+			}{
+				List: []Template{
+					{
+						Type:  "datasource",
+						Query: "prometheus",
+						Name:  "datasource",
+					},
+					{
+						Type:  "datasource",
+						Query: "loki",
+						Name:  "datasource",
+					},
+				},
+			},
+
+			Panels: []Panel{tc.panel}}, tc.result)
 	}
 }
 

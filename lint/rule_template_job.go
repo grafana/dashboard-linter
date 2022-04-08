@@ -2,6 +2,7 @@ package lint
 
 import (
 	"fmt"
+	"strings"
 )
 
 func NewTemplateJobRule() *DashboardRuleFunc {
@@ -36,10 +37,10 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	if t.Datasource != "$datasource" && t.Datasource != "${datasource}" {
+	if expectedDatasources := checkTemplatedDatasourceUsed(d, t.Datasource); len(expectedDatasources) > 0 {
 		return &Result{
 			Severity: Error,
-			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource '$datasource', is currently '%s'", d.Title, name, t.Datasource),
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource %s, is currently '%s'", d.Title, name, strings.Join(expectedDatasources, " or "), t.Datasource),
 		}
 	}
 

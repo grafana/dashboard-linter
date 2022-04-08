@@ -11,7 +11,7 @@ func TestJobDatasource(t *testing.T) {
 		result    Result
 		dashboard Dashboard
 	}{
-		// Non-promtheus dashboards shouldn't fail.
+		// Non-prometheus dashboards shouldn't fail.
 		{
 			result: Result{
 				Severity: Success,
@@ -45,7 +45,7 @@ func TestJobDatasource(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test' job template should use datasource '$datasource', is currently 'foo'",
+				Message:  "Dashboard 'test' job template should use datasource $datasource, is currently 'foo'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -56,6 +56,34 @@ func TestJobDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Query: "prometheus",
+						},
+						{
+							Name:       "job",
+							Datasource: "foo",
+						},
+					},
+				},
+			},
+		},
+		// Wrong datasource (multiple datasources).
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test' job template should use datasource $prometheus_datasource or $loki_datasource, is currently 'foo'",
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Type:  "datasource",
+							Query: "loki",
 						},
 						{
 							Name:       "job",

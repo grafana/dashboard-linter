@@ -15,6 +15,7 @@ const (
 	Quiet
 
 	Prometheus = "prometheus"
+	Loki       = "loki"
 )
 
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
