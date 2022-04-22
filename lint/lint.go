@@ -2,6 +2,7 @@ package lint
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -77,6 +78,41 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 			t.Query = v["query"].(string)
 		default:
 			return fmt.Errorf("invalid type for field 'query': %v", v)
+		}
+	}
+
+	return nil
+}
+
+func (t *TemplateValue) UnmarshalJSON(buf []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(buf, &raw); err != nil {
+		return err
+	}
+
+	if txt, ok := raw["text"]; !ok {
+		return errors.New("'text' property required")
+	} else {
+		switch tt := txt.(type) {
+		case string:
+			t.Text = txt.(string)
+		case []interface{}:
+			t.Text = txt.([]interface{})[0].(string)
+		default:
+			return fmt.Errorf("invalid type for field 'text': %v", tt)
+		}
+	}
+
+	if val, ok := raw["value"]; !ok {
+		return errors.New("'value' property required")
+	} else {
+		switch vt := val.(type) {
+		case string:
+			t.Value = val.(string)
+		case []interface{}:
+			t.Value = val.([]interface{})[0].(string)
+		default:
+			return fmt.Errorf("invalid type for field 'value': %v", vt)
 		}
 	}
 

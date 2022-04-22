@@ -2,6 +2,7 @@ package lint
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -52,4 +53,44 @@ func TestParseDashboard(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, dashboard.GetPanels(), 4)
 	})
+}
+
+func TestParseTemplateValue(t *testing.T) {
+	for _, tc := range []struct {
+		input    []byte
+		expected TemplateValue
+		err      error
+	}{
+		{
+			input:    []byte(`{"text": "text", "value": "value"}`),
+			expected: TemplateValue{Text: "text", Value: "value"},
+		},
+		{
+			input:    []byte(`{"text": ["text1", "text2"], "value": ["value1", "value2"]}`),
+			expected: TemplateValue{Text: "text1", Value: "value1"},
+		},
+		{
+			input: []byte(`{"text": 1, "value": 2}`),
+			err:   errors.New("invalid type for field 'text': 1"),
+		},
+		{
+			input:    []byte(`{"text": "text", "value": 2}`),
+			expected: TemplateValue{Text: "text"},
+			err:      errors.New("invalid type for field 'value': 2"),
+		},
+		{
+			input: []byte(`{}`),
+			err:   errors.New("'text' property required"),
+		},
+		{
+			input:    []byte(`{"text": "text"}`),
+			expected: TemplateValue{Text: "text"},
+			err:      errors.New("'value' property required"),
+		},
+	} {
+		var actual TemplateValue
+		err := json.Unmarshal(tc.input, &actual)
+		require.Equal(t, tc.err, err)
+		require.Equal(t, tc.expected, actual)
+	}
 }
