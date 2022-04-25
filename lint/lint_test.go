@@ -167,14 +167,33 @@ func TestConfiguration(t *testing.T) {
 		appendConfigExclude(t, "rule1", "", "", "", c)
 		appendConfigExclude(t, "rule1", "dash1", "", "", c)
 
-		r1 := newResultContext(t, "rule1", "dash1", "", "", Error)
-		r2 := newResultContext(t, "rule1", "dash2", "", "", Error)
+		r1 := newResultContext(t, "rule1", "dash1", "foo", "0", Error)
+		r2 := newResultContext(t, "rule1", "dash2", "bar", "0", Error)
 
 		rc1 := c.Apply(r1)
 		require.Equal(t, Exclude, rc1.Result.Severity)
 
 		rc2 := c.Apply(r2)
 		require.Equal(t, Error, rc2.Result.Severity)
+	})
+
+	t.Run("Excludes multiple entries for the same rule", func(t *testing.T) {
+		c := NewConfigurationFile()
+		appendConfigExclude(t, "rule1", "dash1", "", "", c)
+		appendConfigExclude(t, "rule1", "dash2", "", "", c)
+
+		r1 := newResultContext(t, "rule1", "dash1", "", "", Error)
+		r2 := newResultContext(t, "rule1", "dash2", "", "", Error)
+		r3 := newResultContext(t, "rule1", "dash3", "", "", Error)
+
+		rc1 := c.Apply(r1)
+		require.Equal(t, Exclude, rc1.Result.Severity)
+
+		rc2 := c.Apply(r2)
+		require.Equal(t, Exclude, rc2.Result.Severity)
+
+		rc3 := c.Apply(r3)
+		require.Equal(t, Error, rc3.Result.Severity)
 	})
 
 	t.Run("Excludes all when rule defined but entries empty", func(t *testing.T) {
