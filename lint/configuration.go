@@ -40,11 +40,11 @@ func (cre *ConfigurationRuleEntries) AddEntry(e ConfigurationEntry) {
 
 func (ce *ConfigurationEntry) IsMatch(r ResultContext) bool {
 	ret := true
-	if r.Dashboard != nil && ce.Dashboard != r.Dashboard.Title {
+	if ce.Dashboard != "" && r.Dashboard != nil && ce.Dashboard != r.Dashboard.Title {
 		ret = false
 	}
 
-	if r.Panel != nil && ce.Panel != r.Panel.Title {
+	if ce.Panel != "" && r.Panel != nil && ce.Panel != r.Panel.Title {
 		ret = false
 	}
 
