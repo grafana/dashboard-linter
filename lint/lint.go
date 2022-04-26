@@ -92,15 +92,15 @@ func (t *TemplateValue) UnmarshalJSON(buf []byte) error {
 
 	if txt, ok := raw["text"]; !ok {
 		return errors.New("'text' property required")
-	} else {
-		switch tt := txt.(type) {
-		case string:
-			t.Text = txt.(string)
-		case []interface{}:
-			t.Text = txt.([]interface{})[0].(string)
-		default:
-			return fmt.Errorf("invalid type for field 'text': %v", tt)
-		}
+	}
+	
+	switch tt := txt.(type) {
+	case string:
+		t.Text = txt.(string)
+	case []interface{}:
+		t.Text = txt.([]interface{})[0].(string)
+	default:
+		return fmt.Errorf("invalid type for field 'text': %v", tt)
 	}
 
 	if val, ok := raw["value"]; !ok {
