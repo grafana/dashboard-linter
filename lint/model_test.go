@@ -79,13 +79,12 @@ func TestParseTemplateValue(t *testing.T) {
 			err:      errors.New("invalid type for field 'value': 2"),
 		},
 		{
-			input: []byte(`{}`),
-			err:   errors.New("'text' property required"),
+			input:    []byte(`{}`),
+			expected: TemplateValue{Text:"", Value:""},
 		},
 		{
 			input:    []byte(`{"text": "text"}`),
-			expected: TemplateValue{Text: "text"},
-			err:      errors.New("'value' property required"),
+			expected: TemplateValue{Text:"text", Value:""},
 		},
 	} {
 		var actual TemplateValue
