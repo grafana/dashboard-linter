@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestJobDatasource(t *testing.T) {
+func TestJobTemplate(t *testing.T) {
 	linter := NewTemplateJobRule()
 
 	for _, tc := range []struct {
@@ -111,34 +111,6 @@ func TestJobDatasource(t *testing.T) {
 							Datasource: "$datasource",
 							Type:       "query",
 							Label:      "bar",
-						},
-					},
-				},
-			},
-		},
-		// Missing instance templates.
-		{
-			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'test' is missing the instance template",
-			},
-			dashboard: Dashboard{
-				Title: "test",
-				Templating: struct {
-					List []Template `json:"list"`
-				}{
-					List: []Template{
-						{
-							Type:  "datasource",
-							Query: "prometheus",
-						},
-						{
-							Name:       "job",
-							Datasource: "$datasource",
-							Type:       "query",
-							Label:      "job",
-							Multi:      true,
-							AllValue:   ".+",
 						},
 					},
 				},
