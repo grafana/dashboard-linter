@@ -7,7 +7,7 @@ import (
 func NewTemplateJobRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-job-rule",
-		description: "Checks that the dashboard has a templated job and instance.",
+		description: "Checks that the dashboard has a templated job.",
 		fn: func(d Dashboard) Result {
 			template := getTemplateDatasource(d)
 			if template == nil || template.Query != Prometheus {
@@ -15,10 +15,6 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 			}
 
 			if r := checkTemplate(d, "job"); r != nil {
-				return *r
-			}
-
-			if r := checkTemplate(d, "instance"); r != nil {
 				return *r
 			}
 
