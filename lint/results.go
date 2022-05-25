@@ -91,6 +91,9 @@ func (rs *ResultSet) ReportByRule() {
 	for _, res := range rs.ByRule() {
 		fmt.Fprintln(os.Stdout, res[0].Rule.Description())
 		for _, r := range res {
+			if r.Result.Severity == Exclude && !rs.config.Verbose {
+				continue
+			}
 			r.TtyPrint()
 		}
 	}
