@@ -2,7 +2,6 @@ package lint
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 )
 
@@ -93,31 +92,27 @@ func (t *TemplateValue) UnmarshalJSON(buf []byte) error {
 	var txt, val interface{}
 
 	txt, ok := raw["text"]
-	if !ok {
-		return errors.New("'text' property required")
-	}
-
-	switch tt := txt.(type) {
-	case string:
-		t.Text = txt.(string)
-	case []interface{}:
-		t.Text = txt.([]interface{})[0].(string)
-	default:
-		return fmt.Errorf("invalid type for field 'text': %v", tt)
+	if ok {
+		switch tt := txt.(type) {
+		case string:
+			t.Text = txt.(string)
+		case []interface{}:
+			t.Text = txt.([]interface{})[0].(string)
+		default:
+			return fmt.Errorf("invalid type for field 'text': %v", tt)
+		}
 	}
 
 	val, ok = raw["value"]
-	if !ok {
-		return errors.New("'value' property required")
-	}
-
-	switch vt := val.(type) {
-	case string:
-		t.Value = val.(string)
-	case []interface{}:
-		t.Value = val.([]interface{})[0].(string)
-	default:
-		return fmt.Errorf("invalid type for field 'value': %v", vt)
+	if ok {
+		switch vt := val.(type) {
+		case string:
+			t.Value = val.(string)
+		case []interface{}:
+			t.Value = val.([]interface{})[0].(string)
+		default:
+			return fmt.Errorf("invalid type for field 'value': %v", vt)
+		}
 	}
 
 	return nil
