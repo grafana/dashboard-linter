@@ -71,6 +71,25 @@
         "name": "query0",
         "skipUrlSync": false,
         "type": "adhoc"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "10",
+          "value": "10"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "limit",
+        "options": [
+          {
+            "selected": true,
+            "text": "10",
+            "value": "10"
+          }
+        ],
+        "type": "custom"
       }
     ]
   },

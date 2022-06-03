@@ -68,8 +68,8 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	t.Current = raw.Current
 	t.Options = raw.Options
 
-	// the 'adhoc' variable type does not have a field `Query`, so we can't perform these checks for the `adhoc` type
-	if t.Type != "adhoc" {
+	// the 'adhoc' and 'custom' variable type does not have a field `Query`, so we can't perform these checks
+	if t.Type != "adhoc" && t.Type != "custom" {
 		switch v := raw.Query.(type) {
 		case string:
 			t.Query = v
