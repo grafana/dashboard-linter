@@ -3,7 +3,7 @@ module github.com/grafana/dashboard-linter
 go 1.17
 
 require (
-	github.com/prometheus/prometheus v0.36.0
+	github.com/prometheus/prometheus v0.36.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.1
