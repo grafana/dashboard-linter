@@ -91,7 +91,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 				}
 				return Result{
 					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s', panel '%s' has no or invalid units defined: '%s'", d.Title, p.Title, configured_unit),
+					Message:  fmt.Sprintf("Dashboard '%s', panel '%s' has no or invalid units defined: '%s'", d.Title, p.Title, configuredUnit),
 				}
 			}
 			return ResultSuccess
