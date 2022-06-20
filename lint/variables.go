@@ -102,6 +102,17 @@ func stringValue(name string, value interface{}, kind, format string) (string, e
 	}
 }
 
+func removeVariableByName(name string, variables []Template) []Template {
+	vars := make([]Template, 0, len(variables))
+	for _, v := range variables {
+		if v.Name == name {
+			continue
+		}
+		vars = append(vars, v)
+	}
+	return vars
+}
+
 func variableSampleValue(s string, variables []Template) (string, error) {
 	var name, kind, format string
 	parts := strings.Split(s, ":")
@@ -125,6 +136,10 @@ func variableSampleValue(s string, variables []Template) (string, error) {
 	if value, ok := globalVariables[name]; ok {
 		return stringValue(name, value, kind, format)
 	}
+	// If it is an auto interval variable, replace with a sample value of 10s
+	if strings.HasPrefix(name, "__auto_interval_") {
+		return "10s", nil
+	}
 	// If it is a template variable and we have a value, we use it
 	for _, v := range variables {
 		if v.Name != name {
@@ -132,11 +147,13 @@ func variableSampleValue(s string, variables []Template) (string, error) {
 		}
 		// if it has a current value, use it
 		if v.Current.Value != "" {
-			return v.Current.Value, nil
+			// Recursively expand, without the current variable to avoid infinite recursion
+			return expandVariables(v.Current.Value, removeVariableByName(name, variables))
 		}
 		// If it has options, use the first option
 		if len(v.Options) > 0 {
-			return v.Options[0].Value, nil
+			// Recursively expand, without the current variable to avoid infinite recursion
+			return expandVariables(v.Options[0].Value, removeVariableByName(name, variables))
 		}
 	}
 	// Assume variable type is a string

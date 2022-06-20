@@ -118,6 +118,18 @@ func TestTargetPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		{
+			result: ResultSuccess,
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: `increase(foo{}[$sampling])`,
+					},
+				},
+			},
+		},
 	} {
 		dashboard := Dashboard{
 			Title: "dashboard",
@@ -135,6 +147,11 @@ func TestTargetPromQLRule(t *testing.T) {
 						Options: []TemplateOption{
 							{TemplateValue: TemplateValue{Value: "1h"}, Selected: true},
 						},
+					},
+					{
+						Type:    "interval",
+						Name:    "sampling",
+						Current: TemplateValue{Value: "$__auto_interval_sampling"},
 					},
 					{
 						Type: "resolution",

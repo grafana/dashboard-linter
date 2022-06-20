@@ -153,6 +153,22 @@ func TestVariableExpansion(t *testing.T) {
 			},
 			result: "max by(value) (rate(cpu{}[4h:5m]))",
 		},
+		{
+			desc: "Should recursively replace variables",
+			expr: "sum (rate(cpu{}[$interval]))",
+			variables: []Template{
+				{Name: "interval", Current: TemplateValue{Value: "$__auto_interval_interval"}},
+			},
+			result: "sum (rate(cpu{}[10s]))",
+		},
+		{
+			desc: "Should recursively replace variables, but not run into an infinite loop",
+			expr: "sum (rate(cpu{}[$interval]))",
+			variables: []Template{
+				{Name: "interval", Current: TemplateValue{Value: "$interval"}},
+			},
+			result: "sum (rate(cpu{}[interval]))",
+		},
 	} {
 		s, err := expandVariables(tc.expr, tc.variables)
 		require.Equal(t, tc.err, err)
