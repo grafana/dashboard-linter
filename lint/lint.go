@@ -196,8 +196,15 @@ type Dashboard struct {
 	Templating struct {
 		List []Template `json:"list"`
 	} `json:"templating"`
-	Rows   []Row   `json:"rows,omitempty"`
-	Panels []Panel `json:"panels,omitempty"`
+	Rows    []Row   `json:"rows,omitempty"`
+	Panels  []Panel `json:"panels,omitempty"`
+	Time    Time    `json:"time"`
+	Refresh string  `json:"refresh"`
+}
+
+type Time struct {
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 // GetPanels returns the all panels whether they are nested in the (now deprecated) "rows" property or
