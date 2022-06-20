@@ -3,7 +3,7 @@ package lint
 import "fmt"
 
 func NewPanelUnitsRule() *PanelRuleFunc {
-	valid_units := []string{
+	validUnits := []string{
 		// Enumerated from: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 
 		// Misc
@@ -68,22 +68,22 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 		fn: func(d Dashboard, p Panel) Result {
 			switch p.Type {
 			case "stat", "singlestat", "graph", "table", "timeseries", "gauge":
-				configured_unit := ""
+				configuredUnit := ""
 				// First check if an override with unit exists - if no override then check if standard unit is present and valid
 				if len(p.FieldConfig.Overrides) > 0 {
 					for _, p := range p.FieldConfig.Overrides {
 						for _, o := range p.OverrideProperties {
 							if o.Id == "unit" {
-								configured_unit = o.Value
+								configuredUnit = o.Value
 							}
 						}
 					}
 				}
-				if configured_unit == "" && len(p.FieldConfig.Defaults.Unit) > 0 {
-					configured_unit = p.FieldConfig.Defaults.Unit
+				if configuredUnit == "" && len(p.FieldConfig.Defaults.Unit) > 0 {
+					configuredUnit = p.FieldConfig.Defaults.Unit
 				}
-				if configured_unit != "" {
-					for _, u := range valid_units {
+				if configuredUnit != "" {
+					for _, u := range validUnits {
 						if u == p.FieldConfig.Defaults.Unit {
 							return ResultSuccess
 						}
