@@ -167,7 +167,17 @@ type Panel struct {
 }
 
 type FieldConfig struct {
-	Defaults Defaults `json:"defaults"`
+	Defaults  Defaults   `json:"defaults"`
+	Overrides []Override `json:"overrides"`
+}
+
+type Override struct {
+	OverrideProperties []OverrideProperty `json:"properties"`
+}
+
+type OverrideProperty struct {
+	Id    string `json:"id"`
+	Value string `json:"value"`
 }
 
 type Defaults struct {

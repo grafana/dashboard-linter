@@ -4,6 +4,8 @@ import "fmt"
 
 func NewPanelUnitsRule() *PanelRuleFunc {
 	valid_units := []string{
+		// Enumerated from: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
+
 		// Misc
 		"none", "string",
 		// short
@@ -65,8 +67,22 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 		description: "Checks that each panel uses has valid units defined.",
 		fn: func(d Dashboard, p Panel) Result {
 			switch p.Type {
-			case "stat", "singlestat", "graph", "table", "timeseries":
-				if len(p.FieldConfig.Defaults.Unit) > 0 {
+			case "stat", "singlestat", "graph", "table", "timeseries", "gauge":
+				configured_unit := ""
+				// First check if an override with unit exists - if no override then check if standard unit is present and valid
+				if len(p.FieldConfig.Overrides) > 0 {
+					for _, p := range p.FieldConfig.Overrides {
+						for _, o := range p.OverrideProperties {
+							if o.Id == "unit" {
+								configured_unit = o.Value
+							}
+						}
+					}
+				}
+				if configured_unit == "" && len(p.FieldConfig.Defaults.Unit) > 0 {
+					configured_unit = p.FieldConfig.Defaults.Unit
+				}
+				if configured_unit != "" {
 					for _, u := range valid_units {
 						if u == p.FieldConfig.Defaults.Unit {
 							return ResultSuccess
@@ -75,7 +91,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 				}
 				return Result{
 					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s', panel '%s' has no or invalid units defined: '%s'", d.Title, p.Title, p.FieldConfig.Defaults.Unit),
+					Message:  fmt.Sprintf("Dashboard '%s', panel '%s' has no or invalid units defined: '%s'", d.Title, p.Title, configured_unit),
 				}
 			}
 			return ResultSuccess
