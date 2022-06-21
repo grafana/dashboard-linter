@@ -180,6 +180,27 @@ type OverrideProperty struct {
 	Value string `json:"value"`
 }
 
+func (o *OverrideProperty) UnmarshalJSON(buf []byte) error {
+	// An override value can be of type string or int
+	// This function detects type mismatch and uses an int type for Value
+	var raw struct {
+		Id    string `json:"id"`
+		Value string `json:"value"`
+	}
+
+	if err := json.Unmarshal(buf, &raw); err != nil {
+		var raw struct {
+			Id    string `json:"id"`
+			Value int    `json:"value"`
+		}
+		if err := json.Unmarshal(buf, &raw); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 type Defaults struct {
 	Unit string `json:"unit"`
 }
