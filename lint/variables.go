@@ -137,7 +137,7 @@ func variableSampleValue(s string, variables []Template) (string, error) {
 		return stringValue(name, value, kind, format)
 	}
 	// If it is an auto interval variable, replace with a sample value of 10s
-	if strings.HasPrefix(name, "__auto_interval_") {
+	if strings.HasPrefix(name, "__auto_interval") {
 		return "10s", nil
 	}
 	// If it is a template variable and we have a value, we use it
