@@ -7,7 +7,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 		// Enumerated from: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 
 		// Misc
-		"none", "string",
+		"string",
 		// short
 		"short", "percent", "percentunit", "humidity", "dB", "hex0x", "hex", "sci", "locale", "pixel",
 		// Acceleration
