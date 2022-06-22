@@ -158,11 +158,13 @@ type Target struct {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Title      string     `json:"title"`
-	Targets    []Target   `json:"targets,omitempty"`
-	Datasource Datasource `json:"datasource"`
-	Type       string     `json:"type"`
-	Panels     []Panel    `json:"panels,omitempty"`
+	Id          int        `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Targets     []Target   `json:"targets,omitempty"`
+	Datasource  Datasource `json:"datasource"`
+	Type        string     `json:"type"`
+	Panels      []Panel    `json:"panels,omitempty"`
 }
 
 // GetPanels returns the all panels nested inside the panel (inc the current panel)
