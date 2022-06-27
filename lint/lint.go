@@ -158,13 +158,53 @@ type Target struct {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Id          int        `json:"id"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Targets     []Target   `json:"targets,omitempty"`
-	Datasource  Datasource `json:"datasource"`
-	Type        string     `json:"type"`
-	Panels      []Panel    `json:"panels,omitempty"`
+  Id          int        `json:"id"`
+	Title       string      `json:"title"`
+  Description string     `json:"description"`
+	Targets     []Target    `json:"targets,omitempty"`
+	Datasource  Datasource  `json:"datasource"`
+	Type        string      `json:"type"`
+	Panels      []Panel     `json:"panels,omitempty"`
+	FieldConfig FieldConfig `json:"fieldConfig"`
+}
+
+type FieldConfig struct {
+	Defaults  Defaults   `json:"defaults"`
+	Overrides []Override `json:"overrides"`
+}
+
+type Override struct {
+	OverrideProperties []OverrideProperty `json:"properties"`
+}
+
+type OverrideProperty struct {
+	Id    string `json:"id"`
+	Value string `json:"value"`
+}
+
+func (o *OverrideProperty) UnmarshalJSON(buf []byte) error {
+	// An override value can be of type string or int
+	// This function detects type mismatch and uses an int type for Value
+	var raw struct {
+		Id    string `json:"id"`
+		Value string `json:"value"`
+	}
+
+	if err := json.Unmarshal(buf, &raw); err != nil {
+		var raw struct {
+			Id    string `json:"id"`
+			Value int    `json:"value"`
+		}
+		if err := json.Unmarshal(buf, &raw); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type Defaults struct {
+	Unit string `json:"unit"`
 }
 
 // GetPanels returns the all panels nested inside the panel (inc the current panel)
