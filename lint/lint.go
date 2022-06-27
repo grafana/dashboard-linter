@@ -158,9 +158,9 @@ type Target struct {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-  Id          int        `json:"id"`
+	Id          int         `json:"id"`
 	Title       string      `json:"title"`
-  Description string     `json:"description"`
+	Description string      `json:"description"`
 	Targets     []Target    `json:"targets,omitempty"`
 	Datasource  Datasource  `json:"datasource"`
 	Type        string      `json:"type"`
