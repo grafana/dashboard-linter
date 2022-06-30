@@ -5,7 +5,7 @@ do
   rulename=$(basename $rulefile .md)
   for docfile in $(find ./docs -regex ".*\.md\|.*_intermediate/.*\.txt" -print)
   do
-   sed -i".bak" "s,\`${rulename}\`,\[${rulename}\]\(${rulefile}\),g" "${docfile}"
+   sed -i".bak" "s,\`${rulename}\`,\[${rulename}\]\(./${rulename}.md\),g" "${docfile}"
    rm "${docfile}.bak"
   done
 done

@@ -1,6 +1,6 @@
 # Usage
-
 All Commands:
+
 [embedmd]:# (_intermediate/help.txt)
 ```txt
 A command-line application to lint Grafana dashboards.
@@ -60,7 +60,7 @@ Flags:
 
 The linter implements the following rules:
 
-* [template-datasource-rule](./docs/rules/template-datasource-rule.md) - Checks that the dashboard has a templated datasource.
+* [template-datasource-rule](./template-datasource-rule.md) - Checks that the dashboard has a templated datasource.
 * `template-job-rule` - Checks that the dashboard has a templated job.
 * `template-instance-rule` - Checks that the dashboard has a templated instance.
 * `template-label-promql-rule` - Checks that the dashboard templated labels have proper PromQL expressions.
