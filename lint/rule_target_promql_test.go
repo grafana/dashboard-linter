@@ -54,7 +54,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel' invalid PromQL query 'foo(bar.baz)': 1:8: parse error: unexpected character: '.'",
+				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'foo(bar.baz)': 1:8: parse error: unexpected character: '.'",
 			},
 			panel: Panel{
 				Title: "panel",
