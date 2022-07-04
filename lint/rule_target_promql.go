@@ -59,7 +59,7 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 					}
 					return Result{
 						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid panel refernce in target, reference panel id '%d': ", d.Title, p.Title, t.PanelId),
+						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid panel refernce in target, reference panel id: '%d'", d.Title, p.Title, t.PanelId),
 					}
 				}
 			}

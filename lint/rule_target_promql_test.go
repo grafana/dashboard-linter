@@ -118,6 +118,7 @@ func TestTargetPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Template variables substitutions
 		{
 			result: ResultSuccess,
 			panel: Panel{
@@ -125,7 +126,40 @@ func TestTargetPromQLRule(t *testing.T) {
 				Type:  "singlestat",
 				Targets: []Target{
 					{
-						Expr: `increase(foo{}[$sampling])`,
+						Expr: `sum (rate(foo[$interval:$resolution]))`,
+					},
+				},
+			},
+		},
+		// Empty PromQL expression
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'dashboard', panel 'panel' invalid PromQL query '': 1:1: parse error: no expression found in input",
+			},
+			panel: Panel{
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						Expr: ``,
+					},
+				},
+			},
+		},
+		// Reference another panel that does not exist
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'dashboard', panel 'panel' invalid panel refernce in target, reference panel id: '2'",
+			},
+			panel: Panel{
+				Id:    1,
+				Title: "panel",
+				Type:  "singlestat",
+				Targets: []Target{
+					{
+						PanelId: 2,
 					},
 				},
 			},
