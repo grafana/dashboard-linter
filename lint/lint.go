@@ -199,7 +199,7 @@ func (o *OverrideProperty) UnmarshalJSON(buf []byte) error {
 		}
 		if err := json.Unmarshal(buf, &raw); err != nil {
 			// Overrirde can have varying different types int, string and arrays
-			// Currently only units are being changed from overrides so returning nil in case of unhandled types
+			// Currently only units are being checked from overrides so returning nil in case of unhandled types
 			return nil
 		}
 	}

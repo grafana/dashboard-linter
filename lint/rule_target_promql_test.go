@@ -118,7 +118,6 @@ func TestTargetPromQLRule(t *testing.T) {
 				},
 			},
 		},
-		// Template variables substitutions
 		{
 			result: ResultSuccess,
 			panel: Panel{
@@ -126,7 +125,7 @@ func TestTargetPromQLRule(t *testing.T) {
 				Type:  "singlestat",
 				Targets: []Target{
 					{
-						Expr: `sum (rate(foo[$interval:$resolution]))`,
+						Expr: `increase(foo{}[$sampling])`,
 					},
 				},
 			},
