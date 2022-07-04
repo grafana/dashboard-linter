@@ -151,8 +151,10 @@ func (d *Datasource) UnmarshalJSON(buf []byte) error {
 // Target is a deliberately incomplete representation of the Dashboard -> Panel -> Target type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Target struct {
-	Idx  int    // This is the only (best?) way to uniquely identify a target, it is set by
-	Expr string `json:"expr,omitempty"`
+	Idx     int    // This is the only (best?) way to uniquely identify a target, it is set by
+	Expr    string `json:"expr,omitempty"`
+	PanelId int    `json:"panelId,omitempty"`
+	RefId   string `json:"refId,omitempty"`
 }
 
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
@@ -196,7 +198,9 @@ func (o *OverrideProperty) UnmarshalJSON(buf []byte) error {
 			Value int    `json:"value"`
 		}
 		if err := json.Unmarshal(buf, &raw); err != nil {
-			return err
+			// Overrirde can have varying different types int, string and arrays
+			// Currently only units are being changed from overrides so returning nil in case of unhandled types
+			return nil
 		}
 	}
 
