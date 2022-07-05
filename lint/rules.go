@@ -90,6 +90,7 @@ func NewRuleSet() RuleSet {
 			NewPanelDatasourceRule(),
 			NewPanelTitleDescriptionRule(),
 			NewPanelUnitsRule(),
+			NewPanelNoTargetsRule(),
 			NewTargetPromQLRule(),
 			NewTargetRateIntervalRule(),
 			NewTargetJobRule(),
