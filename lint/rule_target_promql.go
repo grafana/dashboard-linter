@@ -33,6 +33,8 @@ func parsePromQL(expr string, variables []Template) (parser.Expr, error) {
 // NewTargetPromQLRule builds a lint rule for panels with Prometheus queries which checks:
 // - the query is valid PromQL
 // - the query contains two matchers within every selector - `{job=~"$job", instance=~"$instance"}`
+// - the query is not empty
+// - if the query references another panel then make sure that panel exists
 func NewTargetPromQLRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-promql-rule",
@@ -45,6 +47,21 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 
 			if !panelHasQueries(p) {
 				return ResultSuccess
+			}
+
+			// If panel does not contain an expression then check if it references another panel and it exists
+			if !(len(t.Expr) > 0) {
+				if t.PanelId > 0 {
+					for _, p1 := range d.Panels {
+						if p1.Id == t.PanelId {
+							return ResultSuccess
+						}
+					}
+					return Result{
+						Severity: Error,
+						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid panel refernce in target, reference panel id: '%d'", d.Title, p.Title, t.PanelId),
+					}
+				}
 			}
 
 			if _, err := parsePromQL(t.Expr, d.Templating.List); err != nil {
