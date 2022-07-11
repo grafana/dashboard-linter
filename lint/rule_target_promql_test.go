@@ -134,7 +134,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel' invalid PromQL query '': 1:1: parse error: no expression found in input",
+				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': 1:1: parse error: no expression found in input",
 			},
 			panel: Panel{
 				Title: "panel",
@@ -150,7 +150,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel' invalid panel refernce in target, reference panel id: '2'",
+				Message:  "Dashboard 'dashboard', panel 'panel' invalid panel reference in target, reference panel id: '2'",
 			},
 			panel: Panel{
 				Id:    1,
