@@ -54,7 +54,7 @@ func TestTargetRateIntervalRule(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'dashboard', panel 'panel' invalid PromQL query 'sum(rate(foo{job=~"$job",instance=~"$instance"}[5m]))': should use $__rate_interval`,
+				Message:  `Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'sum(rate(foo{job=~"$job",instance=~"$instance"}[5m]))': should use $__rate_interval`,
 			},
 			panel: Panel{
 				Title: "panel",
@@ -70,7 +70,7 @@ func TestTargetRateIntervalRule(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'dashboard', panel 'panel' invalid PromQL query 'sum(rate(foo{job=~"$job",instance=~"$instance"}[5m]))': should use $__rate_interval`,
+				Message:  `Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'sum(rate(foo{job=~"$job",instance=~"$instance"}[5m]))': should use $__rate_interval`,
 			},
 			panel: Panel{
 				Title: "panel",
@@ -102,7 +102,7 @@ func TestTargetRateIntervalRule(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'dashboard', panel 'panel' invalid PromQL query 'sum(irate(foo{job=~"$job",instance=~"$instance"}[$__interval]))': should use $__rate_interval`,
+				Message:  `Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'sum(irate(foo{job=~"$job",instance=~"$instance"}[$__interval]))': should use $__rate_interval`,
 			},
 			panel: Panel{
 				Title: "panel",
