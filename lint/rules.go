@@ -95,6 +95,8 @@ func NewRuleSet() RuleSet {
 			NewTargetRateIntervalRule(),
 			NewTargetJobRule(),
 			NewTargetInstanceRule(),
+			NewDefaultTimeIntervalRule(),
+			NewDefaultRefreshIntervalRule(),
 		},
 	}
 }
