@@ -95,6 +95,7 @@ func NewRuleSet() RuleSet {
 			NewTargetRateIntervalRule(),
 			NewTargetJobRule(),
 			NewTargetInstanceRule(),
+			NewTargetCounterAggRule(),
 		},
 	}
 }
