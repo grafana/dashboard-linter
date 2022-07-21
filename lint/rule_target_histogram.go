@@ -27,7 +27,7 @@ func NewTargetHistogramRule() *TargetRuleFunc {
 
 				errmsg := fmt.Errorf("Dashboard '%s', panel '%s', target idx '%d' histogram metric '%s' is not calculated in a histogram function", d.Title, p.Title, t.Idx, node.String())
 
-				if strings.HasSuffix(selector.String(), "_bucket") {
+				if strings.Contains(selector.String(), "_bucket") {
 					// The vector selector must have (at least) one parent
 					if len(parents) == 0 {
 						return errmsg

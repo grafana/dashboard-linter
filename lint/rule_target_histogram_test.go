@@ -24,7 +24,19 @@ func TestTargetHistogramRule(t *testing.T) {
 				},
 			},
 		},
-		// Is this one valid? Would someone ever do this, or must there always be a rate?
+		{
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'dashboard', panel '', target idx '0' histogram metric 'job_cluster_le:something_bucket:rate_5m' is not calculated in a histogram function",
+			},
+			panel: Panel{
+				Targets: []Target{
+					{
+						Expr: `job_cluster_le:something_bucket:rate_5m`,
+					},
+				},
+			},
+		},
 		{
 			result: ResultSuccess,
 			panel: Panel{
@@ -51,6 +63,16 @@ func TestTargetHistogramRule(t *testing.T) {
 				Targets: []Target{
 					{
 						Expr: `histogram_quantile(0.9, sum by (le) (rate(something_bucket[$__rate_interval])))`,
+					},
+				},
+			},
+		},
+		{
+			result: ResultSuccess,
+			panel: Panel{
+				Targets: []Target{
+					{
+						Expr: `histogram_quantile(0.9, job_cluster_le:something_bucket:rate_5m)`,
 					},
 				},
 			},
