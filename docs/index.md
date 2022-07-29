@@ -61,33 +61,40 @@ Flags:
 The linter implements the following rules:
 
 * [template-datasource-rule](./rules/template-datasource-rule.md) - Checks that the dashboard has a templated datasource.
-* `template-job-rule` - Checks that the dashboard has a templated job.
-* `template-instance-rule` - Checks that the dashboard has a templated instance.
-* `template-label-promql-rule` - Checks that the dashboard templated labels have proper PromQL expressions.
-* `panel-datasource-rule` - Checks that each panel uses the templated datasource.
-* `panel-title-description-rule` - Checks that each panel has a title and description.
-* `panel-units-rule` - Checks that each panel uses has valid units defined.
-* `target-promql-rule` - Checks that each target uses a valid PromQL query.
-* `target-rate-interval-rule` - Checks that each target uses $__rate_interval.
-* `target-job-rule` - Checks that every PromQL query has a job matcher.
-* `target-instance-rule` - Checks that every PromQL query has a instance matcher.
+* [template-job-rule](./rules/template-job-rule.md) - Checks that the dashboard has a templated job.
+* [template-instance-rule](./rules/template-instance-rule.md) - Checks that the dashboard has a templated instance.
+* [template-label-promql-rule](./rules/template-label-promql-rule.md) - Checks that the dashboard templated labels have proper PromQL expressions.
+* [panel-datasource-rule](./rules/panel-datasource-rule.md) - Checks that each panel uses the templated datasource.
+* [panel-title-description-rule](./rules/panel-title-description-rule.md) - Checks that each panel has a title and description.
+* [panel-units-rule](./rules/panel-units-rule.md) - Checks that each panel uses has valid units defined.
+* [target-promql-rule](./rules/target-promql-rule.md) - Checks that each target uses a valid PromQL query.
+* [target-rate-interval-rule](./rules/target-rate-interval-rule.md) - Checks that each target uses $__rate_interval.
+* [target-job-rule](./rules/target-job-rule.md) - Checks that every PromQL query has a job matcher.
+* [target-instance-rule](./rules/target-instance-rule.md) - Checks that every PromQL query has a instance matcher.
 
 ## Related Rules
 
 There are groups of rules that are intended to drive certain outcomes, but may be implemented separately to allow more granular [exceptions](#exclusions-and-warnings), and to keep the rules terse.
 
-## Job and Instance Template Variables
+### Job and Instance Template Variables
 
 The following rules work together to ensure that every dashboard has template variables for Job and Instance, and that they are properly configured, and used in every promql query.
 
-* `template-job-rule`
-* `template-instance-rule`
-* `target-job-rule`
-* `target-instance-rule`
+* [template-job-rule](./rules/template-job-rule.md)
+* [template-instance-rule](./rules/template-instance-rule.md)
+* [target-job-rule](./rules/target-job-rule.md)
+* [target-instance-rule](./rules/target-instance-rule.md)
 
-The reasoning is that.. WIP, but...
-* All prom metrics will have these, as it's part of the spec
-* Other reasons?
+These rules enforce a best practice for dashboards with a single Prometheus or Loki data source. Metrics and logs scraped by Prometheus and Loki have automatically generated [job and instance labels](https://prometheus.io/docs/concepts/jobs_instances/) on them. For this reason, having the ability to filter by these assured always-present labels is logical and a useful additional feature.
+
+#### Multi Data Source Exeptions
+These rules become cumbersome when dealing with a dashboard with more than one data source. Because the the `job` and `instance` labels must match between the two data sources, and because the default names for those labels will be different in disparate data sources (or absent entirely), significant relabeling in the scrape config is required.
+
+One current example is with the [Grafana Cloud Docker Integration](https://grafana.com/docs/grafana-cloud/data-configuration/integrations/integration-reference/integration-docker/#post-install-configuration-for-the-docker-integration), which combines metrics from cAdvisor, and logs from the docker daemon using `docker_sd_configs`.
+
+In this case, without label rewriting the logs would not have any labels at all. The relabeling on the metrics is in order to apply an opinionated job name rather than the default the agent would provide (`integrations/cadvisor`).
+
+For dashboards like this, it is advised that a linting [exception](#exclusions-and-warnings) be created for these rules, and a separate label which exists on data from all data sources be used to filter.
 
 # Exclusions and Warnings
 
