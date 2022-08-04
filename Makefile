@@ -17,3 +17,4 @@ intermediate-docs:
 
 embedmd:
 	@go install github.com/campoy/embedmd@v1.0.0
+

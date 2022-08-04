@@ -9,3 +9,4 @@ do
    rm "${docfile}.bak"
   done
 done
+
