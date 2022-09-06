@@ -88,9 +88,16 @@ func (rs *ResultSet) ByRule() map[string][]ResultContext {
 }
 
 func (rs *ResultSet) ReportByRule() {
-	for _, res := range rs.ByRule() {
-		fmt.Fprintln(os.Stdout, res[0].Rule.Description())
-		for _, r := range res {
+	byRule := rs.ByRule()
+	rules := make([]string, 0, len(byRule))
+	for r := range byRule {
+		rules = append(rules, r)
+	}
+	sort.Strings(rules)
+
+	for _, rule := range rules {
+		fmt.Fprintln(os.Stdout, byRule[rule][0].Rule.Description())
+		for _, r := range byRule[rule] {
 			if r.Result.Severity == Exclude && !rs.config.Verbose {
 				continue
 			}
