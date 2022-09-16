@@ -78,7 +78,7 @@ There are groups of rules that are intended to drive certain outcomes, but may b
 
 ### Job and Instance Template Variables
 
-The following rules work together to ensure that every dashboard has template variables for Job and Instance, and that they are properly configured, and used in every promql query.
+The following rules work together to ensure that every dashboard has template variables for `Job` and `Instance`, that they are properly configured, and used in every promql query.
 
 * [template-job-rule](./rules/template-job-rule.md)
 * [template-instance-rule](./rules/template-instance-rule.md)
