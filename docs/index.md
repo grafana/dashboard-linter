@@ -99,7 +99,7 @@ For dashboards like this, create a linting [exception](#exclusions-and-warnings)
 
 # Exclusions and Warnings
 
-Where the rules above don't make sense, you can drop a `.lint` file in a same directory as the dashboard telling the linter to ignore certain rules, or downgrade them to warnings.
+Where the rules above don't make sense, you can add a `.lint` file in the same directory as the dashboard telling the linter to ignore certain rules or downgrade them to a warning.
 
 Example:
 ```yaml
