@@ -110,7 +110,7 @@ warnings:
 
 ## Reasons
 
-It is advised that whenever you exclude, or warn for a rule, that you provide a reason. This allows for other maintainers of your dashboard to understand why a particular rule may not be followed. Eventually the dashboard-linter will provide reporting that echos that reason back to the user.
+Whenever you exclude or warn for a rule, it's recommended that you provide a reason. This allows for other maintainers of your dashboard to understand why a particular rule may not be followed. Eventually, the dashboard-linter will provide reporting that echoes that reason back to the user.
 
 Example:
 ```yaml
