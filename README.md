@@ -1,6 +1,6 @@
 # Grafana Dashboard Linter
 
-This is a tool to lint Grafana dashboards for common mistakes, and suggest best practices.  To use:
+This tool is a command-line application to lint Grafana dashboards for common mistakes, and suggest best practices. To use the linter, run the following install commands:
 
 ```
 $ go install github.com/grafana/dashboard-linter
