@@ -87,7 +87,7 @@ The following rules work together to ensure that every dashboard has template va
 
 These rules enforce a best practice for dashboards with a single Prometheus or Loki data source. Metrics and logs scraped by Prometheus and Loki have automatically generated [job and instance labels](https://prometheus.io/docs/concepts/jobs_instances/) on them. For this reason, having the ability to filter by these assured always-present labels is logical and a useful additional feature.
 
-#### Multi Data Source Exeptions
+#### Multi Data Source Exceptions
 These rules may become cumbersome when dealing with a dashboard with more than one data source. Significant relabeling in the scrape config is required because the `job` and `instance` labels must match between each data source, and the default names for those labels will be different or absent in disparate data sources. 
 
 For example:
