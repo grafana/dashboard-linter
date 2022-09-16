@@ -90,11 +90,12 @@ These rules enforce a best practice for dashboards with a single Prometheus or L
 #### Multi Data Source Exeptions
 These rules become cumbersome when dealing with a dashboard with more than one data source. Because the the `job` and `instance` labels must match between the two data sources, and because the default names for those labels will be different in disparate data sources (or absent entirely), significant relabeling in the scrape config is required.
 
-One current example is with the [Grafana Cloud Docker Integration](https://grafana.com/docs/grafana-cloud/data-configuration/integrations/integration-reference/integration-docker/#post-install-configuration-for-the-docker-integration), which combines metrics from cAdvisor, and logs from the docker daemon using `docker_sd_configs`.
+For example:
+The [Grafana Cloud Docker Integration](https://grafana.com/docs/grafana-cloud/data-configuration/integrations/integration-reference/integration-docker/#post-install-configuration-for-the-docker-integration) combines metrics from cAdvisor, and logs from the docker daemon using `docker_sd_configs`.
 
-In this case, without label rewriting the logs would not have any labels at all. The relabeling on the metrics is in order to apply an opinionated job name rather than the default the agent would provide (`integrations/cadvisor`).
+In this case, without label rewriting, the logs would not have any labels at all. The metrics relabeling applies opinionated job names rather than the defaults provided by the agent. (`integrations/cadvisor`).
 
-For dashboards like this, it is advised that a linting [exception](#exclusions-and-warnings) be created for these rules, and a separate label which exists on data from all data sources be used to filter.
+For dashboards like this, create a linting [exception](#exclusions-and-warnings) for these rules, and use a separate label that exists on data from all data sources to filter.
 
 # Exclusions and Warnings
 
