@@ -3,7 +3,7 @@
 This tool is a command-line application to lint Grafana dashboards for common mistakes, and suggest best practices. To use the linter, run the following install commands:
 
 ```
-$ go install github.com/grafana/dashboard-linter
+$ go install github.com/grafana/dashboard-linter@latest
 $ dashboard-linter lint dashboard.json
 ```
 
