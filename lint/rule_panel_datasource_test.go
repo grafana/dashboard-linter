@@ -34,6 +34,26 @@ func TestPanelDatasource(t *testing.T) {
 				Datasource: "$datasource",
 			},
 		},
+		{
+            result: Result{
+                Severity: Success,
+                Message:  "OK",
+            },
+            panel: Panel{
+                Type:       "singlestat",
+                Datasource: "${SomeDataSource}",
+            },
+        },
+        {
+            result: Result{
+                Severity: Success,
+                Message:  "OK",
+            },
+            panel: Panel{
+                Type:       "singlestat",
+                Datasource: "$SomeDataSource",
+            },
+        },
 	} {
 		testRule(t, linter, Dashboard{Title: "test", Panels: []Panel{tc.panel}}, tc.result)
 	}

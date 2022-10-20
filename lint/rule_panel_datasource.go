@@ -2,6 +2,7 @@ package lint
 
 import (
 	"fmt"
+	"regexp"
 )
 
 func NewPanelDatasourceRule() *PanelRuleFunc {
@@ -11,7 +12,8 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 		fn: func(d Dashboard, p Panel) Result {
 			switch p.Type {
 			case "singlestat", "graph", "table", "timeseries":
-				if p.Datasource != "$datasource" && p.Datasource != "${datasource}" {
+				match, _ := regexp.MatchString("^\\${?.+}?", string(p.Datasource))
+				if !match {
 					return Result{
 						Severity: Error,
 						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' does not use templates datasource, uses '%s'", d.Title, p.Title, p.Datasource),
