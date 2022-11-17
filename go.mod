@@ -1,6 +1,6 @@
 module github.com/grafana/dashboard-linter
 
-go 1.17
+go 1.18
 
 require (
 	github.com/prometheus/prometheus v0.40.2
