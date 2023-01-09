@@ -30,6 +30,8 @@ type ConfigurationEntry struct {
 	Reason    string `json:"reason,omitempty"`
 	Dashboard string `json:"dashboard,omitempty"`
 	Panel     string `json:"panel,omitempty"`
+	// Alerts are currently included, so we can read in configuration for Mixtool.
+	Alert string `json:"alert,omitempty"`
 	// This gets (un)marshalled as a string, because a 0 index is valid, but also the zero value of an int
 	TargetIdx string `json:"targetIdx"`
 }
