@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,7 +10,9 @@ import (
 	"github.com/grafana/dashboard-linter/lint"
 )
 
-var lintStrictFlag, lintVerboseFlag bool
+var lintStrictFlag bool
+var lintVerboseFlag bool
+var lintConfigFlag string
 
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
@@ -36,7 +37,7 @@ var lintCmd = &cobra.Command{
 		}
 
 		config := lint.NewConfigurationFile()
-		if err := config.Load(path.Dir(filename)); err != nil {
+		if err := config.Load(lintConfigFlag); err != nil {
 			return fmt.Errorf("failed to load lint config: %v", err)
 		}
 		config.Verbose = lintVerboseFlag
@@ -84,6 +85,13 @@ func init() {
 		"verbose",
 		false,
 		"show more information about linting",
+	)
+	lintCmd.Flags().StringVarP(
+		&lintConfigFlag,
+		"config",
+		"c",
+		"",
+		"path to a configuration file",
 	)
 }
 
