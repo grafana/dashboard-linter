@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,6 +35,11 @@ var lintCmd = &cobra.Command{
 		dashboard, err := lint.NewDashboard(buf)
 		if err != nil {
 			return fmt.Errorf("failed to parse dashboard: %v", err)
+		}
+
+		// if no config flag was passed, set a default path of a .lint file in the dashboards directory
+		if lintConfigFlag == "" {
+			lintConfigFlag = path.Join(path.Dir(filename), ".lint")
 		}
 
 		config := lint.NewConfigurationFile()
