@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/dashboard-linter/lint"
 )
 
-var lintStrictFlag, lintVerboseFlag bool
+var lintStrictFlag bool
+var lintVerboseFlag bool
+var lintConfigFlag string
 
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
@@ -35,8 +37,13 @@ var lintCmd = &cobra.Command{
 			return fmt.Errorf("failed to parse dashboard: %v", err)
 		}
 
+		// if no config flag was passed, set a default path of a .lint file in the dashboards directory
+		if lintConfigFlag == "" {
+			lintConfigFlag = path.Join(path.Dir(filename), ".lint")
+		}
+
 		config := lint.NewConfigurationFile()
-		if err := config.Load(path.Dir(filename)); err != nil {
+		if err := config.Load(lintConfigFlag); err != nil {
 			return fmt.Errorf("failed to load lint config: %v", err)
 		}
 		config.Verbose = lintVerboseFlag
@@ -84,6 +91,13 @@ func init() {
 		"verbose",
 		false,
 		"show more information about linting",
+	)
+	lintCmd.Flags().StringVarP(
+		&lintConfigFlag,
+		"config",
+		"c",
+		"",
+		"path to a configuration file",
 	)
 }
 

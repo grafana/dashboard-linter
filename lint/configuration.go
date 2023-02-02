@@ -3,7 +3,6 @@ package lint
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	yaml "gopkg.in/yaml.v3"
@@ -119,8 +118,7 @@ func NewConfigurationFile() *ConfigurationFile {
 }
 
 func (cf *ConfigurationFile) Load(path string) error {
-	lintFilePath := filepath.Join(path, ".lint")
-	f, err := os.Open(lintFilePath)
+	f, err := os.Open(path)
 	if err != nil && os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -130,7 +128,7 @@ func (cf *ConfigurationFile) Load(path string) error {
 
 	dec := yaml.NewDecoder(f)
 	if err = dec.Decode(cf); err != nil {
-		return fmt.Errorf("could not unmarshal lint configuration %s: %w", lintFilePath, err)
+		return fmt.Errorf("could not unmarshal lint configuration %s: %w", path, err)
 	}
 	return nil
 }
