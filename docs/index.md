@@ -51,9 +51,10 @@ Usage:
   dashboard-linter lint [dashboard.json] [flags]
 
 Flags:
-  -h, --help      help for lint
-      --strict    fail upon linting error or warning
-      --verbose   show more information about linting
+  -c, --config string   path to a configuration file
+  -h, --help            help for lint
+      --strict          fail upon linting error or warning
+      --verbose         show more information about linting
 ```
 
 # Rules
@@ -64,13 +65,16 @@ The linter implements the following rules:
 * [template-job-rule](./rules/template-job-rule.md) - Checks that the dashboard has a templated job.
 * [template-instance-rule](./rules/template-instance-rule.md) - Checks that the dashboard has a templated instance.
 * [template-label-promql-rule](./rules/template-label-promql-rule.md) - Checks that the dashboard templated labels have proper PromQL expressions.
+* [template-on-time-change-reload-rule](./rules/template-on-time-change-reload-rule.md) - Checks that the dashboard template variables are configured to reload on time change.
 * [panel-datasource-rule](./rules/panel-datasource-rule.md) - Checks that each panel uses the templated datasource.
 * [panel-title-description-rule](./rules/panel-title-description-rule.md) - Checks that each panel has a title and description.
 * [panel-units-rule](./rules/panel-units-rule.md) - Checks that each panel uses has valid units defined.
+* `panel-no-targets-rule` - Checks that each panel has at least one target.
 * [target-promql-rule](./rules/target-promql-rule.md) - Checks that each target uses a valid PromQL query.
 * [target-rate-interval-rule](./rules/target-rate-interval-rule.md) - Checks that each target uses $__rate_interval.
 * [target-job-rule](./rules/target-job-rule.md) - Checks that every PromQL query has a job matcher.
 * [target-instance-rule](./rules/target-instance-rule.md) - Checks that every PromQL query has a instance matcher.
+* `target-counter-agg-rule` - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
 
 ## Related Rules
 
