@@ -3,6 +3,7 @@ package lint
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 type Severity int
@@ -266,6 +267,18 @@ func (d *Dashboard) GetPanels() []Panel {
 		}
 	}
 	return p
+}
+
+// GetTemplateByType returns all dashboard templates which match the provided type. Type comparison
+// is case insensitive as it uses strings.EqualFold()
+func (d *Dashboard) GetTemplateByType(t string) []Template {
+	var retval []Template
+	for _, templ := range d.Templating.List {
+		if strings.EqualFold(templ.Type, t) {
+			retval = append(retval, templ)
+		}
+	}
+	return retval
 }
 
 func NewDashboard(buf []byte) (Dashboard, error) {

@@ -32,7 +32,9 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	if t.Datasource != "$datasource" && t.Datasource != "${datasource}" {
+	// TODO: Adding the prometheus_datasource here is hacky. This check function also assumes that all template vars which it will
+	// ever check are only prometheus queries, which may not always be the case.
+	if t.Datasource != "$datasource" && t.Datasource != "${datasource}" && t.Datasource != "$prometheus_datasource" && t.Datasource != "${prometheus_datasource}" {
 		return &Result{
 			Severity: Error,
 			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource '$datasource', is currently '%s'", d.Title, name, t.Datasource),
