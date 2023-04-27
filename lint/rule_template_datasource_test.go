@@ -43,7 +43,7 @@ func TestTemplateDatasource(t *testing.T) {
 		},
 		{
 			result: Result{
-				Severity: Error,
+				Severity: Warning,
 				Message:  "Dashboard 'test' templated data source variable labeled 'bar', should be labeled 'Bar data source', or 'Data source'",
 			},
 			dashboard: Dashboard{
@@ -224,7 +224,7 @@ func TestTemplateDatasource(t *testing.T) {
 		},
 		{
 			result: Result{
-				Severity: Error,
+				Severity: Warning,
 				Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Prometheus data source'",
 			},
 			dashboard: Dashboard{

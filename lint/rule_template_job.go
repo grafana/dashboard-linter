@@ -2,6 +2,9 @@ package lint
 
 import (
 	"fmt"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func NewTemplateJobRule() *DashboardRuleFunc {
@@ -48,10 +51,13 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
+	titleCaser := cases.Title(language.English)
+	labelTitle := titleCaser.String(name)
+
 	if t.Label != name {
 		return &Result{
-			Severity: Error,
-			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a labelled '%s', is currently '%s'", d.Title, name, name, t.Label),
+			Severity: Warning,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a labeled '%s', is currently '%s'", d.Title, name, labelTitle, t.Label),
 		}
 	}
 

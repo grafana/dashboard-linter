@@ -93,8 +93,8 @@ func TestJobTemplate(t *testing.T) {
 		// Wrong job label.
 		{
 			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'test' job template should be a labelled 'job', is currently 'bar'",
+				Severity: Warning,
+				Message:  "Dashboard 'test' job template should be a labeled 'Job', is currently 'bar'",
 			},
 			dashboard: Dashboard{
 				Title: "test",

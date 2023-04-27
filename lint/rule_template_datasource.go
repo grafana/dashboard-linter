@@ -58,7 +58,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				_, ok = allowedDsNames[templDs.Label]
 				if !ok {
 					return Result{
-						Severity: Error,
+						Severity: Warning,
 						Message:  nameError,
 					}
 				}
