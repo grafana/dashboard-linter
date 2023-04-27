@@ -44,7 +44,7 @@ func TestTemplateDatasource(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test' templated data source variable labeled 'bar', should be labeled 'Bar Data Source', or 'Data Source'",
+				Message:  "Dashboard 'test' templated data source variable labeled 'bar', should be labeled 'Bar data source', or 'Data source'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -76,7 +76,7 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "prometheus",
 						},
 					},
@@ -97,7 +97,7 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "datasource",
-							Label: "Prometheus Data Source",
+							Label: "Prometheus data source",
 							Query: "prometheus",
 						},
 					},
@@ -118,7 +118,7 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "prometheus_datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "prometheus",
 						},
 					},
@@ -139,7 +139,7 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "prometheus_datasource",
-							Label: "Prometheus Data Source",
+							Label: "Prometheus data source",
 							Query: "prometheus",
 						},
 					},
@@ -160,7 +160,7 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "loki_datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "loki",
 						},
 					},
@@ -181,7 +181,7 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "loki",
 						},
 					},
@@ -203,19 +203,19 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "prometheus",
 						},
 						{
 							Type:  "datasource",
 							Name:  "loki_datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "loki",
 						},
 						{
 							Type:  "datasource",
 							Name:  "influx_datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "influx",
 						},
 					},
@@ -225,7 +225,7 @@ func TestTemplateDatasource(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test' templated data source variable labeled 'Data Source', should be labeled 'Prometheus Data Source'",
+				Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Prometheus data source'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -236,19 +236,19 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "prometheus_datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "prometheus",
 						},
 						{
 							Type:  "datasource",
 							Name:  "loki_datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "loki",
 						},
 						{
 							Type:  "datasource",
 							Name:  "influx_datasource",
-							Label: "Data Source",
+							Label: "Data source",
 							Query: "influx",
 						},
 					},
@@ -269,19 +269,19 @@ func TestTemplateDatasource(t *testing.T) {
 						{
 							Type:  "datasource",
 							Name:  "prometheus_datasource",
-							Label: "Prometheus Data Source",
+							Label: "Prometheus data source",
 							Query: "prometheus",
 						},
 						{
 							Type:  "datasource",
 							Name:  "loki_datasource",
-							Label: "Loki Data Source",
+							Label: "Loki data source",
 							Query: "loki",
 						},
 						{
 							Type:  "datasource",
 							Name:  "influx_datasource",
-							Label: "Influx Data Source",
+							Label: "Influx data source",
 							Query: "influx",
 						},
 					},

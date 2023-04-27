@@ -28,7 +28,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 
 			for _, templDs := range templatedDs {
 				querySpecificUID := fmt.Sprintf("%s_datasource", strings.ToLower(templDs.Query))
-				querySpecificName := fmt.Sprintf("%s Data Source", titleCaser.String(templDs.Query))
+				querySpecificName := fmt.Sprintf("%s data source", titleCaser.String(templDs.Query))
 
 				allowedDsUIDs := make(map[string]struct{})
 				allowedDsNames := make(map[string]struct{})
@@ -37,10 +37,10 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				nameError := fmt.Sprintf("Dashboard '%s' templated data source variable labeled '%s', should be labeled '%s'", d.Title, templDs.Label, querySpecificName)
 				if len(templatedDs) == 1 {
 					allowedDsUIDs["datasource"] = struct{}{}
-					allowedDsNames["Data Source"] = struct{}{}
+					allowedDsNames["Data source"] = struct{}{}
 
 					uidError = uidError + ", or 'datasource'"
-					nameError = nameError + ", or 'Data Source'"
+					nameError = nameError + ", or 'Data source'"
 				}
 
 				allowedDsUIDs[querySpecificUID] = struct{}{}
