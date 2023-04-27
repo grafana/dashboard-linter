@@ -54,7 +54,7 @@ func checkTemplate(d Dashboard, name string) *Result {
 	titleCaser := cases.Title(language.English)
 	labelTitle := titleCaser.String(name)
 
-	if t.Label != name {
+	if t.Label != labelTitle {
 		return &Result{
 			Severity: Warning,
 			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a labeled '%s', is currently '%s'", d.Title, name, labelTitle, t.Label),
