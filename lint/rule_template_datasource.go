@@ -2,6 +2,10 @@ package lint
 
 import (
 	"fmt"
+	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func NewTemplateDatasourceRule() *DashboardRuleFunc {
@@ -9,32 +13,54 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 		name:        "template-datasource-rule",
 		description: "Checks that the dashboard has a templated datasource.",
 		fn: func(d Dashboard) Result {
-			template := getTemplateDatasource(d)
-			if template == nil {
+			templatedDs := d.GetTemplateByType("datasource")
+			if len(templatedDs) == 0 {
 				return Result{
 					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s' does not have a templated datasource", d.Title),
+					Message:  fmt.Sprintf("Dashboard '%s' does not have a templated data source", d.Title),
 				}
 			}
 
-			if template.Name != "datasource" {
-				return Result{
-					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s' templated datasource variable named '%s', should be names 'datasource'", d.Title, template.Name),
-				}
-			}
+			// TODO: Should there be a "Template" rule type which will iterate over all dashboard templates and execute rules?
+			// This will only return one linting error at a time, when there may be multiple issues with templated datasources.
 
-			if template.Label != "Data Source" {
-				return Result{
-					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s' templated datasource variable labeled '%s', should be labeled 'Data Source'", d.Title, template.Label),
-				}
-			}
+			titleCaser := cases.Title(language.English)
 
-			if template.Query != Prometheus && template.Query != "loki" {
-				return Result{
-					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s' templated datasource variable query is '%s', should be 'prometheus' or 'loki'", d.Title, template.Query),
+			for _, templDs := range templatedDs {
+				querySpecificUID := fmt.Sprintf("%s_datasource", strings.ToLower(templDs.Query))
+				querySpecificName := fmt.Sprintf("%s data source", titleCaser.String(templDs.Query))
+
+				allowedDsUIDs := make(map[string]struct{})
+				allowedDsNames := make(map[string]struct{})
+
+				uidError := fmt.Sprintf("Dashboard '%s' templated data source variable named '%s', should be named '%s'", d.Title, templDs.Name, querySpecificUID)
+				nameError := fmt.Sprintf("Dashboard '%s' templated data source variable labeled '%s', should be labeled '%s'", d.Title, templDs.Label, querySpecificName)
+				if len(templatedDs) == 1 {
+					allowedDsUIDs["datasource"] = struct{}{}
+					allowedDsNames["Data source"] = struct{}{}
+
+					uidError = uidError + ", or 'datasource'"
+					nameError = nameError + ", or 'Data source'"
+				}
+
+				allowedDsUIDs[querySpecificUID] = struct{}{}
+				allowedDsNames[querySpecificName] = struct{}{}
+
+				// TODO: These are really two different rules
+				_, ok := allowedDsUIDs[templDs.Name]
+				if !ok {
+					return Result{
+						Severity: Error,
+						Message:  uidError,
+					}
+				}
+
+				_, ok = allowedDsNames[templDs.Label]
+				if !ok {
+					return Result{
+						Severity: Warning,
+						Message:  nameError,
+					}
 				}
 			}
 

@@ -2,6 +2,9 @@ package lint
 
 import (
 	"fmt"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func NewTemplateJobRule() *DashboardRuleFunc {
@@ -32,7 +35,9 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	if t.Datasource != "$datasource" && t.Datasource != "${datasource}" {
+	// TODO: Adding the prometheus_datasource here is hacky. This check function also assumes that all template vars which it will
+	// ever check are only prometheus queries, which may not always be the case.
+	if t.Datasource != "$datasource" && t.Datasource != "${datasource}" && t.Datasource != "$prometheus_datasource" && t.Datasource != "${prometheus_datasource}" {
 		return &Result{
 			Severity: Error,
 			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource '$datasource', is currently '%s'", d.Title, name, t.Datasource),
@@ -46,10 +51,13 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	if t.Label != name {
+	titleCaser := cases.Title(language.English)
+	labelTitle := titleCaser.String(name)
+
+	if t.Label != labelTitle {
 		return &Result{
-			Severity: Error,
-			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a labelled '%s', is currently '%s'", d.Title, name, name, t.Label),
+			Severity: Warning,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a labeled '%s', is currently '%s'", d.Title, name, labelTitle, t.Label),
 		}
 	}
 

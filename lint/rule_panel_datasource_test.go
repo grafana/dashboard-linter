@@ -10,13 +10,14 @@ func TestPanelDatasource(t *testing.T) {
 	linter := NewPanelDatasourceRule()
 
 	for _, tc := range []struct {
-		result Result
-		panel  Panel
+		result    Result
+		panel     Panel
+		templates []Template
 	}{
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test', panel 'bar' does not use templates datasource, uses 'foo'",
+				Message:  "Dashboard 'test', panel 'bar' does not use a templated datasource, uses 'foo'",
 			},
 			panel: Panel{
 				Type:       "singlestat",
@@ -33,9 +34,69 @@ func TestPanelDatasource(t *testing.T) {
 				Type:       "singlestat",
 				Datasource: "$datasource",
 			},
+			templates: []Template{
+				{
+					Type: "datasource",
+					Name: "datasource",
+				},
+			},
+		},
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "${datasource}",
+			},
+			templates: []Template{
+				{
+					Type: "datasource",
+					Name: "datasource",
+				},
+			},
+		},
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "$prometheus_datasource",
+			},
+			templates: []Template{
+				{
+					Type: "datasource",
+					Name: "prometheus_datasource",
+				},
+			},
+		},
+		{
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "${prometheus_datasource}",
+			},
+			templates: []Template{
+				{
+					Type: "datasource",
+					Name: "prometheus_datasource",
+				},
+			},
 		},
 	} {
-		testRule(t, linter, Dashboard{Title: "test", Panels: []Panel{tc.panel}}, tc.result)
+		testRule(t, linter, Dashboard{
+			Title:  "test",
+			Panels: []Panel{tc.panel},
+			Templating: struct {
+				List []Template "json:\"list\""
+			}{List: tc.templates},
+		}, tc.result)
 	}
 }
 

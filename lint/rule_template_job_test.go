@@ -93,8 +93,8 @@ func TestJobTemplate(t *testing.T) {
 		// Wrong job label.
 		{
 			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'test' job template should be a labelled 'job', is currently 'bar'",
+				Severity: Warning,
+				Message:  "Dashboard 'test' job template should be a labeled 'Job', is currently 'bar'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -136,7 +136,7 @@ func TestJobTemplate(t *testing.T) {
 							Name:       "job",
 							Datasource: "$datasource",
 							Type:       "query",
-							Label:      "job",
+							Label:      "Job",
 							Multi:      true,
 							AllValue:   ".+",
 						},
@@ -144,7 +144,7 @@ func TestJobTemplate(t *testing.T) {
 							Name:       "instance",
 							Datasource: "${datasource}",
 							Type:       "query",
-							Label:      "instance",
+							Label:      "Instance",
 							Multi:      true,
 							AllValue:   ".+",
 						},
