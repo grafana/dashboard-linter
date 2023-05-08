@@ -155,10 +155,11 @@ func (d *Datasource) UnmarshalJSON(buf []byte) error {
 // Target is a deliberately incomplete representation of the Dashboard -> Panel -> Target type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Target struct {
-	Idx     int    // This is the only (best?) way to uniquely identify a target, it is set by
-	Expr    string `json:"expr,omitempty"`
-	PanelId int    `json:"panelId,omitempty"`
-	RefId   string `json:"refId,omitempty"`
+	Idx          int    // This is the only (best?) way to uniquely identify a target, it is set by
+	Expr         string `json:"expr,omitempty"`
+	PanelId      int    `json:"panelId,omitempty"`
+	RefId        string `json:"refId,omitempty"`
+	LegendFormat string `json:"legendFormat,omitempty"`
 }
 
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
