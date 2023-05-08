@@ -1,5 +1,7 @@
 package lint
 
+import "fmt"
+
 type Rule interface {
 	Description() string
 	Name() string
@@ -117,4 +119,15 @@ func (s *RuleSet) Lint(dashboards []Dashboard) (*ResultSet, error) {
 		}
 	}
 	return resSet, nil
+}
+
+func NewErrorResult(d *Dashboard, p Panel, t Target, msg string) Result {
+	return Result{
+		Severity: Error,
+		Message:  NewErrorMessage(d, p, t, msg),
+	}
+}
+
+func NewErrorMessage(d *Dashboard, p Panel, t Target, msg string) string {
+	return fmt.Sprintf("Dashboard '%s', panel '%s', target idx '%d' %s", d.Title, p.Title, t.Idx, msg)
 }

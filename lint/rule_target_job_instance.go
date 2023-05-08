@@ -28,10 +28,7 @@ func newTargetRequiredMatcherRule(matcher string) *TargetRuleFunc {
 
 			for _, selector := range parser.ExtractSelectors(node) {
 				if err := checkForMatcher(selector, matcher, labels.MatchRegexp, fmt.Sprintf("$%s", matcher)); err != nil {
-					return Result{
-						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s', panel '%s', target idx '%d' invalid PromQL query '%s': %v", d.Title, p.Title, t.Idx, t.Expr, err),
-					}
+					return NewErrorResult(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err))
 				}
 			}
 
