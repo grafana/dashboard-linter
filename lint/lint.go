@@ -78,7 +78,7 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 		case string:
 			t.Query = v
 		case map[string]interface{}:
-			t.Query = v["query"].(string)
+			t.Query = v[targetTypeQuery].(string)
 		default:
 			return fmt.Errorf("invalid type for field 'query': %v", v)
 		}

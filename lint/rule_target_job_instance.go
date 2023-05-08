@@ -12,7 +12,7 @@ func newTargetRequiredMatcherRule(matcher string) *TargetRuleFunc {
 		name:        fmt.Sprintf("target-%s-rule", matcher),
 		description: fmt.Sprintf("Checks that every PromQL query has a %s matcher.", matcher),
 		fn: func(d Dashboard, p Panel, t Target) Result {
-			// TODO: The RuleSet should be responsible for routing rule checks based on their query type (prometheus, loki, mysql, etc)
+			// The RuleSet should be responsible for routing rule checks based on their query type (prometheus, loki, mysql, etc)
 			// and for ensuring that the datasource is set.
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasource is a separate rule.

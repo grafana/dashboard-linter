@@ -67,21 +67,8 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 		description: "Checks that each panel uses has valid units defined.",
 		fn: func(d Dashboard, p Panel) Result {
 			switch p.Type {
-			case "stat", "singlestat", "graph", "table", "timeseries", "gauge":
-				configuredUnit := ""
-				// First check if an override with unit exists - if no override then check if standard unit is present and valid
-				if len(p.FieldConfig.Overrides) > 0 {
-					for _, p := range p.FieldConfig.Overrides {
-						for _, o := range p.OverrideProperties {
-							if o.Id == "unit" {
-								configuredUnit = o.Value
-							}
-						}
-					}
-				}
-				if configuredUnit == "" && len(p.FieldConfig.Defaults.Unit) > 0 {
-					configuredUnit = p.FieldConfig.Defaults.Unit
-				}
+			case panelTypeStat, panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries, panelTypeGauge:
+				configuredUnit := getConfiguredUnit(p)
 				if configuredUnit != "" {
 					for _, u := range validUnits {
 						if u == p.FieldConfig.Defaults.Unit {
@@ -97,4 +84,22 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 			return ResultSuccess
 		},
 	}
+}
+
+func getConfiguredUnit(p Panel) string {
+	configuredUnit := ""
+	// First check if an override with unit exists - if no override then check if standard unit is present and valid
+	if len(p.FieldConfig.Overrides) > 0 {
+		for _, p := range p.FieldConfig.Overrides {
+			for _, o := range p.OverrideProperties {
+				if o.Id == "unit" {
+					configuredUnit = o.Value
+				}
+			}
+		}
+	}
+	if configuredUnit == "" && len(p.FieldConfig.Defaults.Unit) > 0 {
+		configuredUnit = p.FieldConfig.Defaults.Unit
+	}
+	return configuredUnit
 }

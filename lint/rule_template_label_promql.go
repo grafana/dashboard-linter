@@ -49,7 +49,7 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 				return ResultSuccess
 			}
 			for _, template := range d.Templating.List {
-				if template.Type != "query" {
+				if template.Type != targetTypeQuery {
 					continue
 				}
 				if err := parseTemplatedLabelPromQL(template, d.Templating.List); err != nil {
