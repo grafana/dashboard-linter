@@ -28,7 +28,7 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-rate-interval-rule",
 		description: "Checks that each target uses $__rate_interval.",
-		fn: func(d Dashboard, p Panel, t Target) Result {
+		fn: func(d *Dashboard, p Panel, t Target) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
 				return ResultSuccess

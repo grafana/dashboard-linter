@@ -39,7 +39,7 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-promql-rule",
 		description: "Checks that each target uses a valid PromQL query.",
-		fn: func(d Dashboard, p Panel, t Target) Result {
+		fn: func(d *Dashboard, p Panel, t Target) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
 				return ResultSuccess

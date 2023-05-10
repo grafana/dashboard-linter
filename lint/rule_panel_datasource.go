@@ -8,7 +8,7 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-datasource-rule",
 		description: "Checks that each panel uses the templated datasource.",
-		fn: func(d Dashboard, p Panel) Result {
+		fn: func(d *Dashboard, p Panel) Result {
 			switch p.Type {
 			case panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries:
 				// That a templated datasource exists, is the responsibility of another rule.
@@ -19,11 +19,18 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 					availableDsUids[fmt.Sprintf("${%s}", tds.Name)] = struct{}{}
 				}
 
-				_, ok := availableDsUids[string(p.Datasource)]
+				src, err := p.GetDataSource()
+				if err != nil {
+					return Result{
+						Severity: Error,
+						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' has invalid datasource: %v'", d.Title, p.Title, err),
+					}
+				}
+				_, ok := availableDsUids[string(src)]
 				if !ok {
 					return Result{
 						Severity: Error,
-						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' does not use a templated datasource, uses '%s'", d.Title, p.Title, p.Datasource),
+						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' does not use a templated datasource, uses '%s'", d.Title, p.Title, src),
 					}
 				}
 			}

@@ -103,8 +103,19 @@ func TestPanelDatasource(t *testing.T) {
 // testRule is a small helper that tests a lint rule and expects it to only return
 // a single result.
 func testRule(t *testing.T, rule Rule, d Dashboard, result Result) {
-	var rs ResultSet
+	testRuleWithAutofix(t, rule, &d, result, false)
+}
+
+func testRuleWithAutofix(t *testing.T, rule Rule, d *Dashboard, result Result, autofix bool) {
+	rs := ResultSet{
+		config: &ConfigurationFile{Autofix: autofix},
+	}
 	rule.Lint(d, &rs)
 	require.Len(t, rs.results, 1)
-	require.Equal(t, result, rs.results[0].Result)
+	actual := rs.results[0].Result
+	if actual.Severity == Quiet {
+		// all test cases expect success
+		actual.Severity = Success
+	}
+	require.Equal(t, result, actual)
 }

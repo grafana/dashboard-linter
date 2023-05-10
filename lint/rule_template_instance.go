@@ -4,7 +4,7 @@ func NewTemplateInstanceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-instance-rule",
 		description: "Checks that the dashboard has a templated instance.",
-		fn: func(d Dashboard) Result {
+		fn: func(d *Dashboard, cfg *ConfigurationFile) Result {
 			template := getTemplateDatasource(d)
 			if template == nil || template.Query != Prometheus {
 				return ResultSuccess

@@ -14,6 +14,7 @@ type ConfigurationFile struct {
 	Exclusions map[string]*ConfigurationRuleEntries `yaml:"exclusions"`
 	Warnings   map[string]*ConfigurationRuleEntries `yaml:"warnings"`
 	Verbose    bool                                 `yaml:"-"`
+	Autofix    bool                                 `yaml:"-"`
 }
 
 type ConfigurationRuleEntries struct {

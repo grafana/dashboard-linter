@@ -12,7 +12,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-datasource-rule",
 		description: "Checks that the dashboard has a templated datasource.",
-		fn: func(d Dashboard) Result {
+		fn: func(d *Dashboard, cfg *ConfigurationFile) Result {
 			templatedDs := d.GetTemplateByType("datasource")
 			if len(templatedDs) == 0 {
 				return Result{
@@ -69,7 +69,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 	}
 }
 
-func getTemplateDatasource(d Dashboard) *Template {
+func getTemplateDatasource(d *Dashboard) *Template {
 	for _, template := range d.Templating.List {
 		if template.Type != "datasource" {
 			continue

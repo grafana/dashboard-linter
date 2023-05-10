@@ -177,21 +177,27 @@ func TestTargetPromQLRule(t *testing.T) {
 					{
 						Type: "interval",
 						Name: "interval",
-						Options: []TemplateOption{
-							{TemplateValue: TemplateValue{Value: "1h"}, Selected: true},
+						Options: []RawTemplateValue{
+							map[string]interface{}{
+								"value": "1h",
+							},
 						},
 					},
 					{
 						Type:    "interval",
 						Name:    "sampling",
-						Current: TemplateValue{Value: "$__auto_interval_sampling"},
+						Current: map[string]interface{}{"value": "$__auto_interval_sampling"},
 					},
 					{
 						Type: "resolution",
 						Name: "resolution",
-						Options: []TemplateOption{
-							{TemplateValue: TemplateValue{Value: "1h"}, Selected: true},
-							{TemplateValue: TemplateValue{Value: "1h"}},
+						Options: []RawTemplateValue{
+							map[string]interface{}{
+								"value": "1h",
+							},
+							map[string]interface{}{
+								"value": "1h",
+							},
 						},
 					},
 				},

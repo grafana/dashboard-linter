@@ -12,7 +12,7 @@ func NewTargetCounterAggRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-counter-agg-rule",
 		description: "Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.",
-		fn: func(d Dashboard, p Panel, t Target) Result {
+		fn: func(d *Dashboard, p Panel, t Target) Result {
 			expr, err := parsePromQL(t.Expr, d.Templating.List)
 			if err != nil {
 				// Invalid PromQL is another rule

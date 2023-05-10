@@ -11,7 +11,7 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-job-rule",
 		description: "Checks that the dashboard has a templated job.",
-		fn: func(d Dashboard) Result {
+		fn: func(d *Dashboard, cfg *ConfigurationFile) Result {
 			template := getTemplateDatasource(d)
 			if template == nil || template.Query != Prometheus {
 				return ResultSuccess
@@ -26,7 +26,7 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 	}
 }
 
-func checkTemplate(d Dashboard, name string) *Result {
+func checkTemplate(d *Dashboard, name string) *Result {
 	t := getTemplate(d, name)
 	if t == nil {
 		return &Result{
@@ -37,10 +37,18 @@ func checkTemplate(d Dashboard, name string) *Result {
 
 	// TODO: Adding the prometheus_datasource here is hacky. This check function also assumes that all template vars which it will
 	// ever check are only prometheus queries, which may not always be the case.
-	if t.Datasource != "$datasource" && t.Datasource != "${datasource}" && t.Datasource != "$prometheus_datasource" && t.Datasource != "${prometheus_datasource}" {
+	src, err := t.GetDataSource()
+	if err != nil {
 		return &Result{
 			Severity: Error,
-			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource '$datasource', is currently '%s'", d.Title, name, t.Datasource),
+			Message:  fmt.Sprintf("Dashboard '%s' %s template has invalid datasource %v", d.Title, name, err),
+		}
+	}
+
+	if src != "$datasource" && src != "${datasource}" && src != "$prometheus_datasource" && src != "${prometheus_datasource}" {
+		return &Result{
+			Severity: Error,
+			Message:  fmt.Sprintf("Dashboard '%s' %s template should use datasource '$datasource', is currently '%s'", d.Title, name, src),
 		}
 	}
 
@@ -78,7 +86,7 @@ func checkTemplate(d Dashboard, name string) *Result {
 	return nil
 }
 
-func getTemplate(d Dashboard, name string) *Template {
+func getTemplate(d *Dashboard, name string) *Template {
 	for _, template := range d.Templating.List {
 		if template.Name == name {
 			return &template

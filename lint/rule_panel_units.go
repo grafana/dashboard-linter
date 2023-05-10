@@ -66,7 +66,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-units-rule",
 		description: "Checks that each panel uses has valid units defined.",
-		fn: func(d Dashboard, p Panel) Result {
+		fn: func(d *Dashboard, p Panel) Result {
 			switch p.Type {
 			case panelTypeStat, panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries, panelTypeGauge:
 				configuredUnit := getConfiguredUnit(p)
