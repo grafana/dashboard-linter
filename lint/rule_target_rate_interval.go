@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -62,7 +63,8 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 				// Now check if the parent is a rate function
 				call, ok := parents[len(parents)-1].(*parser.Call)
 				if !ok {
-					return fmt.Errorf("Dashboard '%s', panel '%s', target idx '%d' invalid PromQL query '%s': $__rate_interval used in non-rate function", d.Title, p.Title, t.Idx, t.Expr)
+					return errors.New(NewErrorMessage(d, p, t, fmt.Sprintf(
+						"invalid PromQL query '%s': $__rate_interval used in non-rate function", t.Expr)))
 				}
 
 				if call.Func.Name != "rate" && call.Func.Name != "irate" {
@@ -70,7 +72,8 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 					return nil
 				}
 
-				return fmt.Errorf("Dashboard '%s', panel '%s', target idx '%d' invalid PromQL query '%s': should use $__rate_interval", d.Title, p.Title, t.Idx, t.Expr)
+				return errors.New(NewErrorMessage(d, p, t,
+					fmt.Sprintf("invalid PromQL query '%s': should use $__rate_interval", t.Expr)))
 			}), expr, nil)
 			if err != nil {
 				return Result{
