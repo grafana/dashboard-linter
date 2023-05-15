@@ -80,11 +80,11 @@ func TestParseTemplateValue(t *testing.T) {
 		},
 		{
 			input:    []byte(`{}`),
-			expected: TemplateValue{Text:"", Value:""},
+			expected: TemplateValue{Text: "", Value: ""},
 		},
 		{
 			input:    []byte(`{"text": "text"}`),
-			expected: TemplateValue{Text:"text", Value:""},
+			expected: TemplateValue{Text: "text", Value: ""},
 		},
 	} {
 		var actual TemplateValue

@@ -3,13 +3,12 @@ package lint
 import "fmt"
 
 func NewPanelNoTargetsRule() *PanelRuleFunc {
-
 	return &PanelRuleFunc{
 		name:        "panel-no-targets-rule",
 		description: "Checks that each panel has at least one target.",
 		fn: func(d Dashboard, p Panel) Result {
 			switch p.Type {
-			case "stat", "singlestat", "graph", "table", "timeseries", "gauge":
+			case panelTypeStat, panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries, panelTypeGauge:
 				if p.Targets != nil {
 					return ResultSuccess
 				}

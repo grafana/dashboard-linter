@@ -10,7 +10,7 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 		description: "Checks that each panel uses the templated datasource.",
 		fn: func(d Dashboard, p Panel) Result {
 			switch p.Type {
-			case "singlestat", "graph", "table", "timeseries":
+			case panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries:
 				// That a templated datasource exists, is the responsibility of another rule.
 				templatedDs := d.GetTemplateByType("datasource")
 				availableDsUids := make(map[string]struct{}, len(templatedDs)*2)

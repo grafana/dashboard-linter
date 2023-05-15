@@ -44,7 +44,7 @@ func checkTemplate(d Dashboard, name string) *Result {
 		}
 	}
 
-	if t.Type != "query" {
+	if t.Type != targetTypeQuery {
 		return &Result{
 			Severity: Error,
 			Message:  fmt.Sprintf("Dashboard '%s' %s template should be a Prometheus query, is currently '%s'", d.Title, name, t.Type),

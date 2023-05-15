@@ -39,8 +39,8 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 					allowedDsUIDs["datasource"] = struct{}{}
 					allowedDsNames["Data source"] = struct{}{}
 
-					uidError = uidError + ", or 'datasource'"
-					nameError = nameError + ", or 'Data source'"
+					uidError += ", or 'datasource'"
+					nameError += ", or 'Data source'"
 				}
 
 				allowedDsUIDs[querySpecificUID] = struct{}{}

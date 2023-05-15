@@ -18,37 +18,7 @@ func NewTargetCounterAggRule() *TargetRuleFunc {
 				return ResultSuccess
 			}
 
-			err = parser.Walk(inspector(func(node parser.Node, parents []parser.Node) error {
-				// We're looking for either a VectorSelector. This skips any other node type.
-				selector, ok := node.(*parser.VectorSelector)
-				if !ok {
-					return nil
-				}
-
-				errmsg := fmt.Errorf("Dashboard '%s', panel '%s', target idx '%d' counter metric '%s' is not aggregated with rate, irate, or increase", d.Title, p.Title, t.Idx, node.String())
-
-				if strings.HasSuffix(selector.String(), "_total") {
-					// The vector selector must have (at least) two parents
-					if len(parents) < 2 {
-						return errmsg
-					}
-					// The vector must be ranged
-					_, ok := parents[len(parents)-1].(*parser.MatrixSelector)
-					if !ok {
-						return errmsg
-					}
-					// The range, must be in a function call
-					call, ok := parents[len(parents)-2].(*parser.Call)
-					if !ok {
-						return errmsg
-					}
-					// Finally, the immediate ancestor call must be rate, irate, or increase
-					if call.Func.Name != "rate" && call.Func.Name != "irate" && call.Func.Name != "increase" {
-						return errmsg
-					}
-				}
-				return nil
-			}), expr, nil)
+			err = parser.Walk(newInspector(d, p, t), expr, nil)
 			if err != nil {
 				return Result{
 					Severity: Error,
@@ -57,5 +27,39 @@ func NewTargetCounterAggRule() *TargetRuleFunc {
 			}
 			return ResultSuccess
 		},
+	}
+}
+
+func newInspector(d Dashboard, p Panel, t Target) inspector {
+	return func(node parser.Node, parents []parser.Node) error {
+		// We're looking for either a VectorSelector. This skips any other node type.
+		selector, ok := node.(*parser.VectorSelector)
+		if !ok {
+			return nil
+		}
+
+		errmsg := fmt.Errorf("Dashboard '%s', panel '%s', target idx '%d' counter metric '%s' is not aggregated with rate, irate, or increase", d.Title, p.Title, t.Idx, node.String())
+
+		if strings.HasSuffix(selector.String(), "_total") {
+			// The vector selector must have (at least) two parents
+			if len(parents) < 2 {
+				return errmsg
+			}
+			// The vector must be ranged
+			_, ok := parents[len(parents)-1].(*parser.MatrixSelector)
+			if !ok {
+				return errmsg
+			}
+			// The range, must be in a function call
+			call, ok := parents[len(parents)-2].(*parser.Call)
+			if !ok {
+				return errmsg
+			}
+			// Finally, the immediate ancestor call must be rate, irate, or increase
+			if call.Func.Name != "rate" && call.Func.Name != "irate" && call.Func.Name != "increase" {
+				return errmsg
+			}
+		}
+		return nil
 	}
 }

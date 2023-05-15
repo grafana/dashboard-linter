@@ -10,7 +10,7 @@ func NewTemplateOnTimeRangeReloadRule() *DashboardRuleFunc {
 		description: "Checks that the dashboard template variables are configured to reload on time change.",
 		fn: func(d Dashboard) Result {
 			for _, template := range d.Templating.List {
-				if template.Type != "query" {
+				if template.Type != targetTypeQuery {
 					continue
 				}
 
