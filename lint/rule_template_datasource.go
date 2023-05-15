@@ -21,7 +21,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				}
 			}
 
-			// Should there be a "Template" rule type which will iterate over all dashboard templates and execute rules?
+			// TODO: Should there be a "Template" rule type which will iterate over all dashboard templates and execute rules?
 			// This will only return one linting error at a time, when there may be multiple issues with templated datasources.
 
 			titleCaser := cases.Title(language.English)
@@ -46,7 +46,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				allowedDsUIDs[querySpecificUID] = struct{}{}
 				allowedDsNames[querySpecificName] = struct{}{}
 
-				// These are really two different rules
+				// TODO: These are really two different rules
 				_, ok := allowedDsUIDs[templDs.Name]
 				if !ok {
 					return Result{

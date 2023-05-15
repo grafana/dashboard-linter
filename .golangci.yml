@@ -23,7 +23,6 @@ linters:
     - varcheck
     - whitespace
     - gocognit
-    - godox
     - ifshort
     - importas
     - forbidigo
