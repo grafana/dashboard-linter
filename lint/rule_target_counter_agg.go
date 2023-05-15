@@ -31,7 +31,7 @@ func NewTargetCounterAggRule() *TargetRuleFunc {
 	}
 }
 
-func newInspector(d Dashboard, p Panel, t Target) inspector {
+func newInspector(d *Dashboard, p Panel, t Target) inspector {
 	return func(node parser.Node, parents []parser.Node) error {
 		// We're looking for either a VectorSelector. This skips any other node type.
 		selector, ok := node.(*parser.VectorSelector)

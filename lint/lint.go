@@ -142,8 +142,6 @@ func GetDataSource(raw interface{}) (Datasource, error) {
 	default:
 		return "", fmt.Errorf("invalid type for field 'datasource': %v", v)
 	}
-
-	return "", nil
 }
 
 // Target is a deliberately incomplete representation of the Dashboard -> Panel -> Target type in grafana.

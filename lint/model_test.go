@@ -47,6 +47,7 @@ func TestParseDatasource(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var raw interface{}
 			err := json.Unmarshal(tc.input, &raw)
+			require.NoError(t, err)
 			actual, err := GetDataSource(raw)
 			require.Equal(t, tc.err, err)
 			require.Equal(t, tc.expected, actual)
@@ -98,6 +99,7 @@ func TestParseTemplateValue(t *testing.T) {
 	} {
 		var raw RawTemplateValue
 		err := json.Unmarshal(tc.input, &raw)
+		require.NoError(t, err)
 		actual, err := raw.Get()
 		require.Equal(t, tc.err, err)
 		require.Equal(t, tc.expected, actual)

@@ -91,7 +91,7 @@ func write(dashboard lint.Dashboard, filename string, old []byte) error {
 	}
 	json := strings.ReplaceAll(string(b), "\"options\": null,", "\"options\": [],")
 
-	return os.WriteFile(filename, []byte(json), 0300)
+	return os.WriteFile(filename, []byte(json), 0600)
 }
 
 var rulesCmd = &cobra.Command{
