@@ -5,7 +5,8 @@ import "fmt"
 func NewPanelUnitsRule() *PanelRuleFunc {
 	validUnits := []string{
 		// Enumerated from: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
-
+		// Scalar, e.g. number of loaded classes
+		"none",
 		// Misc
 		"string",
 		// short

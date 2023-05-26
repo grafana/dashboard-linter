@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -38,7 +39,8 @@ func newInspector(d Dashboard, p Panel, t Target) inspector {
 			return nil
 		}
 
-		errmsg := fmt.Errorf("Dashboard '%s', panel '%s', target idx '%d' counter metric '%s' is not aggregated with rate, irate, or increase", d.Title, p.Title, t.Idx, node.String())
+		errmsg := errors.New(NewErrorMessage(d, p, t,
+			fmt.Sprintf("counter metric '%s' is not aggregated with rate, irate, or increase", node.String())))
 
 		if strings.HasSuffix(selector.String(), "_total") {
 			// The vector selector must have (at least) two parents

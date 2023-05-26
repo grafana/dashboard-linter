@@ -65,10 +65,7 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 			}
 
 			if _, err := parsePromQL(t.Expr, d.Templating.List); err != nil {
-				return Result{
-					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s', panel '%s', target idx '%d' invalid PromQL query '%s': %v", d.Title, p.Title, t.Idx, t.Expr, err),
-				}
+				return NewErrorResult(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err))
 			}
 
 			return ResultSuccess
