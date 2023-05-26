@@ -39,7 +39,7 @@ func TestPanelUnits(t *testing.T) {
 				Type:        "singlestat",
 				Datasource:  "foo",
 				Title:       "bar",
-				FieldConfig: &FieldConfig{},
+				FieldConfig: FieldConfig{},
 			},
 		},
 		{
@@ -69,7 +69,7 @@ func TestPanelUnits(t *testing.T) {
 				Type:       "singlestat",
 				Datasource: "foo",
 				Title:      "bar",
-				FieldConfig: &FieldConfig{
+				FieldConfig: FieldConfig{
 					Defaults: Defaults{
 						Unit: "none",
 					},
