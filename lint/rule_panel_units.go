@@ -66,23 +66,21 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-units-rule",
 		description: "Checks that each panel uses has valid units defined.",
-		fn: func(d *Dashboard, p Panel) Result {
+		fn: func(d Dashboard, p Panel) PanelRuleResults {
+			r := PanelRuleResults{}
 			switch p.Type {
 			case panelTypeStat, panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries, panelTypeGauge:
 				configuredUnit := getConfiguredUnit(p)
 				if configuredUnit != "" {
 					for _, u := range validUnits {
 						if u == p.FieldConfig.Defaults.Unit {
-							return ResultSuccess
+							return r
 						}
 					}
 				}
-				return Result{
-					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s', panel '%s' has no or invalid units defined: '%s'", d.Title, p.Title, configuredUnit),
-				}
+				r.AddError(d, p, fmt.Sprintf("has no or invalid units defined: '%s'", configuredUnit))
 			}
-			return ResultSuccess
+			return r
 		},
 	}
 }

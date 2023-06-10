@@ -8,25 +8,23 @@ func TestJobTemplate(t *testing.T) {
 	linter := NewTemplateJobRule()
 
 	for _, tc := range []struct {
-		result    Result
+		name      string
+		result    []Result
 		dashboard Dashboard
 	}{
-		// Non-promtheus dashboards shouldn't fail.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			name:   "Non-promtheus dashboards shouldn't fail.",
+			result: []Result{ResultSuccess},
 			dashboard: Dashboard{
 				Title: "test",
 			},
 		},
-		// Missing job template.
 		{
-			result: Result{
+			name: "Missing job template.",
+			result: []Result{{
 				Severity: Error,
 				Message:  "Dashboard 'test' is missing the job template",
-			},
+			}},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -41,12 +39,14 @@ func TestJobTemplate(t *testing.T) {
 				},
 			},
 		},
-		// Wrong datasource.
 		{
-			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'test' job template should use datasource '$datasource', is currently 'foo'",
-			},
+			name: "Wrong datasource.",
+			result: []Result{
+				{Severity: Error, Message: "Dashboard 'test' job template should use datasource '$datasource', is currently 'foo'"},
+				{Severity: Error, Message: "Dashboard 'test' job template should be a Prometheus query, is currently ''"},
+				{Severity: Warning, Message: "Dashboard 'test' job template should be a labeled 'Job', is currently ''"},
+				{Severity: Error, Message: "Dashboard 'test' job template should be a multi select"},
+				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"}},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -65,12 +65,13 @@ func TestJobTemplate(t *testing.T) {
 				},
 			},
 		},
-		// Wrong type.
 		{
-			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'test' job template should be a Prometheus query, is currently 'bar'",
-			},
+			name: "Wrong type.",
+			result: []Result{
+				{Severity: Error, Message: "Dashboard 'test' job template should be a Prometheus query, is currently 'bar'"},
+				{Severity: Warning, Message: "Dashboard 'test' job template should be a labeled 'Job', is currently ''"},
+				{Severity: Error, Message: "Dashboard 'test' job template should be a multi select"},
+				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"}},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -90,12 +91,12 @@ func TestJobTemplate(t *testing.T) {
 				},
 			},
 		},
-		// Wrong job label.
 		{
-			result: Result{
-				Severity: Warning,
-				Message:  "Dashboard 'test' job template should be a labeled 'Job', is currently 'bar'",
-			},
+			name: "Wrong job label.",
+			result: []Result{
+				{Severity: Warning, Message: "Dashboard 'test' job template should be a labeled 'Job', is currently 'bar'"},
+				{Severity: Error, Message: "Dashboard 'test' job template should be a multi select"},
+				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"}},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -116,12 +117,9 @@ func TestJobTemplate(t *testing.T) {
 				},
 			},
 		},
-		// What success looks like.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			name:   "OK",
+			result: []Result{ResultSuccess},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -153,6 +151,8 @@ func TestJobTemplate(t *testing.T) {
 			},
 		},
 	} {
-		testRule(t, linter, tc.dashboard, tc.result)
+		t.Run(tc.name, func(t *testing.T) {
+			testMultiResultRule(t, linter, tc.dashboard, tc.result)
+		})
 	}
 }

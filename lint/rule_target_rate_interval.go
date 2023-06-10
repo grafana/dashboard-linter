@@ -1,7 +1,6 @@
 package lint
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -28,21 +27,22 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-rate-interval-rule",
 		description: "Checks that each target uses $__rate_interval.",
-		fn: func(d *Dashboard, p Panel, t Target) Result {
+		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
+			r := TargetRuleResults{}
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
-				return ResultSuccess
+				return r
 			}
 
 			if !panelHasQueries(p) {
 				// Don't lint certain types of panels.
-				return ResultSuccess
+				return r
 			}
 
 			expr, err := parsePromQL(t.Expr, d.Templating.List)
 			if err != nil {
 				// Invalid PromQL is another rule
-				return ResultSuccess
+				return r
 			}
 			err = parser.Walk(inspector(func(node parser.Node, parents []parser.Node) error {
 				selector, ok := node.(*parser.MatrixSelector)
@@ -63,8 +63,8 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 				// Now check if the parent is a rate function
 				call, ok := parents[len(parents)-1].(*parser.Call)
 				if !ok {
-					return errors.New(NewErrorMessage(d, p, t, fmt.Sprintf(
-						"invalid PromQL query '%s': $__rate_interval used in non-rate function", t.Expr)))
+					return fmt.Errorf(
+						"invalid PromQL query '%s': $__rate_interval used in non-rate function", t.Expr)
 				}
 
 				if call.Func.Name != "rate" && call.Func.Name != "irate" {
@@ -72,17 +72,13 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 					return nil
 				}
 
-				return errors.New(NewErrorMessage(d, p, t,
-					fmt.Sprintf("invalid PromQL query '%s': should use $__rate_interval", t.Expr)))
+				return fmt.Errorf("invalid PromQL query '%s': should use $__rate_interval", t.Expr)
 			}), expr, nil)
 			if err != nil {
-				return Result{
-					Severity: Error,
-					Message:  err.Error(),
-				}
+				r.AddError(d, p, t, err.Error())
 			}
 
-			return ResultSuccess
+			return r
 		},
 	}
 }

@@ -8,12 +8,12 @@ func TestTargetPromQLRule(t *testing.T) {
 	linter := NewTargetPromQLRule()
 
 	for _, tc := range []struct {
-		result Result
+		result []Result
 		panel  Panel
 	}{
 		// Don't fail non-prometheus panels.
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title:      "panel",
 				Datasource: "foo",
@@ -26,7 +26,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// This is what a valid panel looks like.
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -39,7 +39,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Invalid query
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -52,10 +52,10 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Timeseries support
 		{
-			result: Result{
+			result: []Result{{
 				Severity: Error,
 				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'foo(bar.baz)': 1:8: parse error: unexpected character: '.'",
-			},
+			}},
 			panel: Panel{
 				Title: "panel",
 				Type:  "timeseries",
@@ -68,7 +68,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Variable substitutions
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -81,7 +81,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Variable substitutions with ${...}
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -94,7 +94,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Variable substitutions inside by clause
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -107,7 +107,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Template variables substitutions
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -119,7 +119,7 @@ func TestTargetPromQLRule(t *testing.T) {
 			},
 		},
 		{
-			result: ResultSuccess,
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -132,10 +132,10 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Empty PromQL expression
 		{
-			result: Result{
+			result: []Result{{
 				Severity: Error,
 				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': 1:1: parse error: no expression found in input",
-			},
+			}},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -148,9 +148,15 @@ func TestTargetPromQLRule(t *testing.T) {
 		},
 		// Reference another panel that does not exist
 		{
-			result: Result{
-				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel' invalid panel reference in target, reference panel id: '2'",
+			result: []Result{
+				{
+					Severity: Error,
+					Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' Invalid panel reference in target",
+				},
+				{
+					Severity: Error,
+					Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': 1:1: parse error: no expression found in input",
+				},
 			},
 			panel: Panel{
 				Id:    1,
@@ -207,6 +213,6 @@ func TestTargetPromQLRule(t *testing.T) {
 			},
 		}
 
-		testRule(t, linter, dashboard, tc.result)
+		testMultiResultRule(t, linter, dashboard, tc.result)
 	}
 }

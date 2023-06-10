@@ -24,20 +24,6 @@ func TestTemplateOnTimeRangeReloadRule(t *testing.T) {
 			Refresh:    2,
 		},
 	}
-	bad := []Template{
-		{
-			Type:  "datasource",
-			Query: "prometheus",
-		},
-		{
-			Name:       "namespaces",
-			Datasource: "$datasource",
-			Query:      "label_values(up{job=~\"$job\"}, namespace)",
-			Type:       "query",
-			Label:      "job",
-			Refresh:    1,
-		},
-	}
 	for _, tc := range []struct {
 		name      string
 		result    Result
@@ -45,11 +31,8 @@ func TestTemplateOnTimeRangeReloadRule(t *testing.T) {
 		fixed     *Dashboard
 	}{
 		{
-			name: "OK",
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			name:   "OK",
+			result: ResultSuccess,
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -60,17 +43,27 @@ func TestTemplateOnTimeRangeReloadRule(t *testing.T) {
 			},
 		},
 		{
-			name: "autofix",
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			name:   "autofix",
+			result: ResultSuccess,
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
 					List []Template `json:"list"`
 				}{
-					List: bad,
+					List: ([]Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "namespaces",
+							Datasource: "$datasource",
+							Query:      "label_values(up{job=~\"$job\"}, namespace)",
+							Type:       "query",
+							Label:      "job",
+							Refresh:    1,
+						},
+					}),
 				},
 			},
 			fixed: &Dashboard{
@@ -93,14 +86,27 @@ func TestTemplateOnTimeRangeReloadRule(t *testing.T) {
 				Templating: struct {
 					List []Template `json:"list"`
 				}{
-					List: bad,
+					List: ([]Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "namespaces",
+							Datasource: "$datasource",
+							Query:      "label_values(up{job=~\"$job\"}, namespace)",
+							Type:       "query",
+							Label:      "job",
+							Refresh:    1,
+						},
+					}),
 				},
 			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			autofix := tc.fixed != nil
-			testRuleWithAutofix(t, linter, &tc.dashboard, tc.result, autofix)
+			testRuleWithAutofix(t, linter, &tc.dashboard, []Result{tc.result}, autofix)
 			if autofix {
 				expected, _ := json.Marshal(tc.fixed)
 				actual, _ := json.Marshal(tc.dashboard)

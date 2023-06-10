@@ -12,13 +12,12 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-datasource-rule",
 		description: "Checks that the dashboard has a templated datasource.",
-		fn: func(d *Dashboard, cfg *ConfigurationFile) Result {
+		fn: func(d Dashboard) DashboardRuleResults {
+			r := DashboardRuleResults{}
+
 			templatedDs := d.GetTemplateByType("datasource")
 			if len(templatedDs) == 0 {
-				return Result{
-					Severity: Error,
-					Message:  fmt.Sprintf("Dashboard '%s' does not have a templated data source", d.Title),
-				}
+				r.AddError(d, "does not have a templated data source")
 			}
 
 			// TODO: Should there be a "Template" rule type which will iterate over all dashboard templates and execute rules?
@@ -33,8 +32,8 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				allowedDsUIDs := make(map[string]struct{})
 				allowedDsNames := make(map[string]struct{})
 
-				uidError := fmt.Sprintf("Dashboard '%s' templated data source variable named '%s', should be named '%s'", d.Title, templDs.Name, querySpecificUID)
-				nameError := fmt.Sprintf("Dashboard '%s' templated data source variable labeled '%s', should be labeled '%s'", d.Title, templDs.Label, querySpecificName)
+				uidError := fmt.Sprintf("templated data source variable named '%s', should be named '%s'", templDs.Name, querySpecificUID)
+				nameError := fmt.Sprintf("templated data source variable labeled '%s', should be labeled '%s'", templDs.Label, querySpecificName)
 				if len(templatedDs) == 1 {
 					allowedDsUIDs["datasource"] = struct{}{}
 					allowedDsNames["Data source"] = struct{}{}
@@ -49,27 +48,21 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				// TODO: These are really two different rules
 				_, ok := allowedDsUIDs[templDs.Name]
 				if !ok {
-					return Result{
-						Severity: Error,
-						Message:  uidError,
-					}
+					r.AddError(d, uidError)
 				}
 
 				_, ok = allowedDsNames[templDs.Label]
 				if !ok {
-					return Result{
-						Severity: Warning,
-						Message:  nameError,
-					}
+					r.AddWarning(d, nameError)
 				}
 			}
 
-			return ResultSuccess
+			return r
 		},
 	}
 }
 
-func getTemplateDatasource(d *Dashboard) *Template {
+func getTemplateDatasource(d Dashboard) *Template {
 	for _, template := range d.Templating.List {
 		if template.Type != "datasource" {
 			continue

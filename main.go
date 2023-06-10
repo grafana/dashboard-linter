@@ -53,7 +53,7 @@ var lintCmd = &cobra.Command{
 		config.Autofix = lintAutofixFlag
 
 		rules := lint.NewRuleSet()
-		results, err := rules.Lint([]*lint.Dashboard{&dashboard}, config)
+		results, err := rules.Lint([]lint.Dashboard{dashboard})
 		if err != nil {
 			return fmt.Errorf("failed to lint dashboard: %v", err)
 		}
@@ -62,9 +62,12 @@ var lintCmd = &cobra.Command{
 		results.ReportByRule()
 
 		if config.Autofix {
-			err = write(dashboard, filename, buf)
-			if err != nil {
-				return err
+			changes := results.AutoFix(&dashboard)
+			if changes > 0 {
+				err = write(dashboard, filename, buf)
+				if err != nil {
+					return err
+				}
 			}
 		}
 

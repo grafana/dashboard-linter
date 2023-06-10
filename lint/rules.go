@@ -1,79 +1,166 @@
 package lint
 
-import "fmt"
-
 type Rule interface {
 	Description() string
 	Name() string
-	Lint(*Dashboard, *ResultSet)
+	Lint(Dashboard, *ResultSet)
 }
 
 type DashboardRuleFunc struct {
 	name, description string
-	fn                func(*Dashboard, *ConfigurationFile) Result
+	fn                func(Dashboard) DashboardRuleResults
 }
 
-func NewDashboardRuleFunc(name, description string, fn func(*Dashboard, *ConfigurationFile) Result) Rule {
+func NewDashboardRuleFunc(name, description string, fn func(Dashboard) DashboardRuleResults) Rule {
 	return &DashboardRuleFunc{name, description, fn}
 }
 
 func (f DashboardRuleFunc) Name() string        { return f.name }
 func (f DashboardRuleFunc) Description() string { return f.description }
-func (f DashboardRuleFunc) Lint(d *Dashboard, s *ResultSet) {
+func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
+	dashboardResults := f.fn(d).Results
+	if len(dashboardResults) == 0 {
+		dashboardResults = []DashboardResult{{
+			Result: ResultSuccess,
+		}}
+	}
+	rr := make([]FixableResult, len(dashboardResults))
+	for i, r := range dashboardResults {
+		var fix func(*Dashboard)
+		if r.Fix != nil {
+			fix = func(dashboard *Dashboard) {
+				r.Fix(dashboard)
+			}
+		}
+		rr[i] = FixableResult{
+			Result: Result{
+				Severity: r.Severity,
+				Message:  r.Message,
+			},
+			Fix: fix,
+		}
+	}
+
 	s.AddResult(ResultContext{
-		Result:    f.fn(d, s.config),
+		Result:    RuleResults{rr},
 		Rule:      f,
-		Dashboard: d,
+		Dashboard: &d,
 	})
 }
 
 type PanelRuleFunc struct {
 	name, description string
-	fn                func(*Dashboard, Panel) Result
+	fn                func(Dashboard, Panel) PanelRuleResults
 }
 
-func NewPanelRuleFunc(name, description string, fn func(*Dashboard, Panel) Result) Rule {
+func NewPanelRuleFunc(name, description string, fn func(Dashboard, Panel) PanelRuleResults) Rule {
 	return &PanelRuleFunc{name, description, fn}
 }
 
 func (f PanelRuleFunc) Name() string        { return f.name }
 func (f PanelRuleFunc) Description() string { return f.description }
-func (f PanelRuleFunc) Lint(d *Dashboard, s *ResultSet) {
-	for _, p := range d.GetPanels() {
-		p := p // capture loop variable
+func (f PanelRuleFunc) Lint(d Dashboard, s *ResultSet) {
+	for pi, p := range d.GetPanels() {
+		p := p   // capture loop variable
+		pi := pi // capture loop variable
+		var rr []FixableResult
+
+		panelResults := f.fn(d, p).Results
+		if len(panelResults) == 0 {
+			panelResults = []PanelResult{{
+				Result: ResultSuccess,
+			}}
+		}
+
+		for _, r := range panelResults {
+			var fix func(*Dashboard)
+			if r.Fix != nil {
+				fix = fixPanel(pi, r)
+			}
+			rr = append(rr, FixableResult{
+				Result: Result{
+					Severity: r.Severity,
+					Message:  r.Message,
+				},
+				Fix: fix,
+			})
+		}
+
 		s.AddResult(ResultContext{
-			Result:    f.fn(d, p),
+			Result:    RuleResults{rr},
 			Rule:      f,
-			Dashboard: d,
+			Dashboard: &d,
 			Panel:     &p,
 		})
 	}
 }
 
-type TargetRuleFunc struct {
-	name, description string
-	fn                func(*Dashboard, Panel, Target) Result
+func fixPanel(pi int, r PanelResult) func(dashboard *Dashboard) {
+	return func(dashboard *Dashboard) {
+		p := dashboard.GetPanels()[pi]
+		r.Fix(*dashboard, &p)
+		dashboard.Panels[pi] = p
+	}
 }
 
-func NewTargetRuleFunc(name, description string, fn func(*Dashboard, Panel, Target) Result) Rule {
+type TargetRuleFunc struct {
+	name, description string
+	fn                func(Dashboard, Panel, Target) TargetRuleResults
+}
+
+func NewTargetRuleFunc(name, description string, fn func(Dashboard, Panel, Target) TargetRuleResults) Rule {
 	return &TargetRuleFunc{name, description, fn}
 }
 
 func (f TargetRuleFunc) Name() string        { return f.name }
 func (f TargetRuleFunc) Description() string { return f.description }
-func (f TargetRuleFunc) Lint(d *Dashboard, s *ResultSet) {
-	for _, p := range d.GetPanels() {
-		p := p // capture loop variable
-		for _, t := range p.Targets {
-			t := t // capture loop variable
+func (f TargetRuleFunc) Lint(d Dashboard, s *ResultSet) {
+	for pi, p := range d.GetPanels() {
+		p := p   // capture loop variable
+		pi := pi // capture loop variable
+		for ti, t := range p.Targets {
+			t := t   // capture loop variable
+			ti := ti // capture loop variable
+			var rr []FixableResult
+
+			targetResults := f.fn(d, p, t).Results
+			if len(targetResults) == 0 {
+				targetResults = []TargetResult{{
+					Result: ResultSuccess,
+				}}
+			}
+
+			for _, r := range targetResults {
+				var fix func(*Dashboard)
+				if r.Fix != nil {
+					fix = fixTarget(pi, ti, r)
+				}
+				rr = append(rr, FixableResult{
+					Result: Result{
+						Severity: r.Severity,
+						Message:  r.Message,
+					},
+					Fix: fix,
+				})
+			}
 			s.AddResult(ResultContext{
-				Result:    f.fn(d, p, t),
+				Result:    RuleResults{rr},
 				Rule:      f,
-				Dashboard: d,
+				Dashboard: &d,
 				Panel:     &p,
 				Target:    &t,
 			})
 		}
+	}
+}
+
+func fixTarget(pi int, ti int, r TargetResult) func(dashboard *Dashboard) {
+	return func(dashboard *Dashboard) {
+		p := dashboard.GetPanels()[pi]
+		t := p.Targets[ti]
+		r.Fix(*dashboard, p, &t)
+		p.Targets[ti] = t
+		dashboard.Panels[pi] = p
 	}
 }
 
@@ -111,25 +198,12 @@ func (s *RuleSet) Add(r Rule) {
 	s.rules = append(s.rules, r)
 }
 
-func (s *RuleSet) Lint(dashboards []*Dashboard, cfg *ConfigurationFile) (*ResultSet, error) {
-	resSet := &ResultSet{
-		config: cfg,
-	}
+func (s *RuleSet) Lint(dashboards []Dashboard) (*ResultSet, error) {
+	resSet := &ResultSet{}
 	for _, d := range dashboards {
 		for _, r := range s.rules {
 			r.Lint(d, resSet)
 		}
 	}
 	return resSet, nil
-}
-
-func NewErrorResult(d Dashboard, p Panel, t Target, msg string) Result {
-	return Result{
-		Severity: Error,
-		Message:  NewErrorMessage(d, p, t, msg),
-	}
-}
-
-func NewErrorMessage(d Dashboard, p Panel, t Target, msg string) string {
-	return fmt.Sprintf("Dashboard '%s', panel '%s', target idx '%d' %s", d.Title, p.Title, t.Idx, msg)
 }
