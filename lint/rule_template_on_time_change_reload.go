@@ -20,7 +20,7 @@ func NewTemplateOnTimeRangeReloadRule() *DashboardRuleFunc {
 					r.AddFixableError(d,
 						fmt.Sprintf("templated datasource variable named '%s', should be set to be refreshed "+
 							"'On Time Range Change (value 2)', is currently '%d'", template.Name, template.Refresh),
-						fixTemplateOnTimeRangeReloadRule(d, i))
+						fixTemplateOnTimeRangeReloadRule(i))
 				}
 			}
 			return r
@@ -28,8 +28,8 @@ func NewTemplateOnTimeRangeReloadRule() *DashboardRuleFunc {
 	}
 }
 
-func fixTemplateOnTimeRangeReloadRule(d Dashboard, i int) func(dashboard *Dashboard) {
-	return func(dashboard *Dashboard) {
+func fixTemplateOnTimeRangeReloadRule(i int) func(*Dashboard) {
+	return func(d *Dashboard) {
 		d.Templating.List[i].Refresh = 2
 	}
 }

@@ -58,9 +58,6 @@ var lintCmd = &cobra.Command{
 			return fmt.Errorf("failed to lint dashboard: %v", err)
 		}
 
-		results.Configure(config)
-		results.ReportByRule()
-
 		if config.Autofix {
 			changes := results.AutoFix(&dashboard)
 			if changes > 0 {
@@ -70,6 +67,9 @@ var lintCmd = &cobra.Command{
 				}
 			}
 		}
+
+		results.Configure(config)
+		results.ReportByRule()
 
 		if lintStrictFlag && results.MaximumSeverity() >= lint.Warning {
 			return fmt.Errorf("there were linting errors, please see previous output")

@@ -43,8 +43,11 @@ func TestTemplateOnTimeRangeReloadRule(t *testing.T) {
 			},
 		},
 		{
-			name:   "autofix",
-			result: ResultSuccess,
+			name: "autofix",
+			result: Result{
+				Severity: Fixed,
+				Message:  `Dashboard 'test' templated datasource variable named 'namespaces', should be set to be refreshed 'On Time Range Change (value 2)', is currently '1'`,
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {

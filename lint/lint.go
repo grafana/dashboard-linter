@@ -14,6 +14,7 @@ const (
 	Warning
 	Error
 	Quiet
+	Fixed
 
 	Prometheus = "prometheus"
 )

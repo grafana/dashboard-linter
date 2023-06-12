@@ -121,6 +121,8 @@ func (r Result) TtyPrint() {
 	switch s := r.Severity; s {
 	case Success:
 		sym = "✔️"
+	case Fixed:
+		sym = "❌ (fixed)"
 	case Exclude:
 		sym = "➖"
 	case Warning:
@@ -209,7 +211,7 @@ func (rs *ResultSet) AutoFix(d *Dashboard) int {
 				// Fix is only present when something can be fixed
 				fixableResult.Fix(d)
 				changes++
-				r.Result.Results[i].Result = ResultSuccess
+				r.Result.Results[i].Result.Severity = Fixed
 			}
 		}
 	}
