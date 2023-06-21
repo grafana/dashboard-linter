@@ -14,13 +14,13 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: v1.52
+          version: v1.53
 
           # Optional: working directory, useful for monorepos
           # working-directory: somedir
 
           # Optional: golangci-lint command line arguments.
-          # args: --issues-exit-code=0
+          args: --timeout=80s
 
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           # only-new-issues: true

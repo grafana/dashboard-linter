@@ -26,10 +26,7 @@ func TestPanelDatasource(t *testing.T) {
 			},
 		},
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Type:       "singlestat",
 				Datasource: "$datasource",
@@ -42,10 +39,7 @@ func TestPanelDatasource(t *testing.T) {
 			},
 		},
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Type:       "singlestat",
 				Datasource: "${datasource}",
@@ -58,10 +52,7 @@ func TestPanelDatasource(t *testing.T) {
 			},
 		},
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Type:       "singlestat",
 				Datasource: "$prometheus_datasource",
@@ -74,10 +65,7 @@ func TestPanelDatasource(t *testing.T) {
 			},
 		},
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			panel: Panel{
 				Type:       "singlestat",
 				Datasource: "${prometheus_datasource}",
@@ -103,8 +91,28 @@ func TestPanelDatasource(t *testing.T) {
 // testRule is a small helper that tests a lint rule and expects it to only return
 // a single result.
 func testRule(t *testing.T, rule Rule, d Dashboard, result Result) {
-	var rs ResultSet
-	rule.Lint(d, &rs)
+	testRuleWithAutofix(t, rule, &d, []Result{result}, false)
+}
+func testMultiResultRule(t *testing.T, rule Rule, d Dashboard, result []Result) {
+	testRuleWithAutofix(t, rule, &d, result, false)
+}
+
+func testRuleWithAutofix(t *testing.T, rule Rule, d *Dashboard, result []Result, autofix bool) {
+	rs := ResultSet{}
+	rule.Lint(*d, &rs)
+	if autofix {
+		rs.AutoFix(d)
+	}
 	require.Len(t, rs.results, 1)
-	require.Equal(t, result, rs.results[0].Result)
+	actual := rs.results[0].Result
+	if actual.Results[0].Severity == Quiet {
+		// all test cases expect success
+		actual.Results[0].Severity = Success
+	}
+	rr := make([]Result, len(actual.Results))
+	for i, r := range actual.Results {
+		rr[i] = r.Result
+	}
+
+	require.Equal(t, result, rr)
 }

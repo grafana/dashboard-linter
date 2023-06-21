@@ -14,6 +14,7 @@ const (
 	Warning
 	Error
 	Quiet
+	Fixed
 
 	Prometheus = "prometheus"
 )
@@ -21,43 +22,40 @@ const (
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Template struct {
-	Name       string           `json:"name"`
-	Label      string           `json:"label"`
-	Type       string           `json:"type"`
-	Query      string           `json:"query"`
-	Datasource Datasource       `json:"datasource"`
-	Multi      bool             `json:"multi"`
-	AllValue   string           `json:"allValue"`
-	Current    TemplateValue    `json:"current"`
-	Options    []TemplateOption `json:"options"`
-	Refresh    int              `json:"refresh"`
+	Name       string             `json:"name"`
+	Label      string             `json:"label"`
+	Type       string             `json:"type"`
+	RawQuery   interface{}        `json:"query"`
+	Query      string             `json:"-"`
+	Datasource interface{}        `json:"datasource,omitempty"`
+	Multi      bool               `json:"multi"`
+	AllValue   string             `json:"allValue,omitempty"`
+	Current    RawTemplateValue   `json:"current"`
+	Options    []RawTemplateValue `json:"options"`
+	Refresh    int                `json:"refresh"`
 	// If you add properties here don't forget to add them to the raw struct, and assign them from raw to actual in UnmarshalJSON below!
 }
+
+type RawTemplateValue map[string]interface{}
 
 type TemplateValue struct {
 	Text  string `json:"text"`
 	Value string `json:"value"`
 }
 
-type TemplateOption struct {
-	TemplateValue
-	Selected bool `json:"selected"`
-}
-
 func (t *Template) UnmarshalJSON(buf []byte) error {
 	var raw struct {
-		Name       string           `json:"name"`
-		Label      string           `json:"label"`
-		Type       string           `json:"type"`
-		Query      interface{}      `json:"query"`
-		Datasource Datasource       `json:"datasource"`
-		Multi      bool             `json:"multi"`
-		AllValue   string           `json:"allValue"`
-		Current    TemplateValue    `json:"current"`
-		Options    []TemplateOption `json:"options"`
-		Refresh    int              `json:"refresh"`
+		Name       string             `json:"name"`
+		Label      string             `json:"label"`
+		Type       string             `json:"type"`
+		Query      interface{}        `json:"query"`
+		Datasource interface{}        `json:"datasource,omitempty"`
+		Multi      bool               `json:"multi"`
+		AllValue   string             `json:"allValue"`
+		Current    RawTemplateValue   `json:"current"`
+		Options    []RawTemplateValue `json:"options"`
+		Refresh    int                `json:"refresh"`
 	}
-
 	if err := json.Unmarshal(buf, &raw); err != nil {
 		return err
 	}
@@ -71,6 +69,7 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	t.Current = raw.Current
 	t.Options = raw.Options
 	t.Refresh = raw.Refresh
+	t.RawQuery = raw.Query
 
 	// the 'adhoc' and 'custom' variable type does not have a field `Query`, so we can't perform these checks
 	if t.Type != "adhoc" && t.Type != "custom" {
@@ -87,15 +86,16 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 	return nil
 }
 
-func (t *TemplateValue) UnmarshalJSON(buf []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(buf, &raw); err != nil {
-		return err
-	}
+func (t *Template) GetDataSource() (Datasource, error) {
+	return GetDataSource(t.Datasource)
+}
 
+func (raw *RawTemplateValue) Get() (TemplateValue, error) {
+	t := TemplateValue{}
 	var txt, val interface{}
+	m := *raw
 
-	txt, ok := raw["text"]
+	txt, ok := m["text"]
 	if ok {
 		switch tt := txt.(type) {
 		case string:
@@ -103,11 +103,11 @@ func (t *TemplateValue) UnmarshalJSON(buf []byte) error {
 		case []interface{}:
 			t.Text = txt.([]interface{})[0].(string)
 		default:
-			return fmt.Errorf("invalid type for field 'text': %v", tt)
+			return t, fmt.Errorf("invalid type for field 'text': %v", tt)
 		}
 	}
 
-	val, ok = raw["value"]
+	val, ok = m["value"]
 	if ok {
 		switch vt := val.(type) {
 		case string:
@@ -115,47 +115,40 @@ func (t *TemplateValue) UnmarshalJSON(buf []byte) error {
 		case []interface{}:
 			t.Value = val.([]interface{})[0].(string)
 		default:
-			return fmt.Errorf("invalid type for field 'value': %v", vt)
+			return t, fmt.Errorf("invalid type for field 'value': %v", vt)
 		}
 	}
 
-	return nil
+	return t, nil
 }
 
 type Datasource string
 
-func (d *Datasource) UnmarshalJSON(buf []byte) error {
-	var raw interface{}
-	if err := json.Unmarshal(buf, &raw); err != nil {
-		return err
-	}
-
+func GetDataSource(raw interface{}) (Datasource, error) {
 	switch v := raw.(type) {
 	case nil:
-		*d = ""
+		return "", nil
 	case string:
-		*d = Datasource(v)
+		return Datasource(v), nil
 	case map[string]interface{}:
 		uid, ok := v["uid"]
 		if !ok {
-			return fmt.Errorf("invalid type for field 'datasource': missing uid field")
+			return "", fmt.Errorf("invalid type for field 'datasource': missing uid field")
 		}
 		uidStr, ok := uid.(string)
 		if !ok {
-			return fmt.Errorf("invalid type for field 'datasource': invalid uid field type, should be string")
+			return "", fmt.Errorf("invalid type for field 'datasource': invalid uid field type, should be string")
 		}
-		*d = Datasource(uidStr)
+		return Datasource(uidStr), nil
 	default:
-		return fmt.Errorf("invalid type for field 'datasource': %v", v)
+		return "", fmt.Errorf("invalid type for field 'datasource': %v", v)
 	}
-
-	return nil
 }
 
 // Target is a deliberately incomplete representation of the Dashboard -> Panel -> Target type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Target struct {
-	Idx     int    // This is the only (best?) way to uniquely identify a target, it is set by
+	Idx     int    `json:"-"` // This is the only (best?) way to uniquely identify a target, it is set by GetPanels
 	Expr    string `json:"expr,omitempty"`
 	PanelId int    `json:"panelId,omitempty"`
 	RefId   string `json:"refId,omitempty"`
@@ -164,19 +157,19 @@ type Target struct {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Id          int         `json:"id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Targets     []Target    `json:"targets,omitempty"`
-	Datasource  Datasource  `json:"datasource"`
-	Type        string      `json:"type"`
-	Panels      []Panel     `json:"panels,omitempty"`
-	FieldConfig FieldConfig `json:"fieldConfig"`
+	Id          int          `json:"id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description,omitempty"`
+	Targets     []Target     `json:"targets,omitempty"`
+	Datasource  interface{}  `json:"datasource,omitempty"`
+	Type        string       `json:"type"`
+	Panels      []Panel      `json:"panels,omitempty"`
+	FieldConfig *FieldConfig `json:"fieldConfig,omitempty"`
 }
 
 type FieldConfig struct {
-	Defaults  Defaults   `json:"defaults"`
-	Overrides []Override `json:"overrides"`
+	Defaults  Defaults   `json:"defaults,omitempty"`
+	Overrides []Override `json:"overrides,omitempty"`
 }
 
 type Override struct {
@@ -202,7 +195,7 @@ func (o *OverrideProperty) UnmarshalJSON(buf []byte) error {
 			Value int    `json:"value"`
 		}
 		if err := json.Unmarshal(buf, &raw); err != nil {
-			// Overrirde can have varying different types int, string and arrays
+			// Override can have varying different types int, string and arrays
 			// Currently only units are being checked from overrides so returning nil in case of unhandled types
 			return nil
 		}
@@ -212,7 +205,7 @@ func (o *OverrideProperty) UnmarshalJSON(buf []byte) error {
 }
 
 type Defaults struct {
-	Unit string `json:"unit"`
+	Unit string `json:"unit,omitempty"`
 }
 
 // GetPanels returns the all panels nested inside the panel (inc the current panel)
@@ -222,6 +215,10 @@ func (p *Panel) GetPanels() []Panel {
 		panels = append(panels, panel.GetPanels()...)
 	}
 	return panels
+}
+
+func (p *Panel) GetDataSource() (Datasource, error) {
+	return GetDataSource(p.Datasource)
 }
 
 // Row is a deliberately incomplete representation of the Dashboard -> Row type in grafana.
@@ -279,6 +276,10 @@ func (d *Dashboard) GetTemplateByType(t string) []Template {
 		}
 	}
 	return retval
+}
+
+func (d *Dashboard) Marshal() ([]byte, error) {
+	return json.Marshal(d)
 }
 
 func NewDashboard(buf []byte) (Dashboard, error) {
