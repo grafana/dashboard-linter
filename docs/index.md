@@ -52,6 +52,7 @@ Usage:
 
 Flags:
   -c, --config string   path to a configuration file
+      --fix             automatically fix problems if possible
   -h, --help            help for lint
       --strict          fail upon linting error or warning
       --verbose         show more information about linting
