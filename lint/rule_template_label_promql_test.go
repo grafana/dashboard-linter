@@ -8,13 +8,15 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 	linter := NewTemplateLabelPromQLRule()
 
 	for _, tc := range []struct {
-		name      string
 		result    Result
 		dashboard Dashboard
 	}{
+		// Don't fail on non prometheus template.
 		{
-			name:   "Don't fail on non prometheus template.",
-			result: ResultSuccess,
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -29,9 +31,12 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// What success looks like.
 		{
-			name:   "OK",
-			result: ResultSuccess,
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -53,11 +58,11 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// What failure looks like.
 		{
-			name: "Error",
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'test' template 'namespaces' invalid templated label 'label_values(up{, namespace)': 1:4: parse error: unexpected "," in label matching, expected identifier or "}"`,
+				Message:  `Dashboard 'test', template 'namespaces' invalid templated label 'label_values(up{, namespace)': 1:4: parse error: unexpected "," in label matching, expected identifier or "}"`,
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -80,11 +85,11 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Invalid function.
 		{
-			name: "Invalid function.",
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'test' template 'namespaces' invalid templated label 'foo(up, namespace)': invalid 'function': foo`,
+				Message:  `Dashboard 'test', template 'namespaces' invalid templated label 'foo(up, namespace)': invalid 'function': foo`,
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -107,11 +112,11 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 				},
 			},
 		},
+		// Invalid query expression.
 		{
-			name: "Invalid query expression.",
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'test' template 'namespaces' invalid templated label 'foo': invalid 'query': foo`,
+				Message:  `Dashboard 'test', template 'namespaces' invalid templated label 'foo': invalid 'query': foo`,
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -136,7 +141,10 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 		},
 		// Support main grafana variables.
 		{
-			result: ResultSuccess,
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -159,8 +167,6 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			testRule(t, linter, tc.dashboard, tc.result)
-		})
+		testRule(t, linter, tc.dashboard, tc.result)
 	}
 }

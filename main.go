@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
-	"github.com/miracl/conflate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -15,7 +13,6 @@ import (
 
 var lintStrictFlag bool
 var lintVerboseFlag bool
-var lintAutofixFlag bool
 var lintConfigFlag string
 
 // lintCmd represents the lint command
@@ -50,22 +47,11 @@ var lintCmd = &cobra.Command{
 			return fmt.Errorf("failed to load lint config: %v", err)
 		}
 		config.Verbose = lintVerboseFlag
-		config.Autofix = lintAutofixFlag
 
 		rules := lint.NewRuleSet()
 		results, err := rules.Lint([]lint.Dashboard{dashboard})
 		if err != nil {
 			return fmt.Errorf("failed to lint dashboard: %v", err)
-		}
-
-		if config.Autofix {
-			changes := results.AutoFix(&dashboard)
-			if changes > 0 {
-				err = write(dashboard, filename, buf)
-				if err != nil {
-					return err
-				}
-			}
 		}
 
 		results.Configure(config)
@@ -76,25 +62,6 @@ var lintCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func write(dashboard lint.Dashboard, filename string, old []byte) error {
-	newBytes, err := dashboard.Marshal()
-	if err != nil {
-		return err
-	}
-	c := conflate.New()
-	err = c.AddData(old, newBytes)
-	if err != nil {
-		return err
-	}
-	b, err := c.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	json := strings.ReplaceAll(string(b), "\"options\": null,", "\"options\": [],")
-
-	return os.WriteFile(filename, []byte(json), 0600)
 }
 
 var rulesCmd = &cobra.Command{
@@ -124,12 +91,6 @@ func init() {
 		"verbose",
 		false,
 		"show more information about linting",
-	)
-	lintCmd.Flags().BoolVar(
-		&lintAutofixFlag,
-		"fix",
-		false,
-		"automatically fix problems if possible",
 	)
 	lintCmd.Flags().StringVarP(
 		&lintConfigFlag,

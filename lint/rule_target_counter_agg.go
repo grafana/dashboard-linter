@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,24 +12,26 @@ func NewTargetCounterAggRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-counter-agg-rule",
 		description: "Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.",
-		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
-			r := TargetRuleResults{}
+		fn: func(d Dashboard, p Panel, t Target) Result {
 			expr, err := parsePromQL(t.Expr, d.Templating.List)
 			if err != nil {
 				// Invalid PromQL is another rule
-				return r
+				return ResultSuccess
 			}
 
-			err = parser.Walk(newInspector(), expr, nil)
+			err = parser.Walk(newInspector(d, p, t), expr, nil)
 			if err != nil {
-				r.AddError(d, p, t, err.Error())
+				return Result{
+					Severity: Error,
+					Message:  err.Error(),
+				}
 			}
-			return r
+			return ResultSuccess
 		},
 	}
 }
 
-func newInspector() inspector {
+func newInspector(d Dashboard, p Panel, t Target) inspector {
 	return func(node parser.Node, parents []parser.Node) error {
 		// We're looking for either a VectorSelector. This skips any other node type.
 		selector, ok := node.(*parser.VectorSelector)
@@ -36,7 +39,8 @@ func newInspector() inspector {
 			return nil
 		}
 
-		errmsg := fmt.Errorf("counter metric '%s' is not aggregated with rate, irate, or increase", node.String())
+		errmsg := errors.New(NewErrorMessage(d, p, t,
+			fmt.Sprintf("counter metric '%s' is not aggregated with rate, irate, or increase", node.String())))
 
 		if strings.HasSuffix(selector.String(), "_total") {
 			// The vector selector must have (at least) two parents

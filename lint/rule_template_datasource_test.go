@@ -8,33 +8,24 @@ func TestTemplateDatasource(t *testing.T) {
 	linter := NewTemplateDatasourceRule()
 
 	for _, tc := range []struct {
-		name      string
-		result    []Result
+		result    Result
 		dashboard Dashboard
 	}{
 		// 0 Data Sources
 		{
-			name: "0 Data Sources",
-			result: []Result{{
+			result: Result{
 				Severity: Error,
 				Message:  "Dashboard 'test' does not have a templated data source",
-			}},
+			},
 			dashboard: Dashboard{
 				Title: "test",
 			},
 		},
 		// 1 Data Source
 		{
-			name: "1 Data Source",
-			result: []Result{
-				{
-					Severity: Error,
-					Message:  "Dashboard 'test' templated data source variable named 'foo', should be named '_datasource', or 'datasource'",
-				},
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled '', should be labeled ' data source', or 'Data source'",
-				},
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test' templated data source variable named 'foo', should be named '_datasource', or 'datasource'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -51,12 +42,9 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name: "wrong name",
-			result: []Result{
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled 'bar', should be labeled 'Bar data source', or 'Data source'",
-				},
+			result: Result{
+				Severity: Warning,
+				Message:  "Dashboard 'test' templated data source variable labeled 'bar', should be labeled 'Bar data source', or 'Data source'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -75,8 +63,10 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name:   "OK - Data source ",
-			result: []Result{ResultSuccess},
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -94,8 +84,10 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name:   "OK - Prometheus data source",
-			result: []Result{ResultSuccess},
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -113,8 +105,10 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name:   "OK - name: prometheus_datasource",
-			result: []Result{ResultSuccess},
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -132,8 +126,10 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name:   "OK - name: prometheus_datasource, label: Prometheus data source",
-			result: []Result{ResultSuccess},
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -151,8 +147,10 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name:   "OK - name: loki_datasource, query: loki",
-			result: []Result{ResultSuccess},
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -170,8 +168,10 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name:   "OK - name: datasource, query: loki",
-			result: []Result{ResultSuccess},
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -190,24 +190,9 @@ func TestTemplateDatasource(t *testing.T) {
 		},
 		// 2 or more Data Sources
 		{
-			name: "3 Data Sources - 0",
-			result: []Result{
-				{
-					Severity: Error,
-					Message:  "Dashboard 'test' templated data source variable named 'datasource', should be named 'prometheus_datasource'",
-				},
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Prometheus data source'",
-				},
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Loki data source'",
-				},
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Influx data source'",
-				},
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test' templated data source variable named 'datasource', should be named 'prometheus_datasource'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -238,20 +223,9 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name: "3 Data Sources - 1",
-			result: []Result{
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Prometheus data source'",
-				},
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Loki data source'",
-				},
-				{
-					Severity: Warning,
-					Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Influx data source'",
-				},
+			result: Result{
+				Severity: Warning,
+				Message:  "Dashboard 'test' templated data source variable labeled 'Data source', should be labeled 'Prometheus data source'",
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -282,8 +256,10 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 		{
-			name:   "3 Data Sources - 2",
-			result: []Result{ResultSuccess},
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -313,8 +289,6 @@ func TestTemplateDatasource(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			testMultiResultRule(t, linter, tc.dashboard, tc.result)
-		})
+		testRule(t, linter, tc.dashboard, tc.result)
 	}
 }
