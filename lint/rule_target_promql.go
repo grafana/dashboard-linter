@@ -39,35 +39,36 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-promql-rule",
 		description: "Checks that each target uses a valid PromQL query.",
-		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
-			r := TargetRuleResults{}
-
+		fn: func(d Dashboard, p Panel, t Target) Result {
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
-				return r
+				return ResultSuccess
 			}
 
 			if !panelHasQueries(p) {
-				return r
+				return ResultSuccess
 			}
 
 			// If panel does not contain an expression then check if it references another panel and it exists
-			if len(t.Expr) == 0 {
+			if !(len(t.Expr) > 0) {
 				if t.PanelId > 0 {
 					for _, p1 := range d.Panels {
 						if p1.Id == t.PanelId {
-							return r
+							return ResultSuccess
 						}
 					}
-					r.AddError(d, p, t, "Invalid panel reference in target")
+					return Result{
+						Severity: Error,
+						Message:  fmt.Sprintf("Dashboard '%s', panel '%s' invalid panel reference in target, reference panel id: '%d'", d.Title, p.Title, t.PanelId),
+					}
 				}
 			}
 
 			if _, err := parsePromQL(t.Expr, d.Templating.List); err != nil {
-				r.AddError(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err))
+				return NewErrorResult(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err))
 			}
 
-			return r
+			return ResultSuccess
 		},
 	}
 }

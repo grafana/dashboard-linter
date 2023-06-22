@@ -84,7 +84,10 @@ func TestTargetRateIntervalRule(t *testing.T) {
 		},
 		// Non-rate functions should not make the linter fail
 		{
-			result: ResultSuccess,
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",

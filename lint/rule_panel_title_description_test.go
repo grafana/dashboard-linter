@@ -26,7 +26,7 @@ func TestPanelTitleDescription(t *testing.T) {
 		{
 			result: Result{
 				Severity: Error,
-				Message:  "Dashboard 'test', panel 'title' has missing title or description, currently has title 'title' and description: ''",
+				Message:  "Dashboard 'test', panel with id '2' has missing title or description, currently has title 'title' and description: ''",
 			},
 			panel: Panel{
 				Type:        "singlestat",
@@ -48,7 +48,10 @@ func TestPanelTitleDescription(t *testing.T) {
 			},
 		},
 		{
-			result: ResultSuccess,
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			panel: Panel{
 				Type:        "singlestat",
 				Id:          1,

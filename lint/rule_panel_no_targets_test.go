@@ -23,7 +23,10 @@ func TestPanelNoTargets(t *testing.T) {
 			},
 		},
 		{
-			result: ResultSuccess,
+			result: Result{
+				Severity: Success,
+				Message:  "OK",
+			},
 			panel: Panel{
 				Type:       "singlestat",
 				Datasource: "foo",

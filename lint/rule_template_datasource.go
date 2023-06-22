@@ -12,12 +12,13 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-datasource-rule",
 		description: "Checks that the dashboard has a templated datasource.",
-		fn: func(d Dashboard) DashboardRuleResults {
-			r := DashboardRuleResults{}
-
+		fn: func(d Dashboard) Result {
 			templatedDs := d.GetTemplateByType("datasource")
 			if len(templatedDs) == 0 {
-				r.AddError(d, "does not have a templated data source")
+				return Result{
+					Severity: Error,
+					Message:  fmt.Sprintf("Dashboard '%s' does not have a templated data source", d.Title),
+				}
 			}
 
 			// TODO: Should there be a "Template" rule type which will iterate over all dashboard templates and execute rules?
@@ -32,8 +33,8 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				allowedDsUIDs := make(map[string]struct{})
 				allowedDsNames := make(map[string]struct{})
 
-				uidError := fmt.Sprintf("templated data source variable named '%s', should be named '%s'", templDs.Name, querySpecificUID)
-				nameError := fmt.Sprintf("templated data source variable labeled '%s', should be labeled '%s'", templDs.Label, querySpecificName)
+				uidError := fmt.Sprintf("Dashboard '%s' templated data source variable named '%s', should be named '%s'", d.Title, templDs.Name, querySpecificUID)
+				nameError := fmt.Sprintf("Dashboard '%s' templated data source variable labeled '%s', should be labeled '%s'", d.Title, templDs.Label, querySpecificName)
 				if len(templatedDs) == 1 {
 					allowedDsUIDs["datasource"] = struct{}{}
 					allowedDsNames["Data source"] = struct{}{}
@@ -48,16 +49,22 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 				// TODO: These are really two different rules
 				_, ok := allowedDsUIDs[templDs.Name]
 				if !ok {
-					r.AddError(d, uidError)
+					return Result{
+						Severity: Error,
+						Message:  uidError,
+					}
 				}
 
 				_, ok = allowedDsNames[templDs.Label]
 				if !ok {
-					r.AddWarning(d, nameError)
+					return Result{
+						Severity: Warning,
+						Message:  nameError,
+					}
 				}
 			}
 
-			return r
+			return ResultSuccess
 		},
 	}
 }

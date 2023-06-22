@@ -13,45 +13,35 @@ import (
 
 func TestParseDatasource(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
 		input    []byte
 		expected Datasource
 		err      error
 	}{
 		{
-			name:     "string",
 			input:    []byte(`"${datasource}"`),
 			expected: "${datasource}",
 		},
 		{
-			name:     "uid",
 			input:    []byte(`{"uid":"${datasource}"}`),
 			expected: "${datasource}",
 		},
 		{
-			name:  "byte",
 			input: []byte(`1`),
 			err:   fmt.Errorf("invalid type for field 'datasource': 1"),
 		},
 		{
-			name:  "empty object",
 			input: []byte(`{}`),
 			err:   fmt.Errorf("invalid type for field 'datasource': missing uid field"),
 		},
 		{
-			name:  "int uid",
 			input: []byte(`{"uid":1}`),
 			err:   fmt.Errorf("invalid type for field 'datasource': invalid uid field type, should be string"),
 		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			var raw interface{}
-			err := json.Unmarshal(tc.input, &raw)
-			require.NoError(t, err)
-			actual, err := GetDataSource(raw)
-			require.Equal(t, tc.err, err)
-			require.Equal(t, tc.expected, actual)
-		})
+		var actual Datasource
+		err := json.Unmarshal(tc.input, &actual)
+		require.Equal(t, tc.err, err)
+		require.Equal(t, tc.expected, actual)
 	}
 }
 
@@ -97,10 +87,8 @@ func TestParseTemplateValue(t *testing.T) {
 			expected: TemplateValue{Text: "text", Value: ""},
 		},
 	} {
-		var raw RawTemplateValue
-		err := json.Unmarshal(tc.input, &raw)
-		require.NoError(t, err)
-		actual, err := raw.Get()
+		var actual TemplateValue
+		err := json.Unmarshal(tc.input, &actual)
 		require.Equal(t, tc.err, err)
 		require.Equal(t, tc.expected, actual)
 	}
