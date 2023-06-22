@@ -3,11 +3,11 @@ module github.com/grafana/dashboard-linter
 go 1.18
 
 require (
-	github.com/miracl/conflate v1.3.1
 	github.com/prometheus/prometheus v0.44.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
+	github.com/zeitlinger/conflate v0.0.0-20230622100834-279724abda8c
 	golang.org/x/text v0.9.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -73,5 +73,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/miracl/conflate => github.com/zeitlinger/conflate v0.0.0-20230510130640-e98ef1867340
