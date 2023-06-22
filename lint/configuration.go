@@ -14,6 +14,7 @@ type ConfigurationFile struct {
 	Exclusions map[string]*ConfigurationRuleEntries `yaml:"exclusions"`
 	Warnings   map[string]*ConfigurationRuleEntries `yaml:"warnings"`
 	Verbose    bool                                 `yaml:"-"`
+	Autofix    bool                                 `yaml:"-"`
 }
 
 type ConfigurationRuleEntries struct {
@@ -76,8 +77,11 @@ func (cf *ConfigurationFile) Apply(res ResultContext) ResultContext {
 			matched = true
 		}
 		if matched {
-			res.Result.Severity = Exclude
-			res.Result.Message += " (Excluded)"
+			for i, r := range res.Result.Results {
+				r.Severity = Exclude
+				r.Message += " (Excluded)"
+				res.Result.Results[i] = r
+			}
 		}
 	}
 
@@ -97,13 +101,19 @@ func (cf *ConfigurationFile) Apply(res ResultContext) ResultContext {
 			matched = true
 		}
 		if matched {
-			res.Result.Severity = Warning
+			for i, r := range res.Result.Results {
+				r.Severity = Warning
+				res.Result.Results[i] = r
+			}
 		}
 	}
 
 	{
-		if !cf.Verbose && res.Result.Severity == Success {
-			res.Result.Severity = Quiet
+		for i, r := range res.Result.Results {
+			if !cf.Verbose && r.Severity == Success {
+				r.Severity = Quiet
+				res.Result.Results[i] = r
+			}
 		}
 	}
 

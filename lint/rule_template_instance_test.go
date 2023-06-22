@@ -11,10 +11,7 @@ func TestInstanceTemplate(t *testing.T) {
 	}{
 		// Non-promtheus dashboards shouldn't fail.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			dashboard: Dashboard{
 				Title: "test",
 			},
@@ -49,10 +46,7 @@ func TestInstanceTemplate(t *testing.T) {
 		},
 		// What success looks like.
 		{
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			result: ResultSuccess,
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {

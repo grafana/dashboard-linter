@@ -22,7 +22,7 @@ func TestPanelUnits(t *testing.T) {
 				Type:       "singlestat",
 				Datasource: "foo",
 				Title:      "bar",
-				FieldConfig: FieldConfig{
+				FieldConfig: &FieldConfig{
 					Defaults: Defaults{
 						Unit: "MyInvalidUnit",
 					},
@@ -39,20 +39,17 @@ func TestPanelUnits(t *testing.T) {
 				Type:        "singlestat",
 				Datasource:  "foo",
 				Title:       "bar",
-				FieldConfig: FieldConfig{},
+				FieldConfig: &FieldConfig{},
 			},
 		},
 		{
-			name: "valid",
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			name:   "valid",
+			result: ResultSuccess,
 			panel: Panel{
 				Type:       "singlestat",
 				Datasource: "foo",
 				Title:      "bar",
-				FieldConfig: FieldConfig{
+				FieldConfig: &FieldConfig{
 					Defaults: Defaults{
 						Unit: "short",
 					},
@@ -60,16 +57,13 @@ func TestPanelUnits(t *testing.T) {
 			},
 		},
 		{
-			name: "none - scalar",
-			result: Result{
-				Severity: Success,
-				Message:  "OK",
-			},
+			name:   "none - scalar",
+			result: ResultSuccess,
 			panel: Panel{
 				Type:       "singlestat",
 				Datasource: "foo",
 				Title:      "bar",
-				FieldConfig: FieldConfig{
+				FieldConfig: &FieldConfig{
 					Defaults: Defaults{
 						Unit: "none",
 					},

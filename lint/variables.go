@@ -146,14 +146,22 @@ func variableSampleValue(s string, variables []Template) (string, error) {
 			continue
 		}
 		// if it has a current value, use it
-		if v.Current.Value != "" {
+		c, err := v.Current.Get()
+		if err != nil {
+			return "", err
+		}
+		if c.Value != "" {
 			// Recursively expand, without the current variable to avoid infinite recursion
-			return expandVariables(v.Current.Value, removeVariableByName(name, variables))
+			return expandVariables(c.Value, removeVariableByName(name, variables))
 		}
 		// If it has options, use the first option
 		if len(v.Options) > 0 {
 			// Recursively expand, without the current variable to avoid infinite recursion
-			return expandVariables(v.Options[0].Value, removeVariableByName(name, variables))
+			o, err := v.Options[0].Get()
+			if err != nil {
+				return "", err
+			}
+			return expandVariables(o.Value, removeVariableByName(name, variables))
 		}
 	}
 	// Assume variable type is a string
