@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -16,6 +17,7 @@ import (
 var lintStrictFlag bool
 var lintVerboseFlag bool
 var lintAutofixFlag bool
+var lintReadFromStdIn bool
 var lintConfigFlag string
 
 // lintCmd represents the lint command
@@ -27,12 +29,27 @@ var lintCmd = &cobra.Command{
 		_ = viper.BindPFlags(cmd.PersistentFlags())
 	},
 	SilenceUsage: true,
-	Args:         cobra.ExactArgs(1),
+	Args:         cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		filename := args[0]
-		buf, err := os.ReadFile(filename)
-		if err != nil {
-			return fmt.Errorf("failed to read file %s: %v", filename, err)
+		var buf []byte
+		var err error
+		var filename string
+
+		if lintReadFromStdIn {
+			if lintAutofixFlag {
+				return fmt.Errorf("can't read from stdin and autofix")
+			}
+
+			buf, err = io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("failed to read stdin: %v", err)
+			}
+		} else {
+			filename = args[0]
+			buf, err = os.ReadFile(filename)
+			if err != nil {
+				return fmt.Errorf("failed to read file %s: %v", filename, err)
+			}
 		}
 
 		dashboard, err := lint.NewDashboard(buf)
@@ -137,6 +154,12 @@ func init() {
 		"c",
 		"",
 		"path to a configuration file",
+	)
+	lintCmd.Flags().BoolVar(
+		&lintReadFromStdIn,
+		"stdin",
+		false,
+		"read from stdin",
 	)
 }
 
