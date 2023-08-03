@@ -36,10 +36,9 @@ func TestPanelUnits(t *testing.T) {
 				Message:  "Dashboard 'test', panel 'bar' has no or invalid units defined: ''",
 			},
 			panel: Panel{
-				Type:        "singlestat",
-				Datasource:  "foo",
-				Title:       "bar",
-				FieldConfig: &FieldConfig{},
+				Type:       "singlestat",
+				Datasource: "foo",
+				Title:      "bar",
 			},
 		},
 		{

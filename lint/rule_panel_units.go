@@ -88,7 +88,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 func getConfiguredUnit(p Panel) string {
 	configuredUnit := ""
 	// First check if an override with unit exists - if no override then check if standard unit is present and valid
-	if len(p.FieldConfig.Overrides) > 0 {
+	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
 		for _, p := range p.FieldConfig.Overrides {
 			for _, o := range p.OverrideProperties {
 				if o.Id == "unit" {
