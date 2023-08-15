@@ -97,7 +97,7 @@ func getConfiguredUnit(p Panel) string {
 			}
 		}
 	}
-	if configuredUnit == "" && len(p.FieldConfig.Defaults.Unit) > 0 {
+	if configuredUnit == "" && p.FieldConfig != nil && len(p.FieldConfig.Defaults.Unit) > 0 {
 		configuredUnit = p.FieldConfig.Defaults.Unit
 	}
 	return configuredUnit

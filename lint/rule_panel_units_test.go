@@ -30,7 +30,7 @@ func TestPanelUnits(t *testing.T) {
 			},
 		},
 		{
-			name: "missing unit",
+			name: "missing FieldConfig",
 			result: Result{
 				Severity: Error,
 				Message:  "Dashboard 'test', panel 'bar' has no or invalid units defined: ''",
@@ -39,6 +39,19 @@ func TestPanelUnits(t *testing.T) {
 				Type:       "singlestat",
 				Datasource: "foo",
 				Title:      "bar",
+			},
+		},
+		{
+			name: "empty FieldConfig",
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test', panel 'bar' has no or invalid units defined: ''",
+			},
+			panel: Panel{
+				Type:        "singlestat",
+				Datasource:  "foo",
+				Title:       "bar",
+				FieldConfig: &FieldConfig{},
 			},
 		},
 		{
