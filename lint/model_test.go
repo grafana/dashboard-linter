@@ -105,3 +105,22 @@ func TestParseTemplateValue(t *testing.T) {
 		require.Equal(t, tc.expected, actual)
 	}
 }
+
+func TestParseTemplate(t *testing.T) {
+	for _, tc := range []struct {
+		input    []byte
+		expected Template
+		err      error
+	}{
+		{
+			// NB no "query.query" field, some data source don't use this.
+			input:    []byte(`{ "type": "query", "query": {} }`),
+			expected: Template{Type: "query", RawQuery: map[string]interface{}{}},
+		},
+	} {
+		var actual Template
+		err := json.Unmarshal(tc.input, &actual)
+		require.NoError(t, err)
+		require.Equal(t, tc.expected, actual)
+	}
+}
