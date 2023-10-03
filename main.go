@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -86,7 +87,14 @@ var lintCmd = &cobra.Command{
 		}
 
 		results.Configure(config)
-		results.ReportByRule()
+		// results.ReportByRule()
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		err = enc.Encode(results)
+		// resBytes, err := json.Marshal(results)
+		if err != nil {
+			return fmt.Errorf("failed to generate json representation of results: %v", err)
+		}
 
 		if lintStrictFlag && results.MaximumSeverity() >= lint.Warning {
 			return fmt.Errorf("there were linting errors, please see previous output")

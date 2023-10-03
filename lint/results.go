@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -18,7 +19,7 @@ type Result struct {
 
 type FixableResult struct {
 	Result
-	Fix func(*Dashboard) // if nil, it cannot be fixed
+	Fix func(*Dashboard) `json:"-"` // if nil, it cannot be fixed
 }
 
 type RuleResults struct {
@@ -27,7 +28,7 @@ type RuleResults struct {
 
 type TargetResult struct {
 	Result
-	Fix func(Dashboard, Panel, *Target)
+	Fix func(Dashboard, Panel, *Target) `json:"-"`
 }
 
 type TargetRuleResults struct {
@@ -109,11 +110,11 @@ func (r *DashboardRuleResults) AddWarning(d Dashboard, message string) {
 
 // ResultContext is used by ResultSet to keep all the state data about a lint execution and it's results.
 type ResultContext struct {
-	Result    RuleResults
-	Rule      Rule
-	Dashboard *Dashboard
-	Panel     *Panel
-	Target    *Target
+	Result    RuleResults `json:"result"`
+	Rule      Rule        `json:"rule"`
+	Dashboard *Dashboard  `json:"-"`
+	Panel     *Panel      `json:"-"`
+	Target    *Target     `json:"-"`
 }
 
 func (r Result) TtyPrint() {
@@ -216,4 +217,8 @@ func (rs *ResultSet) AutoFix(d *Dashboard) int {
 		}
 	}
 	return changes
+}
+
+func (rs *ResultSet) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rs.results)
 }
