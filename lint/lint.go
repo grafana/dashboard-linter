@@ -11,9 +11,9 @@ type Severity int
 const (
 	Success Severity = iota
 	Exclude
+	Quiet
 	Warning
 	Error
-	Quiet
 	Fixed
 
 	Prometheus = "prometheus"
