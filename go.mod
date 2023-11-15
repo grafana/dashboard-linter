@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/prometheus/prometheus v0.47.2
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/zeitlinger/conflate v0.0.0-20230622100834-279724abda8c
