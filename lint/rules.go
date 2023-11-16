@@ -186,6 +186,7 @@ func NewRuleSet() RuleSet {
 			NewTargetJobRule(),
 			NewTargetInstanceRule(),
 			NewTargetCounterAggRule(),
+			NewUneditableRule(),
 		},
 	}
 }
