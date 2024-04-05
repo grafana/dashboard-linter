@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,7 +56,7 @@ func TestParseDatasource(t *testing.T) {
 }
 
 func TestParseDashboard(t *testing.T) {
-	sampleDashboard, err := ioutil.ReadFile("testdata/dashboard.json")
+	sampleDashboard, err := os.ReadFile("testdata/dashboard.json")
 	assert.NoError(t, err)
 	t.Run("Row panels", func(t *testing.T) {
 		dashboard, err := NewDashboard(sampleDashboard)
