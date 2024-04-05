@@ -134,7 +134,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		{
 			result: []Result{{
 				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': 1:1: parse error: no expression found in input",
+				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': unknown position: parse error: no expression found in input",
 			}},
 			panel: Panel{
 				Title: "panel",
@@ -155,7 +155,7 @@ func TestTargetPromQLRule(t *testing.T) {
 				},
 				{
 					Severity: Error,
-					Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': 1:1: parse error: no expression found in input",
+					Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': unknown position: parse error: no expression found in input",
 				},
 			},
 			panel: Panel{
