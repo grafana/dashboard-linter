@@ -54,7 +54,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 		// Time
 		"hertz", "ns", "µs", "ms", "s", "m", "h", "d", "dtdurationms", "dtdurations", "dthms", "dtdhms", "timeticks", "clockms", "clocks",
 		// Throughput
-		"cps", "ops", "reqps", "rps", "wps", "iops", "cpm", "opm", "rpm", "wpm",
+		"cps", "ops", "reqps", "rps", "wps", "iops", "cpm", "opm", "rpm", "wpm", "mps", "mpm",
 		// Velocity
 		"velocityms", "velocitykmh", "velocitymph", "velocityknot",
 		// Volume
