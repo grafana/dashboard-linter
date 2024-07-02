@@ -25,9 +25,9 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 				if err != nil {
 					r.AddError(d, p, fmt.Sprintf("has invalid datasource: %v'", err))
 				}
-				_, ok := availableDsUids[string(src)]
+				_, ok := availableDsUids[string(src.UID)]
 				if !ok {
-					r.AddError(d, p, fmt.Sprintf("does not use a templated datasource, uses '%s'", src))
+					r.AddError(d, p, fmt.Sprintf("does not use a templated datasource, uses '%s'", src.UID))
 				}
 			}
 
