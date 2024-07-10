@@ -21,12 +21,17 @@ func TestParseDatasource(t *testing.T) {
 		{
 			name:     "string",
 			input:    []byte(`"${datasource}"`),
-			expected: "${datasource}",
+			expected: Datasource{"${datasource}", ""},
 		},
 		{
 			name:     "uid",
 			input:    []byte(`{"uid":"${datasource}"}`),
-			expected: "${datasource}",
+			expected: Datasource{"${datasource}", ""},
+		},
+		{
+			name:     "uid-type",
+			input:    []byte(`{"uid":"${datasource}","type":"${type}"}`),
+			expected: Datasource{"${datasource}", "${type}"},
 		},
 		{
 			name:  "byte",

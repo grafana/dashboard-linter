@@ -39,8 +39,9 @@ func checkTemplate(d Dashboard, name string, r *DashboardRuleResults) {
 		r.AddError(d, fmt.Sprintf("%s template has invalid datasource %v", name, err))
 	}
 
-	if src != "$datasource" && src != "${datasource}" && src != "$prometheus_datasource" && src != "${prometheus_datasource}" {
-		r.AddError(d, fmt.Sprintf("%s template should use datasource '$datasource', is currently '%s'", name, src))
+	srcUid := src.UID
+	if srcUid != "$datasource" && srcUid != "${datasource}" && srcUid != "$prometheus_datasource" && srcUid != "${prometheus_datasource}" {
+		r.AddError(d, fmt.Sprintf("%s template should use datasource '$datasource', is currently '%s'", name, srcUid))
 	}
 
 	if t.Type != targetTypeQuery {
