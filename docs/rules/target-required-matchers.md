@@ -1,0 +1,2 @@
+# target-required-matchers
+Checks that each PromQL query has the required matchers. See [Required Matchers And Template Variables](../index.md#required-matchers-and-template-variables) for more information about rules relating to this one.
