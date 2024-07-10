@@ -1,7 +1,7 @@
 package lint_test
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/grafana/dashboard-linter/lint"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestCustomRules(t *testing.T) {
-	sampleDashboard, err := ioutil.ReadFile("testdata/dashboard.json")
+	sampleDashboard, err := os.ReadFile("testdata/dashboard.json")
 	assert.NoError(t, err)
 
 	for _, tc := range []struct {

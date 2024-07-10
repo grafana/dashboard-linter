@@ -11,9 +11,9 @@ type Severity int
 const (
 	Success Severity = iota
 	Exclude
+	Quiet
 	Warning
 	Error
-	Quiet
 	Fixed
 
 	Prometheus = "prometheus"
@@ -125,36 +125,60 @@ func (raw *RawTemplateValue) Get() (TemplateValue, error) {
 	return t, nil
 }
 
-type Datasource string
+// Input is a deliberately incomplete representation of the Dashboard -> Input type in grafana.
+// The properties which are extracted from JSON are only those used for linting purposes.
+type Input struct {
+	Name     string `json:"name"`
+	Label    string `json:"label"`
+	Type     string `json:"type"`
+	PluginID string `json:"pluginId"`
+}
+
+type Datasource struct {
+	UID  string `json:"uid"`
+	Type string `json:"type"`
+}
 
 func GetDataSource(raw interface{}) (Datasource, error) {
 	switch v := raw.(type) {
 	case nil:
-		return "", nil
+		return Datasource{}, nil
 	case string:
-		return Datasource(v), nil
+		return Datasource{v, ""}, nil
 	case map[string]interface{}:
 		uid, ok := v["uid"]
 		if !ok {
-			return "", fmt.Errorf("invalid type for field 'datasource': missing uid field")
+			return Datasource{}, fmt.Errorf("invalid type for field 'datasource': missing uid field")
 		}
 		uidStr, ok := uid.(string)
 		if !ok {
-			return "", fmt.Errorf("invalid type for field 'datasource': invalid uid field type, should be string")
+			return Datasource{}, fmt.Errorf("invalid type for field 'datasource': invalid uid field type, should be string")
 		}
-		return Datasource(uidStr), nil
+		if dsType, ok := v["type"]; ok {
+			dsTypeStr, ok := dsType.(string)
+			if !ok {
+				return Datasource{}, fmt.Errorf("invalid type for field 'datasource': invalid type field type, should be string")
+			}
+			return Datasource{uidStr, dsTypeStr}, nil
+		}
+		return Datasource{uidStr, ""}, nil
 	default:
-		return "", fmt.Errorf("invalid type for field 'datasource': %v", v)
+		return Datasource{}, fmt.Errorf("invalid type for field 'datasource': %v", v)
 	}
 }
 
 // Target is a deliberately incomplete representation of the Dashboard -> Panel -> Target type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Target struct {
-	Idx     int    `json:"-"` // This is the only (best?) way to uniquely identify a target, it is set by GetPanels
-	Expr    string `json:"expr,omitempty"`
-	PanelId int    `json:"panelId,omitempty"`
-	RefId   string `json:"refId,omitempty"`
+	Idx        int         `json:"-"` // This is the only (best?) way to uniquely identify a target, it is set by GetPanels
+	Datasource interface{} `json:"datasource,omitempty"`
+	Expr       string      `json:"expr,omitempty"`
+	PanelId    int         `json:"panelId,omitempty"`
+	RefId      string      `json:"refId,omitempty"`
+}
+
+func (t *Target) GetDataSource() (Datasource, error) {
+	return GetDataSource(t.Datasource)
 }
 
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
@@ -242,7 +266,8 @@ func (r *Row) GetPanels() []Panel {
 // Dashboard is a deliberately incomplete representation of the Dashboard type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Dashboard struct {
-	Title      string `json:"title,omitempty"`
+	Inputs     []Input `json:"__inputs"`
+	Title      string  `json:"title,omitempty"`
 	Templating struct {
 		List []Template `json:"list"`
 	} `json:"templating"`
