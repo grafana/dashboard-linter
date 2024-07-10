@@ -271,8 +271,9 @@ type Dashboard struct {
 	Templating struct {
 		List []Template `json:"list"`
 	} `json:"templating"`
-	Rows   []Row   `json:"rows,omitempty"`
-	Panels []Panel `json:"panels,omitempty"`
+	Rows     []Row   `json:"rows,omitempty"`
+	Panels   []Panel `json:"panels,omitempty"`
+	Editable bool    `json:"editable,omitempty"`
 }
 
 // GetPanels returns the all panels whether they are nested in the (now deprecated) "rows" property or
