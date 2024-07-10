@@ -21,7 +21,7 @@ var lintVerboseFlag bool
 var lintAutofixFlag bool
 var lintReadFromStdIn bool
 var lintConfigFlag string
-var lintExprMatchers []string
+var lintRequiredMatchers []string
 
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
@@ -38,16 +38,16 @@ var lintCmd = &cobra.Command{
 		var err error
 		var filename string
 		// the matchers that need to be present in all selectors
-		var exprMatchers []*labels.Matcher
+		var requiredMatchers []*labels.Matcher
 
 		// check the provided matchers are valid prometheus matchers
-		if len(lintExprMatchers) > 0 {
-			for _, m := range lintExprMatchers {
+		if len(lintRequiredMatchers) > 0 {
+			for _, m := range lintRequiredMatchers {
 				matcher, err := parser.ParseMetricSelector(fmt.Sprintf("{%s}", m))
 				if err != nil {
 					return fmt.Errorf("failed to parse provided matcher {%s}: %v", m, err)
 				}
-				exprMatchers = append(exprMatchers, matcher[0])
+				requiredMatchers = append(requiredMatchers, matcher[0])
 			}
 		}
 
@@ -85,7 +85,7 @@ var lintCmd = &cobra.Command{
 		config.Verbose = lintVerboseFlag
 		config.Autofix = lintAutofixFlag
 
-		rules := lint.NewRuleSet(exprMatchers)
+		rules := lint.NewRuleSet(requiredMatchers)
 		results, err := rules.Lint([]lint.Dashboard{dashboard})
 		if err != nil {
 			return fmt.Errorf("failed to lint dashboard: %v", err)
@@ -178,7 +178,7 @@ func init() {
 		"read from stdin",
 	)
 	lintCmd.Flags().StringArrayVarP(
-		&lintExprMatchers,
+		&lintRequiredMatchers,
 		"matcher",
 		"m",
 		[]string{"instance=~\"$instance\"", "job=~\"$job\""},
