@@ -2,10 +2,18 @@ package lint
 
 import (
 	"testing"
+
+	"github.com/prometheus/prometheus/model/labels"
 )
 
 func TestJobTemplate(t *testing.T) {
-	linter := NewTemplateJobRule()
+	linter := NewTemplateVariableMatchersRule([]*labels.Matcher{
+		{
+			Type:  labels.MatchRegexp,
+			Name:  "job",
+			Value: "$job",
+		},
+	})
 
 	for _, tc := range []struct {
 		name      string

@@ -1,5 +1,7 @@
 package lint
 
+import "github.com/prometheus/prometheus/model/labels"
+
 type Rule interface {
 	Description() string
 	Name() string
@@ -169,12 +171,11 @@ type RuleSet struct {
 	rules []Rule
 }
 
-func NewRuleSet() RuleSet {
+func NewRuleSet(matchers []*labels.Matcher) RuleSet {
 	return RuleSet{
 		rules: []Rule{
 			NewTemplateDatasourceRule(),
-			NewTemplateJobRule(),
-			NewTemplateInstanceRule(),
+			NewTemplateVariableMatchersRule(matchers),
 			NewTemplateLabelPromQLRule(),
 			NewTemplateOnTimeRangeReloadRule(),
 			NewPanelDatasourceRule(),
@@ -183,8 +184,7 @@ func NewRuleSet() RuleSet {
 			NewPanelNoTargetsRule(),
 			NewTargetPromQLRule(),
 			NewTargetRateIntervalRule(),
-			NewTargetJobRule(),
-			NewTargetInstanceRule(),
+			newTargetRequiredMatchersRule(matchers),
 			NewTargetCounterAggRule(),
 		},
 	}
