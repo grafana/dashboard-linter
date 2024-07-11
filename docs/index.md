@@ -51,13 +51,11 @@ Usage:
   dashboard-linter lint [dashboard.json] [flags]
 
 Flags:
-  -c, --config string         path to a configuration file
-      --fix                   automatically fix problems if possible
-  -h, --help                  help for lint
-  -m, --matcher stringArray   matcher required to be present in all selectors, e.g. 'instance=~"$instance"' or 'cluster="$cluster"', can be specified multiple times (default ["instance=~""$instance""","job=~""$job"""])
-      --stdin                 read from stdin
-      --strict                fail upon linting error or warning
-      --verbose               show more information about linting
+  -c, --config string   path to a configuration file
+      --fix             automatically fix problems if possible
+  -h, --help            help for lint
+      --strict          fail upon linting error or warning
+      --verbose         show more information about linting
 ```
 
 # Rules
@@ -65,7 +63,8 @@ Flags:
 The linter implements the following rules:
 
 * [template-datasource-rule](./rules/template-datasource-rule.md) - Checks that the dashboard has a templated datasource.
-* [template-variable-matchers-rule](./rules/template-variable-matchers-rule.md) - Checks that the dashboard has a template variable for required matchers that use variables.
+* [template-job-rule](./rules/template-job-rule.md) - Checks that the dashboard has a templated job.
+* [template-instance-rule](./rules/template-instance-rule.md) - Checks that the dashboard has a templated instance.
 * [template-label-promql-rule](./rules/template-label-promql-rule.md) - Checks that the dashboard templated labels have proper PromQL expressions.
 * [template-on-time-change-reload-rule](./rules/template-on-time-change-reload-rule.md) - Checks that the dashboard template variables are configured to reload on time change.
 * [panel-datasource-rule](./rules/panel-datasource-rule.md) - Checks that each panel uses the templated datasource.
@@ -74,19 +73,22 @@ The linter implements the following rules:
 * `panel-no-targets-rule` - Checks that each panel has at least one target.
 * [target-promql-rule](./rules/target-promql-rule.md) - Checks that each target uses a valid PromQL query.
 * [target-rate-interval-rule](./rules/target-rate-interval-rule.md) - Checks that each target uses $__rate_interval.
-* [target-required-matchers](./rules/target-required-matchers.md) - Checks that target expr has the required matchers.
+* [target-job-rule](./rules/target-job-rule.md) - Checks that every PromQL query has a job matcher.
+* [target-instance-rule](./rules/target-instance-rule.md) - Checks that every PromQL query has a instance matcher.
 * `target-counter-agg-rule` - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
 
 ## Related Rules
 
 There are groups of rules that are intended to drive certain outcomes, but may be implemented separately to allow more granular [exceptions](#exclusions-and-warnings), and to keep the rules terse.
 
-### Required Matchers And Template Variables
+### Job and Instance Template Variables
 
-The following rules work together to ensure that every dashboard has template variables for required matchers that use variables, and that they are properly configured, and used in every promql query.
+The following rules work together to ensure that every dashboard has template variables for `Job` and `Instance`, that they are properly configured, and used in every promql query.
 
-* [template-variable-matchers-rule](./rules/template-variable-matchers-rule.md)
-* [target-required-matchers](./rules/target-required-matchers.md)
+* [template-job-rule](./rules/template-job-rule.md)
+* [template-instance-rule](./rules/template-instance-rule.md)
+* [target-job-rule](./rules/target-job-rule.md)
+* [target-instance-rule](./rules/target-instance-rule.md)
 
 These rules enforce a best practice for dashboards with a single Prometheus or Loki data source. Metrics and logs scraped by Prometheus and Loki have automatically generated [job and instance labels](https://prometheus.io/docs/concepts/jobs_instances/) on them. For this reason, having the ability to filter by these assured always-present labels is logical and a useful additional feature.
 
@@ -107,9 +109,9 @@ Where the rules above don't make sense, you can add a `.lint` file in the same d
 Example:
 ```yaml
 exclusions:
-  template-variable-matchers-rule:
+  template-job-rule:
 warnings:
-  template-variable-matchers-rule:
+  template-instance-rule:
 ```
 
 ## Reasons
@@ -119,7 +121,7 @@ Whenever you exclude or warn for a rule, it's recommended that you provide a rea
 Example:
 ```yaml
 exclusions:
-  template-variable-matchers-rule:
+  template-job-rule:
     reason: A job matcher is hardcoded into the recording rule used for all queries on these dashboards.
 ```
 
@@ -137,7 +139,7 @@ exclusions:
       panel: Top 10 Duration Rate
     - dashboard: Apollo Server
       panel: Top 10 Slowest Fields Resolution
-  template-variable-matchers-rule:
+  target-instance-rule:
     reason: Totals are intended to be across all instances
     entries:
     - panel: Requests Per Second

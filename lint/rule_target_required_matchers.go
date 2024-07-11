@@ -3,11 +3,16 @@ package lint
 import (
 	"fmt"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-func newTargetRequiredMatchersRule(matchers []*labels.Matcher) *TargetRuleFunc {
+type TargetRequiredMatchersRuleSettings struct {
+	Matchers config.Matchers `yaml:"matchers"`
+}
+
+func NewTargetRequiredMatchersRule(config *TargetRequiredMatchersRuleSettings) *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-required-matchers",
 		description: "Checks that target expr has the required matchers",
@@ -26,10 +31,10 @@ func newTargetRequiredMatchersRule(matchers []*labels.Matcher) *TargetRuleFunc {
 				// Invalid PromQL is another rule
 				return r
 			}
-			for _, m := range matchers {
+			for _, m := range config.Matchers {
 				for _, selector := range parser.ExtractSelectors(expr) {
-					if err := checkForMatcher(selector, m.Name, m.Type, m.Value); err != nil {
-						r.AddFixableError(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err), fixTargetRequiredMatcherRule(m.Name, m.Type, m.Value))
+					if err := checkForMatcher(selector, m.Name, labels.MatchType(m.Type), m.Value); err != nil {
+						r.AddFixableError(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err), fixTargetRequiredMatcherRule(m.Name, labels.MatchType(m.Type), m.Value))
 					}
 				}
 			}

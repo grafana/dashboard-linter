@@ -7,8 +7,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zeitlinger/conflate"
@@ -16,12 +14,14 @@ import (
 	"github.com/grafana/dashboard-linter/lint"
 )
 
-var lintStrictFlag bool
-var lintVerboseFlag bool
-var lintAutofixFlag bool
-var lintReadFromStdIn bool
-var lintConfigFlag string
-var lintRequiredMatchers []string
+var (
+	lintStrictFlag       bool
+	lintVerboseFlag      bool
+	lintAutofixFlag      bool
+	lintReadFromStdIn    bool
+	lintExperimentalFlag bool
+	lintConfigFlag       string
+)
 
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
@@ -37,19 +37,6 @@ var lintCmd = &cobra.Command{
 		var buf []byte
 		var err error
 		var filename string
-		// the matchers that need to be present in all selectors
-		var requiredMatchers []*labels.Matcher
-
-		// check the provided matchers are valid prometheus matchers
-		if len(lintRequiredMatchers) > 0 {
-			for _, m := range lintRequiredMatchers {
-				matcher, err := parser.ParseMetricSelector(fmt.Sprintf("{%s}", m))
-				if err != nil {
-					return fmt.Errorf("failed to parse provided matcher {%s}: %v", m, err)
-				}
-				requiredMatchers = append(requiredMatchers, matcher[0])
-			}
-		}
 
 		if lintReadFromStdIn {
 			if lintAutofixFlag {
@@ -85,7 +72,7 @@ var lintCmd = &cobra.Command{
 		config.Verbose = lintVerboseFlag
 		config.Autofix = lintAutofixFlag
 
-		rules := lint.NewRuleSet(requiredMatchers)
+		rules := lint.NewRuleSet(lintExperimentalFlag, config.RuleSettings)
 		results, err := rules.Lint([]lint.Dashboard{dashboard})
 		if err != nil {
 			return fmt.Errorf("failed to lint dashboard: %v", err)
@@ -135,7 +122,7 @@ var rulesCmd = &cobra.Command{
 	Short:        "Print documentation about each lint rule.",
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		rules := lint.NewRuleSet(nil)
+		rules := lint.NewRuleSet(true, lint.ConfigurationRuleSettings{})
 		for _, rule := range rules.Rules() {
 			fmt.Fprintf(os.Stdout, "* `%s` - %s\n", rule.Name(), rule.Description())
 		}
@@ -177,12 +164,11 @@ func init() {
 		false,
 		"read from stdin",
 	)
-	lintCmd.Flags().StringArrayVarP(
-		&lintRequiredMatchers,
-		"matcher",
-		"m",
-		[]string{"instance=~\"$instance\"", "job=~\"$job\""},
-		"matcher required to be present in all selectors, e.g. 'instance=~\"$instance\"' or 'cluster=\"$cluster\"', can be specified multiple times",
+	lintCmd.Flags().BoolVar(
+		&lintExperimentalFlag,
+		"experimental",
+		false,
+		"enable experimental rules",
 	)
 }
 

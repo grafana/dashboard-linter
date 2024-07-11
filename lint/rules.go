@@ -1,7 +1,5 @@
 package lint
 
-import "github.com/prometheus/prometheus/model/labels"
-
 type Rule interface {
 	Description() string
 	Name() string
@@ -171,23 +169,33 @@ type RuleSet struct {
 	rules []Rule
 }
 
-func NewRuleSet(matchers []*labels.Matcher) RuleSet {
-	return RuleSet{
-		rules: []Rule{
-			NewTemplateDatasourceRule(),
-			NewTemplateVariableMatchersRule(matchers),
-			NewTemplateLabelPromQLRule(),
-			NewTemplateOnTimeRangeReloadRule(),
-			NewPanelDatasourceRule(),
-			NewPanelTitleDescriptionRule(),
-			NewPanelUnitsRule(),
-			NewPanelNoTargetsRule(),
-			NewTargetPromQLRule(),
-			NewTargetRateIntervalRule(),
-			newTargetRequiredMatchersRule(matchers),
-			NewTargetCounterAggRule(),
-		},
+func NewRuleSet(experimental bool, ruleSettings ConfigurationRuleSettings) RuleSet {
+	// Add stable rules here
+	rules := []Rule{
+		NewTemplateDatasourceRule(),
+		NewTemplateJobRule(),
+		NewTemplateInstanceRule(),
+		NewTemplateLabelPromQLRule(),
+		NewTemplateOnTimeRangeReloadRule(),
+		NewPanelDatasourceRule(),
+		NewPanelTitleDescriptionRule(),
+		NewPanelUnitsRule(),
+		NewPanelNoTargetsRule(),
+		NewTargetPromQLRule(),
+		NewTargetRateIntervalRule(),
+		NewTargetJobRule(),
+		NewTargetInstanceRule(),
+		NewTargetCounterAggRule(),
+		NewUneditableRule(),
 	}
+	// Add experimental rules here
+	if experimental {
+		rules = append(rules,
+			NewTargetRequiredMatchersRule(ruleSettings.TargetRequiredMatchersRule),
+			NewTemplateRequiredVariablesRule(ruleSettings.TemplateRequiredVariablesRule, ruleSettings.TargetRequiredMatchersRule),
+		)
+	}
+	return RuleSet{rules}
 }
 
 func (s *RuleSet) Rules() []Rule {

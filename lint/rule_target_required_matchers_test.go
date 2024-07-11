@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTargetRequiredMatcherRule(t *testing.T) {
-	linter := newTargetRequiredMatchersRule([]*labels.Matcher{
-		{
-			Type:  labels.MatchRegexp,
-			Name:  "instance",
-			Value: "$instance",
+	linter := NewTargetRequiredMatchersRule(&TargetRequiredMatchersRuleSettings{
+		Matchers: config.Matchers{
+			{
+				Name:  "instance",
+				Type:  labels.MatchRegexp,
+				Value: "$instance",
+			},
 		},
 	})
 
