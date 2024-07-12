@@ -14,7 +14,7 @@ intermediate-docs:
 	@go run ./main.go -h > ./docs/_intermediate/help.txt
 	@go run ./main.go completion -h > ./docs/_intermediate/completion.txt
 	@go run ./main.go lint -h > ./docs/_intermediate/lint.txt
-	@go run ./main.go rules > ./docs/_intermediate/rules.txt
+	@go run ./main.go rules --experimental > ./docs/_intermediate/rules.txt
 	@echo "Can't automate everything, please replace the #Rules section of index.md with the contents of ./docs/_intermediate/rules.txt"
 
 embedmd:
