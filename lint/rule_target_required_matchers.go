@@ -14,8 +14,8 @@ type TargetRequiredMatchersRuleSettings struct {
 
 func NewTargetRequiredMatchersRule(config *TargetRequiredMatchersRuleSettings) *TargetRuleFunc {
 	return &TargetRuleFunc{
-		name:        "target-required-matchers",
-		description: "Checks that target expr has the required matchers",
+		name:        "target-required-matchers-rule",
+		description: "Checks that target PromQL query has the required matchers",
 		stability:   "experimental",
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
@@ -50,7 +50,10 @@ func fixTargetRequiredMatcherRule(name string, ty labels.MatchType, value string
 		// no need to check for errors here, as the expression was already parsed and validated
 		expr, _ := parsePromQL(t.Expr, d.Templating.List)
 		// Walk the expression tree and add the matcher to all vector selectors
-		parser.Walk(addMatchers(name, ty, value), expr, nil)
+		err := parser.Walk(addMatchers(name, ty, value), expr, nil)
+		if err != nil {
+			return
+		}
 		t.Expr = expr.String()
 	}
 }

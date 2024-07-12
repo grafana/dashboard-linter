@@ -1,7 +1,6 @@
 package lint
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -17,7 +16,6 @@ func NewTemplateRequiredVariablesRule(config *TemplateRequiredVariablesRuleSetti
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 
-			fmt.Println("config: ", config.Variables)
 			template := getTemplateDatasource(d)
 			if template == nil || template.Query != Prometheus {
 				return r
@@ -26,7 +24,6 @@ func NewTemplateRequiredVariablesRule(config *TemplateRequiredVariablesRuleSetti
 			// Convert the config.variables to a map to leverage uniqueness...
 			variables := make(map[string]bool)
 			for _, v := range config.Variables {
-				fmt.Println("v: ", v)
 				variables[v] = true
 			}
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 )
 
 func TestTemplateRequiredVariable(t *testing.T) {
@@ -12,7 +13,13 @@ func TestTemplateRequiredVariable(t *testing.T) {
 			Variables: []string{"job"},
 		},
 		&TargetRequiredMatchersRuleSettings{
-			Matchers: config.Matchers{},
+			Matchers: config.Matchers{
+				{
+					Name:  "instance",
+					Type:  labels.MatchRegexp,
+					Value: "$instance",
+				},
+			},
 		})
 
 	for _, tc := range []struct {
@@ -28,11 +35,11 @@ func TestTemplateRequiredVariable(t *testing.T) {
 			},
 		},
 		{
-			name: "Missing job template.",
-			result: []Result{{
-				Severity: Error,
-				Message:  "Dashboard 'test' is missing the job template",
-			}},
+			name: "Missing job/instance template.",
+			result: []Result{
+				{Severity: Error, Message: "Dashboard 'test' is missing the job template"},
+				{Severity: Error, Message: "Dashboard 'test' is missing the instance template"},
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -54,7 +61,13 @@ func TestTemplateRequiredVariable(t *testing.T) {
 				{Severity: Error, Message: "Dashboard 'test' job template should be a Prometheus query, is currently ''"},
 				{Severity: Warning, Message: "Dashboard 'test' job template should be a labeled 'Job', is currently ''"},
 				{Severity: Error, Message: "Dashboard 'test' job template should be a multi select"},
-				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"}},
+				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"},
+				{Severity: Error, Message: "Dashboard 'test' instance template should use datasource '$datasource', is currently 'foo'"},
+				{Severity: Error, Message: "Dashboard 'test' instance template should be a Prometheus query, is currently ''"},
+				{Severity: Warning, Message: "Dashboard 'test' instance template should be a labeled 'Instance', is currently ''"},
+				{Severity: Error, Message: "Dashboard 'test' instance template should be a multi select"},
+				{Severity: Error, Message: "Dashboard 'test' instance template allValue should be '.+', is currently ''"},
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -69,6 +82,10 @@ func TestTemplateRequiredVariable(t *testing.T) {
 							Name:       "job",
 							Datasource: "foo",
 						},
+						{
+							Name:       "instance",
+							Datasource: "foo",
+						},
 					},
 				},
 			},
@@ -79,7 +96,12 @@ func TestTemplateRequiredVariable(t *testing.T) {
 				{Severity: Error, Message: "Dashboard 'test' job template should be a Prometheus query, is currently 'bar'"},
 				{Severity: Warning, Message: "Dashboard 'test' job template should be a labeled 'Job', is currently ''"},
 				{Severity: Error, Message: "Dashboard 'test' job template should be a multi select"},
-				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"}},
+				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"},
+				{Severity: Error, Message: "Dashboard 'test' instance template should be a Prometheus query, is currently 'bar'"},
+				{Severity: Warning, Message: "Dashboard 'test' instance template should be a labeled 'Instance', is currently ''"},
+				{Severity: Error, Message: "Dashboard 'test' instance template should be a multi select"},
+				{Severity: Error, Message: "Dashboard 'test' instance template allValue should be '.+', is currently ''"},
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -95,16 +117,25 @@ func TestTemplateRequiredVariable(t *testing.T) {
 							Datasource: "$datasource",
 							Type:       "bar",
 						},
+						{
+							Name:       "instance",
+							Datasource: "$datasource",
+							Type:       "bar",
+						},
 					},
 				},
 			},
 		},
 		{
-			name: "Wrong job label.",
+			name: "Wrong job/instance label.",
 			result: []Result{
 				{Severity: Warning, Message: "Dashboard 'test' job template should be a labeled 'Job', is currently 'bar'"},
 				{Severity: Error, Message: "Dashboard 'test' job template should be a multi select"},
-				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"}},
+				{Severity: Error, Message: "Dashboard 'test' job template allValue should be '.+', is currently ''"},
+				{Severity: Warning, Message: "Dashboard 'test' instance template should be a labeled 'Instance', is currently 'bar'"},
+				{Severity: Error, Message: "Dashboard 'test' instance template should be a multi select"},
+				{Severity: Error, Message: "Dashboard 'test' instance template allValue should be '.+', is currently ''"},
+			},
 			dashboard: Dashboard{
 				Title: "test",
 				Templating: struct {
@@ -117,6 +148,12 @@ func TestTemplateRequiredVariable(t *testing.T) {
 						},
 						{
 							Name:       "job",
+							Datasource: "$datasource",
+							Type:       "query",
+							Label:      "bar",
+						},
+						{
+							Name:       "instance",
 							Datasource: "$datasource",
 							Type:       "query",
 							Label:      "bar",

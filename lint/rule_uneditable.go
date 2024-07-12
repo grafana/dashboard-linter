@@ -2,7 +2,7 @@ package lint
 
 func NewUneditableRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
-		name:        "uneditable-dashboard",
+		name:        "uneditable-dashboard-rule",
 		description: "Checks that the dashboard is not editable.",
 		stability:   "stable",
 		fn: func(d Dashboard) DashboardRuleResults {
