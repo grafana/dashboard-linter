@@ -11,6 +11,7 @@ func newTargetRequiredMatcherRule(matcher string) *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        fmt.Sprintf("target-%s-rule", matcher),
 		description: fmt.Sprintf("Checks that every PromQL query has a %s matcher.", matcher),
+		stability:   "stable",
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 			// TODO: The RuleSet should be responsible for routing rule checks based on their query type (prometheus, loki, mysql, etc)

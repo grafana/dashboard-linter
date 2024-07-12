@@ -3,20 +3,22 @@ package lint
 type Rule interface {
 	Description() string
 	Name() string
+	Stability() string
 	Lint(Dashboard, *ResultSet)
 }
 
 type DashboardRuleFunc struct {
-	name, description string
-	fn                func(Dashboard) DashboardRuleResults
+	name, description, stability string
+	fn                           func(Dashboard) DashboardRuleResults
 }
 
-func NewDashboardRuleFunc(name, description string, fn func(Dashboard) DashboardRuleResults) Rule {
-	return &DashboardRuleFunc{name, description, fn}
+func NewDashboardRuleFunc(name, description, stability string, fn func(Dashboard) DashboardRuleResults) Rule {
+	return &DashboardRuleFunc{name, description, stability, fn}
 }
 
 func (f DashboardRuleFunc) Name() string        { return f.name }
 func (f DashboardRuleFunc) Description() string { return f.description }
+func (f DashboardRuleFunc) Stability() string   { return f.stability }
 func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	dashboardResults := f.fn(d).Results
 	if len(dashboardResults) == 0 {
@@ -49,16 +51,17 @@ func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
 }
 
 type PanelRuleFunc struct {
-	name, description string
-	fn                func(Dashboard, Panel) PanelRuleResults
+	name, description, stability string
+	fn                           func(Dashboard, Panel) PanelRuleResults
 }
 
-func NewPanelRuleFunc(name, description string, fn func(Dashboard, Panel) PanelRuleResults) Rule {
-	return &PanelRuleFunc{name, description, fn}
+func NewPanelRuleFunc(name, description, stability string, fn func(Dashboard, Panel) PanelRuleResults) Rule {
+	return &PanelRuleFunc{name, description, stability, fn}
 }
 
 func (f PanelRuleFunc) Name() string        { return f.name }
 func (f PanelRuleFunc) Description() string { return f.description }
+func (f PanelRuleFunc) Stability() string   { return f.stability }
 func (f PanelRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	for pi, p := range d.GetPanels() {
 		p := p   // capture loop variable
@@ -104,16 +107,17 @@ func fixPanel(pi int, r PanelResult) func(dashboard *Dashboard) {
 }
 
 type TargetRuleFunc struct {
-	name, description string
-	fn                func(Dashboard, Panel, Target) TargetRuleResults
+	name, description, stability string
+	fn                           func(Dashboard, Panel, Target) TargetRuleResults
 }
 
-func NewTargetRuleFunc(name, description string, fn func(Dashboard, Panel, Target) TargetRuleResults) Rule {
-	return &TargetRuleFunc{name, description, fn}
+func NewTargetRuleFunc(name, description, stability string, fn func(Dashboard, Panel, Target) TargetRuleResults) Rule {
+	return &TargetRuleFunc{name, description, stability, fn}
 }
 
 func (f TargetRuleFunc) Name() string        { return f.name }
 func (f TargetRuleFunc) Description() string { return f.description }
+func (f TargetRuleFunc) Stability() string   { return f.stability }
 func (f TargetRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	for pi, p := range d.GetPanels() {
 		p := p   // capture loop variable

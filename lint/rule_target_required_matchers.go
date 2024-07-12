@@ -16,6 +16,7 @@ func NewTargetRequiredMatchersRule(config *TargetRequiredMatchersRuleSettings) *
 	return &TargetRuleFunc{
 		name:        "target-required-matchers",
 		description: "Checks that target expr has the required matchers",
+		stability:   "experimental",
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 			// TODO: The RuleSet should be responsible for routing rule checks based on their query type (prometheus, loki, mysql, etc)
