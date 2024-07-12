@@ -4,6 +4,7 @@ func NewTemplateInstanceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-instance-rule",
 		description: "Checks that the dashboard has a templated instance.",
+		stability:   "stable",
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 

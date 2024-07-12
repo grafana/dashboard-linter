@@ -11,6 +11,7 @@ func NewTargetCounterAggRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-counter-agg-rule",
 		description: "Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.",
+		stability:   "stable",
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 			expr, err := parsePromQL(t.Expr, d.Templating.List)

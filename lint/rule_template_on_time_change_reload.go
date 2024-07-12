@@ -8,6 +8,7 @@ func NewTemplateOnTimeRangeReloadRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-on-time-change-reload-rule",
 		description: "Checks that the dashboard template variables are configured to reload on time change.",
+		stability:   "stable",
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 

@@ -34,12 +34,26 @@ type TargetRuleResults struct {
 	Results []TargetResult
 }
 
+func TargetMessage(d Dashboard, p Panel, t Target, message string) string {
+	return fmt.Sprintf("Dashboard '%s', panel '%s', target idx '%d' %s", d.Title, p.Title, t.Idx, message)
+}
+
 func (r *TargetRuleResults) AddError(d Dashboard, p Panel, t Target, message string) {
 	r.Results = append(r.Results, TargetResult{
 		Result: Result{
 			Severity: Error,
-			Message:  fmt.Sprintf("Dashboard '%s', panel '%s', target idx '%d' %s", d.Title, p.Title, t.Idx, message),
+			Message:  TargetMessage(d, p, t, message),
 		},
+	})
+}
+
+func (r *TargetRuleResults) AddFixableError(d Dashboard, p Panel, t Target, message string, fix func(Dashboard, Panel, *Target)) {
+	r.Results = append(r.Results, TargetResult{
+		Result: Result{
+			Severity: Error,
+			Message:  TargetMessage(d, p, t, message),
+		},
+		Fix: fix,
 	})
 }
 

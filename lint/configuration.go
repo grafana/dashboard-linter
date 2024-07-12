@@ -11,15 +11,21 @@ import (
 // ConfigurationFile contains a map for rule exclusions, and warnings, where the key is the
 // rule name to be excluded or downgraded to a warning
 type ConfigurationFile struct {
-	Exclusions map[string]*ConfigurationRuleEntries `yaml:"exclusions"`
-	Warnings   map[string]*ConfigurationRuleEntries `yaml:"warnings"`
-	Verbose    bool                                 `yaml:"-"`
-	Autofix    bool                                 `yaml:"-"`
+	Exclusions   map[string]*ConfigurationRuleEntries `yaml:"exclusions"`
+	Warnings     map[string]*ConfigurationRuleEntries `yaml:"warnings"`
+	RuleSettings ConfigurationRuleSettings            `yaml:"settings,omitempty"`
+	Verbose      bool                                 `yaml:"-"`
+	Autofix      bool                                 `yaml:"-"`
 }
 
 type ConfigurationRuleEntries struct {
 	Reason  string               `json:"reason,omitempty"`
 	Entries []ConfigurationEntry `json:"entries,omitempty"`
+}
+
+type ConfigurationRuleSettings struct {
+	TemplateRequiredVariablesRule *TemplateRequiredVariablesRuleSettings `yaml:"template-required-variables-rule,omitempty"`
+	TargetRequiredMatchersRule    *TargetRequiredMatchersRuleSettings    `yaml:"target-required-matchers-rule,omitempty"`
 }
 
 // ConfigurationEntry will exist precisely once for every instance of a rule violation you wish
@@ -124,6 +130,10 @@ func NewConfigurationFile() *ConfigurationFile {
 	return &ConfigurationFile{
 		Exclusions: map[string]*ConfigurationRuleEntries{},
 		Warnings:   map[string]*ConfigurationRuleEntries{},
+		RuleSettings: ConfigurationRuleSettings{
+			TemplateRequiredVariablesRule: &TemplateRequiredVariablesRuleSettings{},
+			TargetRequiredMatchersRule:    &TargetRequiredMatchersRuleSettings{},
+		},
 	}
 }
 

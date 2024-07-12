@@ -14,11 +14,14 @@ import (
 	"github.com/grafana/dashboard-linter/lint"
 )
 
-var lintStrictFlag bool
-var lintVerboseFlag bool
-var lintAutofixFlag bool
-var lintReadFromStdIn bool
-var lintConfigFlag string
+var (
+	lintStrictFlag    bool
+	lintVerboseFlag   bool
+	lintAutofixFlag   bool
+	lintReadFromStdIn bool
+	lintConfigFlag    string
+	ExperimentalFlag  bool
+)
 
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
@@ -69,7 +72,7 @@ var lintCmd = &cobra.Command{
 		config.Verbose = lintVerboseFlag
 		config.Autofix = lintAutofixFlag
 
-		rules := lint.NewRuleSet()
+		rules := lint.NewRuleSet(ExperimentalFlag, config.RuleSettings)
 		results, err := rules.Lint([]lint.Dashboard{dashboard})
 		if err != nil {
 			return fmt.Errorf("failed to lint dashboard: %v", err)
@@ -119,9 +122,11 @@ var rulesCmd = &cobra.Command{
 	Short:        "Print documentation about each lint rule.",
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		rules := lint.NewRuleSet()
+		rules := lint.NewRuleSet(ExperimentalFlag, lint.ConfigurationRuleSettings{})
+		fmt.Fprintf(os.Stdout, "%-40s %-15s %s\n", "Rule Name", "Stability", "Description")
+		fmt.Fprintf(os.Stdout, "%-40s %-15s %s\n", "---------", "---------", "-----------")
 		for _, rule := range rules.Rules() {
-			fmt.Fprintf(os.Stdout, "* `%s` - %s\n", rule.Name(), rule.Description())
+			fmt.Fprintf(os.Stdout, "%-40s %-15s %s\n", rule.Name(), rule.Stability(), rule.Description())
 		}
 		return nil
 	},
@@ -129,7 +134,6 @@ var rulesCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(lintCmd)
-	rootCmd.AddCommand(rulesCmd)
 	lintCmd.Flags().BoolVar(
 		&lintStrictFlag,
 		"strict",
@@ -160,6 +164,19 @@ func init() {
 		"stdin",
 		false,
 		"read from stdin",
+	)
+	lintCmd.Flags().BoolVar(
+		&ExperimentalFlag,
+		"experimental",
+		false,
+		"enable experimental rules",
+	)
+	rootCmd.AddCommand(rulesCmd)
+	rulesCmd.Flags().BoolVar(
+		&ExperimentalFlag,
+		"experimental",
+		false,
+		"enable experimental rules",
 	)
 }
 

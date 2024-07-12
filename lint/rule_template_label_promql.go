@@ -43,6 +43,7 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-label-promql-rule",
 		description: "Checks that the dashboard templated labels have proper PromQL expressions.",
+		stability:   "stable",
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 
