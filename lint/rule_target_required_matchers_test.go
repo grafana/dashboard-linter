@@ -85,6 +85,20 @@ func TestTargetRequiredMatcherRule(t *testing.T) {
 				Expr: fmt.Sprintf(`sum(rate(foo{%s=~"$%s"}[5m]))`, "instance", "instance"),
 			},
 		},
+		// Using Grafana global-variable
+		{
+			name: "autofix-reverse-expanded-variables",
+			result: Result{
+				Severity: Fixed,
+				Message:  fmt.Sprintf("Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'sum(rate(foo[$__rate_interval]))': %s selector not found", "instance"),
+			},
+			target: Target{
+				Expr: `sum(rate(foo[$__rate_interval]))`,
+			},
+			fixed: &Target{
+				Expr: fmt.Sprintf(`sum(rate(foo{%s=~"$%s"}[$__rate_interval]))`, "instance", "instance"),
+			},
+		},
 	} {
 		dashboard := Dashboard{
 			Title: "dashboard",
