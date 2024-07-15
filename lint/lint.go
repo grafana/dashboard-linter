@@ -267,6 +267,7 @@ func (r *Row) GetPanels() []Panel {
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Dashboard struct {
 	Inputs     []Input `json:"__inputs"`
+	ID         int     `json:"id"`
 	Title      string  `json:"title,omitempty"`
 	Templating struct {
 		List []Template `json:"list"`
