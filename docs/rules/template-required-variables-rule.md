@@ -20,3 +20,12 @@ settings:
     variables:
       - cluster
       - namespace
+```
+Legacy config example for job and instance
+```yaml
+settings:
+  template-required-variables-rule:
+    variables:
+      - job
+      - instance
+```

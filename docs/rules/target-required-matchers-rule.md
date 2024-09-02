@@ -9,3 +9,12 @@ settings:
     matchers:
       - cluster=~"$cluster"
       - someLabel="someValue"
+```
+Legacy config example for job and instance
+```yaml
+settings:
+  target-required-matchers-rule:
+    matchers:
+      - job
+      - instance
+```
