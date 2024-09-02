@@ -201,3 +201,151 @@ func TestTemplateRequiredVariable(t *testing.T) {
 		})
 	}
 }
+
+func TestTemplateRequiredVariableNilRequiredMatchers(t *testing.T) {
+	linter := NewTemplateRequiredVariablesRule(
+		nil,
+		&TargetRequiredMatchersRuleSettings{
+			Matchers: config.Matchers{
+				{
+					Name:  "instance",
+					Type:  labels.MatchRegexp,
+					Value: "$instance",
+				},
+			},
+		})
+
+	for _, tc := range []struct {
+		name      string
+		result    []Result
+		dashboard Dashboard
+	}{
+		{
+			name: "Missing instance template.",
+			result: []Result{
+				{Severity: Error, Message: "Dashboard 'test' is missing the instance template"},
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "job",
+							Datasource: "$datasource",
+							Type:       "query",
+							Label:      "Job",
+							Multi:      true,
+							AllValue:   ".+",
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testMultiResultRule(t, linter, tc.dashboard, tc.result)
+		})
+	}
+}
+
+func TestTemplateRequiredVariableNilConfig(t *testing.T) {
+	linter := NewTemplateRequiredVariablesRule(
+		&TemplateRequiredVariablesRuleSettings{
+			Variables: []string{"job"},
+		},
+		nil)
+
+	for _, tc := range []struct {
+		name      string
+		result    []Result
+		dashboard Dashboard
+	}{
+		{
+			name: "Missing job template.",
+			result: []Result{
+				{Severity: Error, Message: "Dashboard 'test' is missing the job template"},
+			},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "instance",
+							Datasource: "${datasource}",
+							Type:       "query",
+							Label:      "Instance",
+							Multi:      true,
+							AllValue:   ".+",
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testMultiResultRule(t, linter, tc.dashboard, tc.result)
+		})
+	}
+}
+
+func TestTemplateRequiredVariableNilInput(t *testing.T) {
+	linter := NewTemplateRequiredVariablesRule(
+		nil,
+		nil)
+
+	for _, tc := range []struct {
+		name      string
+		result    []Result
+		dashboard Dashboard
+	}{
+		{
+			name:   "OK",
+			result: []Result{ResultSuccess},
+			dashboard: Dashboard{
+				Title: "test",
+				Templating: struct {
+					List []Template `json:"list"`
+				}{
+					List: []Template{
+						{
+							Type:  "datasource",
+							Query: "prometheus",
+						},
+						{
+							Name:       "job",
+							Datasource: "$datasource",
+							Type:       "query",
+							Label:      "Job",
+							Multi:      true,
+							AllValue:   ".+",
+						},
+						{
+							Name:       "instance",
+							Datasource: "${datasource}",
+							Type:       "query",
+							Label:      "Instance",
+							Multi:      true,
+							AllValue:   ".+",
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testMultiResultRule(t, linter, tc.dashboard, tc.result)
+		})
+	}
+}

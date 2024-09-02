@@ -151,3 +151,73 @@ func TestTargetRequiredMatcherRule(t *testing.T) {
 		})
 	}
 }
+
+func TestTargetRequiredMatcherRuleNilInput(t *testing.T) {
+	linter := NewTargetRequiredMatchersRule(nil)
+
+	for _, tc := range []struct {
+		name   string
+		result Result
+		target Target
+		fixed  *Target
+	}{
+		// Happy path
+		{
+			name:   "OK",
+			result: ResultSuccess,
+			target: Target{
+				Expr: fmt.Sprintf(`sum(rate(foo{%s=~"$%s"}[5m]))`, "instance", "instance"),
+			},
+		},
+	} {
+		dashboard := Dashboard{
+			Title: "dashboard",
+			Templating: struct {
+				List []Template `json:"list"`
+			}{
+				List: []Template{
+					{
+						Type:  "datasource",
+						Query: "prometheus",
+					},
+				},
+			},
+			Panels: []Panel{
+				{
+					Title:   "panel",
+					Type:    "singlestat",
+					Targets: []Target{tc.target},
+				},
+			},
+		}
+		t.Run(tc.name, func(t *testing.T) {
+			autofix := tc.fixed != nil
+			testRuleWithAutofix(t, linter, &dashboard, []Result{tc.result}, autofix)
+			if autofix {
+				fixedDashboard := Dashboard{
+					Title: "dashboard",
+					Templating: struct {
+						List []Template `json:"list"`
+					}{
+						List: []Template{
+							{
+								Type:  "datasource",
+								Query: "prometheus",
+							},
+						},
+					},
+					Panels: []Panel{
+						{
+							Title:   "panel",
+							Type:    "singlestat",
+							Targets: []Target{*tc.fixed},
+						},
+					},
+				}
+				expected, _ := json.Marshal(fixedDashboard)
+				actual, _ := json.Marshal(dashboard)
+				require.Equal(t, string(expected), string(actual))
+			}
+		})
+	}
+}

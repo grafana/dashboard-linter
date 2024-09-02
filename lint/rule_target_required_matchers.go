@@ -32,10 +32,12 @@ func NewTargetRequiredMatchersRule(config *TargetRequiredMatchersRuleSettings) *
 				// Invalid PromQL is another rule
 				return r
 			}
-			for _, m := range config.Matchers {
-				for _, selector := range parser.ExtractSelectors(expr) {
-					if err := checkForMatcher(selector, m.Name, labels.MatchType(m.Type), m.Value); err != nil {
-						r.AddFixableError(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err), fixTargetRequiredMatcherRule(m.Name, labels.MatchType(m.Type), m.Value))
+			if config != nil {
+				for _, m := range config.Matchers {
+					for _, selector := range parser.ExtractSelectors(expr) {
+						if err := checkForMatcher(selector, m.Name, labels.MatchType(m.Type), m.Value); err != nil {
+							r.AddFixableError(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err), fixTargetRequiredMatcherRule(m.Name, labels.MatchType(m.Type), m.Value))
+						}
 					}
 				}
 			}

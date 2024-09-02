@@ -21,16 +21,21 @@ func NewTemplateRequiredVariablesRule(config *TemplateRequiredVariablesRuleSetti
 				return r
 			}
 
-			// Convert the config.variables to a map to leverage uniqueness...
-			variables := make(map[string]bool)
-			for _, v := range config.Variables {
-				variables[v] = true
+			var variables = make(map[string]bool)
+
+			if config != nil {
+				// Convert the config.variables to a map to leverage uniqueness...
+				for _, v := range config.Variables {
+					variables[v] = true
+				}
 			}
 
-			// Check that all required matchers that use variables form target-required-matchers have a corresponding template variable
-			for _, m := range requiredMatchers.Matchers {
-				if strings.HasPrefix(m.Value, "$") {
-					variables[m.Value[1:]] = true
+			if requiredMatchers != nil {
+				// Check that all required matchers that use variables form target-required-matchers have a corresponding template variable
+				for _, m := range requiredMatchers.Matchers {
+					if strings.HasPrefix(m.Value, "$") {
+						variables[m.Value[1:]] = true
+					}
 				}
 			}
 
