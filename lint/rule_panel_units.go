@@ -66,7 +66,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-units-rule",
 		description: "Checks that each panel uses has valid units defined.",
-		stability:   "stable",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard, p Panel) PanelRuleResults {
 			r := PanelRuleResults{}
 			switch p.Type {

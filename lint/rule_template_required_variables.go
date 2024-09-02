@@ -12,7 +12,7 @@ func NewTemplateRequiredVariablesRule(config *TemplateRequiredVariablesRuleSetti
 	return &DashboardRuleFunc{
 		name:        "template-required-variables-rule",
 		description: "Checks that the dashboard has a template variable for required variables or matchers that use variables",
-		stability:   "experimental",
+		stability:   ruleStabilityExperimental,
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 

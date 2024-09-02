@@ -6,7 +6,7 @@ func NewPanelTitleDescriptionRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-title-description-rule",
 		description: "Checks that each panel has a title and description.",
-		stability:   "stable",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard, p Panel) PanelRuleResults {
 			r := PanelRuleResults{}
 			switch p.Type {

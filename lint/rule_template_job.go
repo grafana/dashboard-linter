@@ -4,7 +4,7 @@ func NewTemplateJobRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-job-rule",
 		description: "Checks that the dashboard has a templated job.",
-		stability:   "stable",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 

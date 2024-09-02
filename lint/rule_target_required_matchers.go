@@ -16,7 +16,7 @@ func NewTargetRequiredMatchersRule(config *TargetRequiredMatchersRuleSettings) *
 	return &TargetRuleFunc{
 		name:        "target-required-matchers-rule",
 		description: "Checks that target PromQL query has the required matchers",
-		stability:   "experimental",
+		stability:   ruleStabilityExperimental,
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 			// TODO: The RuleSet should be responsible for routing rule checks based on their query type (prometheus, loki, mysql, etc)
