@@ -41,7 +41,7 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 				// Invalid PromQL is another rule
 				return r
 			}
-			rateIntervalMagicDuration, err := model.ParseDuration(placeholderByVariable["$__rate_interval"].value)
+			rateIntervalMagicDuration, err := model.ParseDuration(placeholderByVariable["$__rate_interval"].value + "s")
 			if err != nil {
 				// Will not happen
 				panic(err)
