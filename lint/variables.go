@@ -1,215 +1,356 @@
 package lint
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/promql/parser"
 )
 
-// https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/
-var globalVariables = map[string]interface{}{
-	"__rate_interval": "8869990787ms",
-	"__interval":      "4867856611ms",
-	"__interval_ms":   "7781188786",
-	"__range_ms":      "6737667980",
-	"__range_s":       "9397795485",
-	"__range":         "6069770749ms",
-	"__dashboard":     "AwREbnft",
-	"__from":          time.Date(2020, 7, 13, 20, 19, 9, 254000000, time.UTC),
-	"__to":            time.Date(2020, 7, 13, 20, 19, 9, 254000000, time.UTC),
-	"__name":          "name",
-	"__org":           42,
-	"__org.name":      "orgname",
-	"__user.id":       42,
-	"__user.login":    "user",
-	"__user.email":    "user@test.com",
-	"timeFilter":      "time > now() - 7d",
-	"__timeFilter":    "time > now() - 7d",
+const (
+	rateInterval   = "__rate_interval"
+	interval       = "__interval"
+	intervalMs     = "__interval_ms"
+	rangeMs        = "__range_ms"
+	rangeS         = "__range_s"
+	rangeVar       = "__range"
+	dashboard      = "__dashboard"
+	from           = "__from"
+	to             = "__to"
+	name           = "__name"
+	org            = "__org"
+	orgName        = "__org.name"
+	userID         = "__user.id"
+	userLogin      = "__user.login"
+	userEmail      = "__user.email"
+	timeFilter     = "timeFilter"
+	timeFilter2    = "__timeFilter"
+	magicTimeRange = model.Duration(time.Hour*24*211 + time.Hour*12 + time.Minute*44 + time.Second*22 + time.Millisecond*50) // 211d12h44m22s50ms
+	magicEpoch     = float64(1294671549254)
+	magicString    = "bgludgvy"
+)
+
+const (
+	valTypeString valType = iota
+	valTypeTimeRange
+	valTypeEpoch
+)
+
+type valType int
+
+type placeholder struct {
+	variable string // variable including the "variable syntax" i.e. $var, ${var}, [[var]]
+	valType  valType
+	value    string
 }
 
-func stringValue(name string, value interface{}, kind, format string) (string, error) {
-	switch val := value.(type) {
-	case int:
-		return strconv.Itoa(val), nil
-	case time.Time:
-		// Implements https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/#__from-and-__to
-		switch kind {
-		case "date":
-			switch format {
-			case "seconds":
-				return strconv.FormatInt(val.Unix(), 10), nil
-			case "iso":
-				return val.Format(time.RFC3339), nil
-			default:
-				return "", fmt.Errorf("Unsupported momentjs time format: " + format)
-			}
-		default:
-			switch format {
-			case "date":
-				return val.Format(time.RFC3339), nil
-			default:
-				return strconv.FormatInt(val.UnixMilli(), 10), nil
-			}
-		}
-	default:
-		// Use variable name as sample value
-		svalue := fmt.Sprintf("%s", value)
-		// For list types, repeat it 3 times (arbitrary value)
-		svalueList := []string{svalue, svalue, svalue}
-		// Implements https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/
-		switch format {
-		case "csv":
-			return strings.Join(svalueList, ","), nil
-		case "doublequote":
-			return "\"" + strings.Join(svalueList, "\",\"") + "\"", nil
-		case "glob":
-			return "{" + strings.Join(svalueList, ",") + "}", nil
-		case "json":
-			data, err := json.Marshal(svalueList)
-			if err != nil {
-				return "", err
-			}
-			return string(data), nil
-		case "lucene":
-			return "(\"" + strings.Join(svalueList, "\" OR \"") + "\")", nil
-		case "percentencode":
-			return url.QueryEscape(strings.Join(svalueList, ",")), nil
-		case "pipe":
-			return strings.Join(svalueList, "|"), nil
-		case "raw":
-			return strings.Join(svalueList, ","), nil
-		case "regex":
-			return strings.Join(svalueList, "|"), nil
-		case "singlequote":
-			return "'" + strings.Join(svalueList, "','") + "'", nil
-		case "sqlstring":
-			return "'" + strings.Join(svalueList, "','") + "'", nil
-		case "text":
-			return strings.Join(svalueList, " + "), nil
-		case "queryparam":
-			values := url.Values{}
-			for _, svalue := range svalueList {
-				values.Add("var-"+name, svalue)
-			}
-			return values.Encode(), nil
-		default:
-			return svalue, nil
-		}
-	}
+// placeholderByVariable key is the variable name, without the "variable syntax" i.e. var
+var placeholderByVariable = make(map[string]*placeholder)
+var placeholderByValue = make(map[string]*placeholder)
+
+var globalVariablesInit = false
+
+// list of global variables in the for om a list of placeholders
+var globalVariables = []*placeholder{
+	{
+		variable: rateInterval,
+		valType:  valTypeTimeRange,
+	},
+	{
+		variable: interval,
+		valType:  valTypeTimeRange,
+	},
+	{
+		variable: intervalMs,
+		valType:  valTypeTimeRange,
+	},
+	{
+		variable: rangeMs,
+		valType:  valTypeTimeRange,
+	},
+	{
+		variable: rangeS,
+		valType:  valTypeTimeRange,
+	},
+	{
+		variable: rangeVar,
+		valType:  valTypeTimeRange,
+	},
+	{
+		variable: dashboard,
+		valType:  valTypeString,
+	},
+	{
+		variable: from,
+		valType:  valTypeEpoch,
+	},
+	{
+		variable: to,
+		valType:  valTypeEpoch,
+	},
+	{
+		variable: name,
+		valType:  valTypeString,
+	},
+	{
+		variable: org,
+		valType:  valTypeEpoch, // not really an epoch, but it is a float64
+	},
+	{
+		variable: orgName,
+		valType:  valTypeString,
+	},
+	{
+		variable: userID,
+		valType:  valTypeEpoch, // not really an epoch, but it is a float64
+	},
+	{
+		variable: userLogin,
+		valType:  valTypeString,
+	},
+	{
+		variable: userEmail,
+		valType:  valTypeString,
+	},
+	{
+		variable: timeFilter,
+		valType:  valTypeString, // not really a string, but currently we do only support prometheus queries, and this would not be a valid prometheus query...
+	},
+	{
+		variable: timeFilter2,
+		valType:  valTypeString, // not really a string, but currently we do only support prometheus queries, and this would not be a valid prometheus query...
+	},
 }
 
-func removeVariableByName(name string, variables []Template) []Template {
-	vars := make([]Template, 0, len(variables))
-	for _, v := range variables {
-		if v.Name == name {
-			continue
-		}
-		vars = append(vars, v)
-	}
-	return vars
-}
-
-func variableSampleValue(s string, variables []Template) (string, error) {
-	var name, kind, format string
-	parts := strings.Split(s, ":")
-	switch len(parts) {
-	case 1:
-		// No format
-		name = s
-	case 2:
-		// Could be __from:date, variable:csv, ...
-		name = parts[0]
-		format = parts[1]
-	case 3:
-		// Could be __from:date:iso, ...
-		name = parts[0]
-		kind = parts[1]
-		format = parts[2]
-	default:
-		return "", fmt.Errorf("unknown variable format: %s", s)
-	}
-	// If it is part of the globals, return a string representation of a sample value
-	if value, ok := globalVariables[name]; ok {
-		return stringValue(name, value, kind, format)
-	}
-	// If it is an auto interval variable, replace with a sample value of 10s
-	if strings.HasPrefix(name, "__auto_interval") {
-		return "10s", nil
-	}
-	// If it is a template variable and we have a value, we use it
-	for _, v := range variables {
-		if v.Name != name {
-			continue
-		}
-		// if it has a current value, use it
-		c, err := v.Current.Get()
-		if err != nil {
-			return "", err
-		}
-		if c.Value != "" {
-			// Recursively expand, without the current variable to avoid infinite recursion
-			return expandVariables(c.Value, removeVariableByName(name, variables))
-		}
-		// If it has options, use the first option
-		if len(v.Options) > 0 {
-			// Recursively expand, without the current variable to avoid infinite recursion
-			o, err := v.Options[0].Get()
-			if err != nil {
-				return "", err
-			}
-			return expandVariables(o.Value, removeVariableByName(name, variables))
-		}
-	}
-	// Assume variable type is a string
-	return stringValue(name, name, kind, format)
-}
+// var supportedFormatOptions = []string{"csv", "distributed", "doublequote", "glob", "json", "lucene", "percentencode", "pipe", "raw", "regex", "singlequote", "sqlstring", "text", "queryparam"}
 
 var variableRegexp = regexp.MustCompile(
 	strings.Join([]string{
-		`\$([[:word:]]+)`,    // $var syntax
-		`\$\{([^}]+)\}`,      // ${var} syntax
-		`\[\[([^\[\]]+)\]\]`, // [[var]] syntax
+		`("\$|\$)([[:word:]]+)`, // $var syntax
+		`("\$|\$)\{([^}]+)\}`,   // ${var} syntax
+		`\[\[([^\[\]]+)\]\]`,    // [[var]] syntax
 	}, "|"),
 )
 
 func expandVariables(expr string, variables []Template) (string, error) {
-	parts := strings.Split(expr, "\"")
-	for i, part := range parts {
-		if i%2 == 1 {
-			// Inside a double quote string, just add it
-			continue
+	// initialize global variables if not already initialized
+	if !globalVariablesInit {
+		for _, v := range globalVariables {
+			// assign placeholder to global variable 3 times to account for the 3 different ways a variable can be defined
+			// $var, ${var}, [[var]]
+			p := []placeholder{
+				{
+					variable: fmt.Sprintf("$%s", v.variable),
+					valType:  v.valType,
+				},
+				{
+					variable: fmt.Sprintf("${%s}", v.variable),
+					valType:  v.valType,
+				},
+				{
+					variable: fmt.Sprintf("[[%s]]", v.variable),
+					valType:  v.valType,
+				},
+			}
+			for _, v := range p {
+				createPlaceholder(v.variable, v.valType)
+			}
+		}
+		globalVariablesInit = true
+	}
+	// add template variables to placeholder maps
+	for _, v := range variables {
+		if v.Name != "" {
+			// create placeholder 3 times to account for the 3 different ways a variable can be defined
+			// at this point, we do not care about the value of the variable, we just need a placeholder for it.
+			valType := getValueType(getTemplateVariableValue(v))
+			createPlaceholder(fmt.Sprintf("$%s", v.Name), valType)
+			createPlaceholder(fmt.Sprintf("${%s}", v.Name), valType)
+			createPlaceholder(fmt.Sprintf("[[%s]]", v.Name), valType)
+		}
+	}
+
+	expr = variableRegexp.ReplaceAllStringFunc(expr, RegexpExpandVariables)
+
+	// Check if the expression can be parsed
+	_, err := parser.ParseExpr(expr)
+	if err != nil {
+		// not using promql parser error since it contains memory address which is hard to test...
+		return "", fmt.Errorf("failed to parse expression: %s", expr)
+	}
+
+	return expr, nil
+}
+
+func revertExpandedVariables(expr string) string {
+	for _, p := range placeholderByValue {
+		expr = strings.ReplaceAll(expr, p.value, p.variable)
+	}
+	return expr
+}
+
+// Should not replace variables inside double quotes
+func RegexpExpandVariables(s string) string {
+	// check if string starts with a double quote
+	if s[0:1] == `"` {
+		return s
+	}
+
+	if strings.Contains(s, ":") {
+		// check if variable is __from or __to with advanced formatting
+		if strings.HasPrefix(trimVariableSyntax(s), from) || strings.HasPrefix(trimVariableSyntax(s), to) {
+			if strings.Count(s, ":") > 2 {
+				// Should not replace variables with more than 2 colons returning the original string, promql parser will handle the error.
+				return s
+			}
+			return createPlaceholder(s, valTypeEpoch)
+		}
+		// check if variable contains more than 1 colon
+		if strings.Count(s, ":") > 1 {
+			// Should not replace variables with more than 1 colon returning the original string, promql parser will handle the error.
+			return s
+		}
+	}
+	return createPlaceholder(s, valTypeString)
+}
+
+// getPlaceholder returns placeholder for a provided variable or value
+func getPlaceholder(variable string, value string) *placeholder {
+	switch {
+	case variable != "" && value != "":
+		if p, ok := placeholderByVariable[variable]; ok {
+			if p.value == value {
+				return p
+			}
+		}
+	case variable != "":
+		if p, ok := placeholderByVariable[variable]; ok {
+			return p
+		}
+	case value != "":
+		if p, ok := placeholderByValue[value]; ok {
+			return p
+		}
+	}
+	return nil
+}
+
+// assignPlaceholder assigns a placeholder to a variable it ensures both placeholderByVariable and placeholderByValue are updated
+func assignPlaceholder(placeholder placeholder) error {
+	if placeholder.variable == "" || placeholder.value == "" {
+		return fmt.Errorf("variable and value must not be empty")
+	}
+	// Check if variable and value combination already exists
+	if getPlaceholder(placeholder.variable, placeholder.value) != nil {
+		return nil
+	}
+	// check if value already exists but with a different variable
+	p := getPlaceholder("", placeholder.value)
+	if p != nil {
+		if p.variable != placeholder.variable {
+			return fmt.Errorf("value %s already assigned to variable %s", placeholder.value, p.variable)
+		}
+	}
+	// check if variable already exists but with a different value
+	p = getPlaceholder(placeholder.variable, "")
+	if p != nil {
+		if p.value != placeholder.value {
+			return fmt.Errorf("variable %s already assigned to value %s", placeholder.variable, p.value)
+		}
+	}
+	// add placeholder to placeholderByVariable
+	placeholderByVariable[placeholder.variable] = &placeholder
+	// add placeholder to placeholderByValue
+	placeholderByValue[placeholder.value] = &placeholder
+	return nil
+}
+
+func getValueType(value string) valType {
+	// check if variable is time range
+	if _, err := model.ParseDuration(value); err == nil {
+		return valTypeTimeRange
+	}
+	// check if variable is epoch, this is used for promql @ modifier
+	if _, err := strconv.ParseFloat(value, 64); err == nil {
+		return valTypeEpoch
+	}
+	return valTypeString
+}
+
+// createPlaceholder returns a placeholder for a variable.
+func createPlaceholder(variable string, valType valType) string {
+	// check if variable already has a placeholder
+	if p := getPlaceholder(variable, ""); p != nil {
+		return p.value
+	}
+	// create placeholder
+	counter := 0
+	var value string
+	for {
+		if valType == valTypeTimeRange {
+			// Using magicTimeRange as a seed for the placeholder
+			timeRange := magicTimeRange + model.Duration(time.Millisecond*time.Duration(counter))
+			value = timeRange.String()
+		}
+		if valType == valTypeEpoch {
+			// Using magicEpoch as a seed for the placeholder
+			epoch := magicEpoch + float64(counter)
+			// trim epoch to 3 decimal places since that is the precision used in prometheus
+			value = fmt.Sprintf("%.3f", epoch)
+		}
+		if valType == valTypeString {
+			value = fmt.Sprintf("%s_%s_%d", magicString, trimVariableSyntax(variable), counter)
 		}
 
-		// Accumulator to store the processed submatches
-		var subparts []string
-		// Cursor indicates where we are in the part being processed
-		cursor := 0
-		for _, v := range variableRegexp.FindAllStringSubmatchIndex(part, -1) {
-			// Add all until match starts
-			subparts = append(subparts, part[cursor:v[0]])
-			// Iterate on all the subgroups and find the one that matched
-			for j := 2; j < len(v); j += 2 {
-				if v[j] < 0 {
-					continue
-				}
-				// Replace the match with sample value
-				val, err := variableSampleValue(part[v[j]:v[j+1]], variables)
-				if err != nil {
-					return "", err
-				}
-				subparts = append(subparts, val)
+		if _, ok := placeholderByValue[value]; !ok {
+			err := assignPlaceholder(placeholder{variable: variable, valType: valType, value: value})
+			if err == nil {
+				return value
 			}
-			// Move the start cursor at the end of the current match
-			cursor = v[1]
 		}
-		// Add rest of the string
-		subparts = append(subparts, parts[i][cursor:])
-		// Merge all back into the parts
-		parts[i] = strings.Join(subparts, "")
+		counter++
+		if counter > 10000 {
+			// this should never happen... but just in case... lets panic...
+			panic("createPlaceholder: counter > 10000 - this should never happen :(")
+		}
 	}
-	return strings.Join(parts, "\""), nil
+}
+
+// Helper func to remove the variable syntax from a string
+func trimVariableSyntax(s string) string {
+	s = strings.TrimPrefix(s, "[[")
+	s = strings.TrimPrefix(s, "${")
+	s = strings.TrimPrefix(s, "$")
+
+	s = strings.TrimSuffix(s, "]]")
+	s = strings.TrimSuffix(s, "}")
+
+	// replace all ":" with "_"
+	s = strings.ReplaceAll(s, ":", "_")
+
+	return s
+}
+
+// Helper func to get the value of a template variable
+func getTemplateVariableValue(v Template) string {
+	// do not handle error
+	c, _ := v.Current.Get()
+	// check if variable has a value
+	if c.Value == "" {
+		if len(v.Options) > 0 {
+			// Do not handle error
+			o, _ := v.Options[0].Get()
+			if o.Value != "" {
+				return o.Value
+			}
+		}
+		// v.Current.Value is empty and no options are provided return empty string
+		return ""
+		// Helper func to check if a format option is supported
+	}
+	return c.Value
 }
