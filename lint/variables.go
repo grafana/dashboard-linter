@@ -5,31 +5,31 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
 const (
-	rateInterval   = "__rate_interval"
-	interval       = "__interval"
-	intervalMs     = "__interval_ms"
-	rangeMs        = "__range_ms"
-	rangeS         = "__range_s"
-	rangeVar       = "__range"
-	dashboard      = "__dashboard"
-	from           = "__from"
-	to             = "__to"
-	name           = "__name"
-	org            = "__org"
-	orgName        = "__org.name"
-	userID         = "__user.id"
-	userLogin      = "__user.login"
-	userEmail      = "__user.email"
-	timeFilter     = "timeFilter"
-	timeFilter2    = "__timeFilter"
-	magicTimeRange = model.Duration(time.Hour*24*211 + time.Hour*12 + time.Minute*44 + time.Second*22 + time.Millisecond*50) // 211d12h44m22s50ms
+	rateInterval = "__rate_interval"
+	interval     = "__interval"
+	intervalMs   = "__interval_ms"
+	rangeMs      = "__range_ms"
+	rangeS       = "__range_s"
+	rangeVar     = "__range"
+	dashboard    = "__dashboard"
+	from         = "__from"
+	to           = "__to"
+	name         = "__name"
+	org          = "__org"
+	orgName      = "__org.name"
+	userID       = "__user.id"
+	userLogin    = "__user.login"
+	userEmail    = "__user.email"
+	timeFilter   = "timeFilter"
+	timeFilter2  = "__timeFilter"
+	// magicTimeRange = model.Duration(time.Hour*24*211 + time.Hour*12 + time.Minute*44 + time.Second*22 + time.Millisecond*50) // 211d12h44m22s50ms
+	magicTimeRange = 11277964 // seconds 130d12h46m4s
 	magicEpoch     = float64(1294671549254)
 	magicString    = "bgludgvy"
 )
@@ -185,11 +185,30 @@ func expandVariables(expr string, variables []Template) (string, error) {
 	return expr, nil
 }
 
-func revertExpandedVariables(expr string) string {
+func revertExpandedVariables(expr string) (string, error) {
 	for _, p := range placeholderByValue {
-		expr = strings.ReplaceAll(expr, p.value, p.variable)
+		if p.valType == valTypeTimeRange {
+			// Replace all versions of time range placeholder
+			expr = strings.ReplaceAll(expr, p.value, p.variable)
+
+			// Parse time duration
+			d, err := model.ParseDuration(p.value + "s")
+			if err != nil {
+				return "", fmt.Errorf("failed to parse duration: %s when reverting expanded variable: %s", p.value, p.variable)
+			}
+			expr = strings.ReplaceAll(expr, d.String(), p.variable)
+
+			// Parse as float64
+			f, err := strconv.ParseFloat(p.value, 64)
+			if err != nil {
+				return "", fmt.Errorf("failed to parse float64: %s when reverting expanded variable: %s", p.value, p.variable)
+			}
+			expr = strings.ReplaceAll(expr, fmt.Sprint(f), p.variable)
+		} else {
+			expr = strings.ReplaceAll(expr, p.value, p.variable)
+		}
 	}
-	return expr
+	return expr, nil
 }
 
 // Should not replace variables inside double quotes
@@ -292,8 +311,8 @@ func createPlaceholder(variable string, valType valType) string {
 	for {
 		if valType == valTypeTimeRange {
 			// Using magicTimeRange as a seed for the placeholder
-			timeRange := magicTimeRange + model.Duration(time.Millisecond*time.Duration(counter))
-			value = timeRange.String()
+			timeRange := magicTimeRange + counter
+			value = strconv.Itoa(timeRange)
 		}
 		if valType == valTypeEpoch {
 			// Using magicEpoch as a seed for the placeholder
