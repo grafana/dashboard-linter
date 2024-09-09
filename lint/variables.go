@@ -48,7 +48,6 @@ type placeholder struct {
 	value    string
 }
 
-// placeholderByVariable key is the variable name, without the "variable syntax" i.e. var
 var placeholderByVariable = make(map[string]*placeholder)
 var placeholderByValue = make(map[string]*placeholder)
 
