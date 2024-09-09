@@ -56,7 +56,11 @@ func fixTargetRequiredMatcherRule(name string, ty labels.MatchType, value string
 		if err != nil {
 			return
 		}
-		t.Expr = expr.String()
+		e, err := revertExpandedVariables(expr.String())
+		if err != nil {
+			return
+		}
+		t.Expr = e
 	}
 }
 
