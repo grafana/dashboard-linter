@@ -288,7 +288,11 @@ func assignPlaceholder(placeholder placeholder) error {
 }
 
 func getValueType(value string) valType {
-	// check if variable is time range
+	// value might be provided as an integer, so we need to check if it can be parsed as an integer and then add s to the end)
+	if _, err := strconv.Atoi(value); err == nil {
+		value = value + "s"
+	}
+	// check if variable is a time range
 	if _, err := model.ParseDuration(value); err == nil {
 		return valTypeTimeRange
 	}
@@ -353,8 +357,14 @@ func trimVariableSyntax(s string) string {
 	return s
 }
 
+// Helper func to check if string has variable syntax
+func checkVariableSyntax(s string) bool {
+	return strings.Contains(s, "$") || strings.Contains(s, "[[") || strings.Contains(s, "{")
+}
+
 // Helper func to get the value of a template variable
 func getTemplateVariableValue(v Template) string {
+	var value string
 	// do not handle error
 	c, _ := v.Current.Get()
 	// check if variable has a value
@@ -363,12 +373,25 @@ func getTemplateVariableValue(v Template) string {
 			// Do not handle error
 			o, _ := v.Options[0].Get()
 			if o.Value != "" {
-				return o.Value
+				value = o.Value
 			}
 		}
-		// v.Current.Value is empty and no options are provided return empty string
-		return ""
-		// Helper func to check if a format option is supported
+	} else {
+		value = c.Value
 	}
-	return c.Value
+	// check value for variable syntax
+	if checkVariableSyntax(value) {
+		// lazy way of dealing with __auto_interval...
+		if strings.HasPrefix(trimVariableSyntax(value), "__auto_interval") {
+			// This will result in a placeholder with type timeRange
+			value = "9001s"
+		} else {
+			// try to expand variable
+			varValue := getPlaceholder(value, "")
+			if varValue != nil {
+				value = varValue.value
+			}
+		}
+	}
+	return value
 }
