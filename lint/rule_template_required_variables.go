@@ -21,12 +21,18 @@ func NewTemplateRequiredVariablesRule(config *TemplateRequiredVariablesRuleSetti
 				return r
 			}
 
-			var variables = make(map[string]bool)
+			// Create a map and a slice, map for uniqueness and slice to keep the order...
+			var varMap = make(map[string]bool)
+			var varSlice = []string{}
 
 			if config != nil {
 				// Convert the config.variables to a map to leverage uniqueness...
 				for _, v := range config.Variables {
-					variables[v] = true
+					if varMap[v] {
+						continue
+					}
+					varMap[v] = true
+					varSlice = append(varSlice, v)
 				}
 			}
 
@@ -34,12 +40,16 @@ func NewTemplateRequiredVariablesRule(config *TemplateRequiredVariablesRuleSetti
 				// Check that all required matchers that use variables form target-required-matchers have a corresponding template variable
 				for _, m := range requiredMatchers.Matchers {
 					if strings.HasPrefix(m.Value, "$") {
-						variables[m.Value[1:]] = true
+						if varMap[m.Value[1:]] {
+							continue
+						}
+						varMap[m.Value[1:]] = true
+						varSlice = append(varSlice, m.Value[1:])
 					}
 				}
 			}
 
-			for v := range variables {
+			for _, v := range varSlice {
 				checkTemplate(d, v, &r)
 			}
 			return r
