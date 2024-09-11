@@ -113,16 +113,13 @@ func TestTargetPromQLRule(t *testing.T) {
 				Type:  "singlestat",
 				Targets: []Target{
 					{
-						Expr: `sum (rate(foo[$interval:$resolution]))`,
+						Expr: `max by($var) (rate(cpu{}[$interval:$resolution]))`,
 					},
 				},
 			},
 		},
 		{
-			result: []Result{{
-				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'increase(foo{}[$sampling])': could not expand variables: failed to parse expression: increase(foo{}[bgludgvy_sampling_0])",
-			}},
+			result: []Result{ResultSuccess},
 			panel: Panel{
 				Title: "panel",
 				Type:  "singlestat",
@@ -196,6 +193,11 @@ func TestTargetPromQLRule(t *testing.T) {
 						Type:    "interval",
 						Name:    "sampling",
 						Current: map[string]interface{}{"value": "$__auto_interval_sampling"},
+					},
+					{
+						Name:    "var",
+						Type:    "query",
+						Current: map[string]interface{}{"value": "value"},
 					},
 					{
 						Type: "resolution",
