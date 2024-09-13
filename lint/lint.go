@@ -181,6 +181,15 @@ func (t *Target) GetDataSource() (Datasource, error) {
 	return GetDataSource(t.Datasource)
 }
 
+type Annotation struct {
+	Name       string      `json:"name"`
+	Datasource interface{} `json:"datasource,omitempty"`
+}
+
+func (a *Annotation) GetDataSource() (Datasource, error) {
+	return GetDataSource(a.Datasource)
+}
+
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
@@ -271,6 +280,9 @@ type Dashboard struct {
 	Templating struct {
 		List []Template `json:"list"`
 	} `json:"templating"`
+	Annotations struct {
+		List []Annotation `json:"list"`
+	} `json:"annotations"`
 	Rows     []Row   `json:"rows,omitempty"`
 	Panels   []Panel `json:"panels,omitempty"`
 	Editable bool    `json:"editable,omitempty"`
