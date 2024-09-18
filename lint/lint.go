@@ -17,6 +17,7 @@ const (
 	Fixed
 
 	Prometheus = "prometheus"
+	Loki       = "loki"
 )
 
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
@@ -175,6 +176,7 @@ type Target struct {
 	Expr       string      `json:"expr,omitempty"`
 	PanelId    int         `json:"panelId,omitempty"`
 	RefId      string      `json:"refId,omitempty"`
+	Hide       bool        `json:"hide"`
 }
 
 func (t *Target) GetDataSource() (Datasource, error) {

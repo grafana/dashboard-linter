@@ -181,6 +181,8 @@ func NewRuleSet() RuleSet {
 			NewPanelTitleDescriptionRule(),
 			NewPanelUnitsRule(),
 			NewPanelNoTargetsRule(),
+			NewTargetLogQLRule(),
+			NewTargetLogQLAutoRule(),
 			NewTargetPromQLRule(),
 			NewTargetRateIntervalRule(),
 			NewTargetJobRule(),
