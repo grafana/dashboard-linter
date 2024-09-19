@@ -6,7 +6,6 @@ import (
 
 func TestTargetRateIntervalRule(t *testing.T) {
 	linter := NewTargetRateIntervalRule()
-
 	for _, tc := range []struct {
 		result Result
 		panel  Panel

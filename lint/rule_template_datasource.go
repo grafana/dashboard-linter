@@ -12,6 +12,7 @@ func NewTemplateDatasourceRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-datasource-rule",
 		description: "Checks that the dashboard has a templated datasource.",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 

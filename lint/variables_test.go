@@ -20,128 +20,133 @@ func TestVariableExpansion(t *testing.T) {
 			expr:   "up{job=~\"$job\"}",
 			result: "up{job=~\"$job\"}",
 		},
-		// https://grafana.com/docs/grafana/latest/variables/syntax/
+		// https: //grafana.com/docs/grafana/latest/variables/syntax/
 		{
 			desc:   "Should replace variables in metric name",
 			expr:   "up$var{job=~\"$job\"}",
-			result: "upvar{job=~\"$job\"}",
+			result: "upbgludgvy_var_0{job=~\"$job\"}",
 		},
 		{
 			desc:   "Should replace global rate/range variables",
-			expr:   "rate(metric{}[$__rate_interval])",
-			result: "rate(metric{}[8869990787ms])",
+			expr:   "rate(metric{}[11277964])",
+			result: "rate(metric{}[11277964])",
 		},
 		{
 			desc:   "Should support ${...} syntax",
 			expr:   "rate(metric{}[${__rate_interval}])",
-			result: "rate(metric{}[8869990787ms])",
+			result: "rate(metric{}[11277965])",
 		},
 		{
 			desc:   "Should support [[...]] syntax",
 			expr:   "rate(metric{}[[[__rate_interval]]])",
-			result: "rate(metric{}[8869990787ms])",
+			result: "rate(metric{}[11277966])",
 		},
 		// https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/
 		{
 			desc:   "Should support ${__user.id}",
 			expr:   "sum(http_requests_total{method=\"GET\"} @ ${__user.id})",
-			result: "sum(http_requests_total{method=\"GET\"} @ 42)",
+			result: "sum(http_requests_total{method=\"GET\"} @ 1294671549264.000)",
 		},
 		{
 			desc:   "Should support $__from/$__to",
 			expr:   "sum(http_requests_total{method=\"GET\"} @ $__from)",
-			result: "sum(http_requests_total{method=\"GET\"} @ 1594671549254)",
+			result: "sum(http_requests_total{method=\"GET\"} @ 1294671549254.000)",
 		},
 		{
 			desc:   "Should support $__from/$__to with formatting option (unix seconds)",
-			expr:   "sum(http_requests_total{method=\"GET\"} @ ${__from:date:seconds}000)",
-			result: "sum(http_requests_total{method=\"GET\"} @ 1594671549000)",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ ${__from:date:seconds})",
+			result: "sum(http_requests_total{method=\"GET\"} @ 1294671549266.000)",
 		},
 		{
 			desc:   "Should support $__from/$__to with formatting option (iso default)",
 			expr:   "sum(http_requests_total{method=\"GET\"} @ ${__from:date})",
-			result: "sum(http_requests_total{method=\"GET\"} @ 2020-07-13T20:19:09Z)",
+			result: "sum(http_requests_total{method=\"GET\"} @ 1294671549267.000)",
 		},
 		{
 			desc:   "Should support $__from/$__to with formatting option (iso)",
 			expr:   "sum(http_requests_total{method=\"GET\"} @ ${__from:date:iso})",
-			result: "sum(http_requests_total{method=\"GET\"} @ 2020-07-13T20:19:09Z)",
+			result: "sum(http_requests_total{method=\"GET\"} @ 1294671549268.000)",
 		},
 		{
-			desc: "Should not support $__from/$__to with momentjs formatting option (iso)",
-			expr: "sum(http_requests_total{method=\"GET\"} @ ${__from:date:YYYY-MM})",
-			err:  fmt.Errorf("Unsupported momentjs time format: YYYY-MM"),
+			desc:   "Should not support $__from/$__to with momentjs formatting option (iso)",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ ${__from:date:YYYY-MM})",
+			result: "sum(http_requests_total{method=\"GET\"} @ 1294671549269.000)",
 		},
 		// https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/
 		{
 			desc:   "Should support ${variable:csv} syntax",
 			expr:   "max by(${variable:csv}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(variable,variable,variable) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_csv_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:doublequote} syntax",
 			expr:   "max by(${variable:doublequote}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(\"variable\",\"variable\",\"variable\") (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_doublequote_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:glob} syntax",
 			expr:   "max by(${variable:glob}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by({variable,variable,variable}) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_glob_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:json} syntax",
 			expr:   "max by(${variable:json}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by([\"variable\",\"variable\",\"variable\"]) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_json_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:lucene} syntax",
 			expr:   "max by(${variable:lucene}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by((\"variable\" OR \"variable\" OR \"variable\")) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_lucene_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:percentencode} syntax",
 			expr:   "max by(${variable:percentencode}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(variable%2Cvariable%2Cvariable) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_percentencode_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:pipe} syntax",
 			expr:   "max by(${variable:pipe}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(variable|variable|variable) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_pipe_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:raw} syntax",
 			expr:   "max by(${variable:raw}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(variable,variable,variable) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_raw_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:regex} syntax",
 			expr:   "max by(${variable:regex}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(variable|variable|variable) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_regex_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:singlequote} syntax",
 			expr:   "max by(${variable:singlequote}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by('variable','variable','variable') (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_singlequote_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:sqlstring} syntax",
 			expr:   "max by(${variable:sqlstring}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by('variable','variable','variable') (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_sqlstring_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:text} syntax",
 			expr:   "max by(${variable:text}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(variable + variable + variable) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_text_0) (rate(cpu{}[11277964]))",
 		},
 		{
 			desc:   "Should support ${variable:queryparam} syntax",
 			expr:   "max by(${variable:queryparam}) (rate(cpu{}[$__rate_interval]))",
-			result: "max by(var-variable=variable&var-variable=variable&var-variable=variable) (rate(cpu{}[8869990787ms]))",
+			result: "max by(bgludgvy_variable_queryparam_0) (rate(cpu{}[11277964]))",
+		},
+		{
+			desc:   "Should support using variables for multiplication",
+			expr:   "sum(rate(foo[$__rate_interval])) * $__range_s",
+			result: "sum(rate(foo[11277964])) * 11277976",
 		},
 		{
 			desc: "Should return an error for unknown syntax",
 			expr: "max by(${a:b:c:d}) (rate(cpu{}[$__rate_interval]))",
-			err:  fmt.Errorf("unknown variable format: a:b:c:d"),
+			err:  fmt.Errorf("failed to parse expression: max by(${a:b:c:d}) (rate(cpu{}[11277964]))"),
 		},
 		{
 			desc: "Should replace variables present in the templating",
@@ -156,20 +161,30 @@ func TestVariableExpansion(t *testing.T) {
 					},
 				},
 				{
+					Name: "sampling",
+					Options: []RawTemplateValue{
+						map[string]interface{}{
+							"value": "1h",
+						},
+					},
+				},
+				{
 					Name: "resolution",
 					Options: []RawTemplateValue{
 						map[string]interface{}{
 							"value": "5m",
 						},
-					}},
+					},
+				},
 				{
 					Name: "var",
 					Type: "query",
 					Current: map[string]interface{}{
 						"value": "value",
-					}},
+					},
+				},
 			},
-			result: "max by(value) (rate(cpu{}[4h:5m]))",
+			result: "max by(bgludgvy_var_0) (rate(cpu{}[11277982:11277988]))",
 		},
 		{
 			desc: "Should recursively replace variables",
@@ -177,7 +192,7 @@ func TestVariableExpansion(t *testing.T) {
 			variables: []Template{
 				{Name: "interval", Current: map[string]interface{}{"value": "$__auto_interval_interval"}},
 			},
-			result: "sum (rate(cpu{}[10s]))",
+			result: "sum (rate(cpu{}[11277982]))",
 		},
 		{
 			desc: "Should support plain $__auto_interval, generated by grafonnet-lib (https://github.com/grafana/grafonnet-lib/blob/master/grafonnet/template.libsonnet#L100)",
@@ -185,19 +200,251 @@ func TestVariableExpansion(t *testing.T) {
 			variables: []Template{
 				{Name: "interval", Current: map[string]interface{}{"value": "$__auto_interval"}},
 			},
-			result: "sum (rate(cpu{}[10s]))",
-		},
-		{
-			desc: "Should recursively replace variables, but not run into an infinite loop",
-			expr: "sum (rate(cpu{}[$interval]))",
-			variables: []Template{
-				{Name: "interval", Current: map[string]interface{}{"value": "$interval"}},
-			},
-			result: "sum (rate(cpu{}[interval]))",
+			result: "sum (rate(cpu{}[11277982]))",
 		},
 	} {
 		s, err := expandVariables(tc.expr, tc.variables)
 		require.Equal(t, tc.err, err)
+		require.Equal(t, tc.result, s, tc.desc)
+	}
+}
+
+func TestReverseVariableExpansion(t *testing.T) {
+	placeholderByValue = map[string]*placeholder{
+		"11277964":                          {variable: "$__rate_interval", valType: 1, value: "11277964"},
+		"11277965":                          {variable: "${__rate_interval}", valType: 1, value: "11277965"},
+		"11277966":                          {variable: "[[__rate_interval]]", valType: 1, value: "11277966"},
+		"11277967":                          {variable: "$__interval", valType: 1, value: "11277967"},
+		"11277968":                          {variable: "${__interval}", valType: 1, value: "11277968"},
+		"11277969":                          {variable: "[[__interval]]", valType: 1, value: "11277969"},
+		"11277970":                          {variable: "$__interval_ms", valType: 1, value: "11277970"},
+		"11277971":                          {variable: "${__interval_ms}", valType: 1, value: "11277971"},
+		"11277972":                          {variable: "[[__interval_ms]]", valType: 1, value: "11277972"},
+		"11277973":                          {variable: "$__range_ms", valType: 1, value: "11277973"},
+		"11277974":                          {variable: "${__range_ms}", valType: 1, value: "11277974"},
+		"11277975":                          {variable: "[[__range_ms]]", valType: 1, value: "11277975"},
+		"11277976":                          {variable: "$__range_s", valType: 1, value: "11277976"},
+		"11277977":                          {variable: "${__range_s}", valType: 1, value: "11277977"},
+		"11277978":                          {variable: "[[__range_s]]", valType: 1, value: "11277978"},
+		"11277979":                          {variable: "$__range", valType: 1, value: "11277979"},
+		"11277980":                          {variable: "${__range}", valType: 1, value: "11277980"},
+		"11277981":                          {variable: "[[__range]]", valType: 1, value: "11277981"},
+		"11277982":                          {variable: "$interval", valType: 1, value: "11277982"},
+		"11277983":                          {variable: "${interval}", valType: 1, value: "11277983"},
+		"11277984":                          {variable: "[[interval]]", valType: 1, value: "11277984"},
+		"11277985":                          {variable: "$sampling", valType: 1, value: "11277985"},
+		"11277986":                          {variable: "${sampling}", valType: 1, value: "11277986"},
+		"11277987":                          {variable: "[[sampling]]", valType: 1, value: "11277987"},
+		"11277988":                          {variable: "$resolution", valType: 1, value: "11277988"},
+		"11277989":                          {variable: "${resolution}", valType: 1, value: "11277989"},
+		"11277990":                          {variable: "[[resolution]]", valType: 1, value: "11277990"},
+		"1294671549254.000":                 {variable: "$__from", valType: 2, value: "1294671549254.000"},
+		"1294671549255.000":                 {variable: "${__from}", valType: 2, value: "1294671549255.000"},
+		"1294671549256.000":                 {variable: "[[__from]]", valType: 2, value: "1294671549256.000"},
+		"1294671549257.000":                 {variable: "$__to", valType: 2, value: "1294671549257.000"},
+		"1294671549258.000":                 {variable: "${__to}", valType: 2, value: "1294671549258.000"},
+		"1294671549259.000":                 {variable: "[[__to]]", valType: 2, value: "1294671549259.000"},
+		"1294671549260.000":                 {variable: "$__org", valType: 2, value: "1294671549260.000"},
+		"1294671549261.000":                 {variable: "${__org}", valType: 2, value: "1294671549261.000"},
+		"1294671549262.000":                 {variable: "[[__org]]", valType: 2, value: "1294671549262.000"},
+		"1294671549263.000":                 {variable: "$__user.id", valType: 2, value: "1294671549263.000"},
+		"1294671549264.000":                 {variable: "${__user.id}", valType: 2, value: "1294671549264.000"},
+		"1294671549265.000":                 {variable: "[[__user.id]]", valType: 2, value: "1294671549265.000"},
+		"1294671549266.000":                 {variable: "${__from:date:seconds}", valType: 2, value: "1294671549266.000"},
+		"1294671549267.000":                 {variable: "${__from:date}", valType: 2, value: "1294671549267.000"},
+		"1294671549268.000":                 {variable: "${__from:date:iso}", valType: 2, value: "1294671549268.000"},
+		"1294671549269.000":                 {variable: "${__from:date:YYYY-MM}", valType: 2, value: "1294671549269.000"},
+		"bgludgvy___dashboard_0":            {variable: "$__dashboard", valType: 0, value: "bgludgvy___dashboard_0"},
+		"bgludgvy___dashboard_1":            {variable: "${__dashboard}", valType: 0, value: "bgludgvy___dashboard_1"},
+		"bgludgvy___dashboard_2":            {variable: "[[__dashboard]]", valType: 0, value: "bgludgvy___dashboard_2"},
+		"bgludgvy___name_0":                 {variable: "$__name", valType: 0, value: "bgludgvy___name_0"},
+		"bgludgvy___name_1":                 {variable: "${__name}", valType: 0, value: "bgludgvy___name_1"},
+		"bgludgvy___name_2":                 {variable: "[[__name]]", valType: 0, value: "bgludgvy___name_2"},
+		"bgludgvy___org.name_0":             {variable: "$__org.name", valType: 0, value: "bgludgvy___org.name_0"},
+		"bgludgvy___org.name_1":             {variable: "${__org.name}", valType: 0, value: "bgludgvy___org.name_1"},
+		"bgludgvy___org.name_2":             {variable: "[[__org.name]]", valType: 0, value: "bgludgvy___org.name_2"},
+		"bgludgvy___timeFilter_0":           {variable: "$__timeFilter", valType: 0, value: "bgludgvy___timeFilter_0"},
+		"bgludgvy___timeFilter_1":           {variable: "${__timeFilter}", valType: 0, value: "bgludgvy___timeFilter_1"},
+		"bgludgvy___timeFilter_2":           {variable: "[[__timeFilter]]", valType: 0, value: "bgludgvy___timeFilter_2"},
+		"bgludgvy___user.email_0":           {variable: "$__user.email", valType: 0, value: "bgludgvy___user.email_0"},
+		"bgludgvy___user.email_1":           {variable: "${__user.email}", valType: 0, value: "bgludgvy___user.email_1"},
+		"bgludgvy___user.email_2":           {variable: "[[__user.email]]", valType: 0, value: "bgludgvy___user.email_2"},
+		"bgludgvy___user.login_0":           {variable: "$__user.login", valType: 0, value: "bgludgvy___user.login_0"},
+		"bgludgvy___user.login_1":           {variable: "${__user.login}", valType: 0, value: "bgludgvy___user.login_1"},
+		"bgludgvy___user.login_2":           {variable: "[[__user.login]]", valType: 0, value: "bgludgvy___user.login_2"},
+		"bgludgvy_namespaces_0":             {variable: "$namespaces", valType: 0, value: "bgludgvy_namespaces_0"},
+		"bgludgvy_namespaces_1":             {variable: "${namespaces}", valType: 0, value: "bgludgvy_namespaces_1"},
+		"bgludgvy_namespaces_2":             {variable: "[[namespaces]]", valType: 0, value: "bgludgvy_namespaces_2"},
+		"bgludgvy_timeFilter_0":             {variable: "$timeFilter", valType: 0, value: "bgludgvy_timeFilter_0"},
+		"bgludgvy_timeFilter_1":             {variable: "${timeFilter}", valType: 0, value: "bgludgvy_timeFilter_1"},
+		"bgludgvy_timeFilter_2":             {variable: "[[timeFilter]]", valType: 0, value: "bgludgvy_timeFilter_2"},
+		"bgludgvy_var_0":                    {variable: "$var", valType: 0, value: "bgludgvy_var_0"},
+		"bgludgvy_var_1":                    {variable: "${var}", valType: 0, value: "bgludgvy_var_1"},
+		"bgludgvy_var_2":                    {variable: "[[var]]", valType: 0, value: "bgludgvy_var_2"},
+		"bgludgvy_variable_csv_0":           {variable: "${variable:csv}", valType: 0, value: "bgludgvy_variable_csv_0"},
+		"bgludgvy_variable_doublequote_0":   {variable: "${variable:doublequote}", valType: 0, value: "bgludgvy_variable_doublequote_0"},
+		"bgludgvy_variable_glob_0":          {variable: "${variable:glob}", valType: 0, value: "bgludgvy_variable_glob_0"},
+		"bgludgvy_variable_json_0":          {variable: "${variable:json}", valType: 0, value: "bgludgvy_variable_json_0"},
+		"bgludgvy_variable_lucene_0":        {variable: "${variable:lucene}", valType: 0, value: "bgludgvy_variable_lucene_0"},
+		"bgludgvy_variable_percentencode_0": {variable: "${variable:percentencode}", valType: 0, value: "bgludgvy_variable_percentencode_0"},
+		"bgludgvy_variable_pipe_0":          {variable: "${variable:pipe}", valType: 0, value: "bgludgvy_variable_pipe_0"},
+		"bgludgvy_variable_queryparam_0":    {variable: "${variable:queryparam}", valType: 0, value: "bgludgvy_variable_queryparam_0"},
+		"bgludgvy_variable_raw_0":           {variable: "${variable:raw}", valType: 0, value: "bgludgvy_variable_raw_0"},
+		"bgludgvy_variable_regex_0":         {variable: "${variable:regex}", valType: 0, value: "bgludgvy_variable_regex_0"},
+		"bgludgvy_variable_singlequote_0":   {variable: "${variable:singlequote}", valType: 0, value: "bgludgvy_variable_singlequote_0"},
+		"bgludgvy_variable_sqlstring_0":     {variable: "${variable:sqlstring}", valType: 0, value: "bgludgvy_variable_sqlstring_0"},
+		"bgludgvy_variable_text_0":          {variable: "${variable:text}", valType: 0, value: "bgludgvy_variable_text_0"},
+	}
+	for _, tc := range []struct {
+		desc   string
+		expr   string
+		result string
+	}{
+		{
+			desc:   "Should not replace variables in quoted strings",
+			expr:   "up{job=~\"$job\"}",
+			result: "up{job=~\"$job\"}",
+		},
+		// https: //grafana.com/docs/grafana/latest/variables/syntax/
+		{
+			desc:   "Should replace variables in metric name",
+			expr:   "upbgludgvy_var_0{job=~\"$job\"}",
+			result: "up$var{job=~\"$job\"}",
+		},
+		{
+			desc:   "Should replace global rate/range variables",
+			expr:   "rate(metric{}[130d12h46m4s])",
+			result: "rate(metric{}[$__rate_interval])",
+		},
+		{
+			desc:   "Should support ${...} syntax",
+			expr:   "rate(metric{}[130d12h46m5s])",
+			result: "rate(metric{}[${__rate_interval}])",
+		},
+		{
+			desc:   "Should support [[...]] syntax",
+			expr:   "rate(metric{}[130d12h46m6s])",
+			result: "rate(metric{}[[[__rate_interval]]])",
+		},
+		// https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/
+		{
+			desc:   "Should support ${__user.id}",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ 1294671549264.000)",
+			result: "sum(http_requests_total{method=\"GET\"} @ ${__user.id})",
+		},
+		{
+			desc:   "Should support $__from/$__to",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ 1294671549254.000)",
+			result: "sum(http_requests_total{method=\"GET\"} @ $__from)",
+		},
+		{
+			desc:   "Should support $__from/$__to with formatting option (unix seconds)",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ 1294671549266.000)",
+			result: "sum(http_requests_total{method=\"GET\"} @ ${__from:date:seconds})",
+		},
+		{
+			desc:   "Should support $__from/$__to with formatting option (iso default)",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ 1294671549267.000)",
+			result: "sum(http_requests_total{method=\"GET\"} @ ${__from:date})",
+		},
+		{
+			desc:   "Should support $__from/$__to with formatting option (iso)",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ 1294671549268.000)",
+			result: "sum(http_requests_total{method=\"GET\"} @ ${__from:date:iso})",
+		},
+		{
+			desc:   "Should not support $__from/$__to with momentjs formatting option (iso)",
+			expr:   "sum(http_requests_total{method=\"GET\"} @ 1294671549269.000)",
+			result: "sum(http_requests_total{method=\"GET\"} @ ${__from:date:YYYY-MM})",
+		},
+		// https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/
+		{
+			desc:   "Should support ${variable:csv} syntax",
+			expr:   "max by(bgludgvy_variable_csv_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:csv}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:doublequote} syntax",
+			expr:   "max by(bgludgvy_variable_doublequote_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:doublequote}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:glob} syntax",
+			expr:   "max by(bgludgvy_variable_glob_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:glob}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:json} syntax",
+			expr:   "max by(bgludgvy_variable_json_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:json}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:lucene} syntax",
+			expr:   "max by(bgludgvy_variable_lucene_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:lucene}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:percentencode} syntax",
+			expr:   "max by(bgludgvy_variable_percentencode_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:percentencode}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:pipe} syntax",
+			expr:   "max by(bgludgvy_variable_pipe_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:pipe}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:raw} syntax",
+			expr:   "max by(bgludgvy_variable_raw_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:raw}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:regex} syntax",
+			expr:   "max by(bgludgvy_variable_regex_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:regex}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:singlequote} syntax",
+			expr:   "max by(bgludgvy_variable_singlequote_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:singlequote}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:sqlstring} syntax",
+			expr:   "max by(bgludgvy_variable_sqlstring_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:sqlstring}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:text} syntax",
+			expr:   "max by(bgludgvy_variable_text_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:text}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should support ${variable:queryparam} syntax",
+			expr:   "max by(bgludgvy_variable_queryparam_0) (rate(cpu{}[130d12h46m4s]))",
+			result: "max by(${variable:queryparam}) (rate(cpu{}[$__rate_interval]))",
+		},
+		{
+			desc:   "Should replace variables present in the templating",
+			expr:   "max by(bgludgvy_var_0) (rate(cpu{}[130d12h46m22s:130d12h46m28s]))",
+			result: "max by($var) (rate(cpu{}[$interval:$resolution]))",
+		},
+		{
+			desc:   "Should support using variables for multiplication",
+			expr:   "sum(rate(foo[130d12h46m4s])) * 11277976",
+			result: "sum(rate(foo[$__rate_interval])) * $__range_s",
+		},
+		{
+			desc:   "Should recursively replace variables",
+			expr:   "sum (rate(cpu{}[130d12h46m22s]))",
+			result: "sum (rate(cpu{}[$interval]))",
+		},
+		{
+			desc:   "Should support plain $__auto_interval, generated by grafonnet-lib (https://github.com/grafana/grafonnet-lib/blob/master/grafonnet/template.libsonnet#L100)",
+			expr:   "sum (rate(cpu{}[130d12h46m22s]))",
+			result: "sum (rate(cpu{}[$interval]))",
+		},
+	} {
+		s, _ := revertExpandedVariables(tc.expr)
 		require.Equal(t, tc.result, s, tc.desc)
 	}
 }

@@ -39,6 +39,7 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-promql-rule",
 		description: "Checks that each target uses a valid PromQL query.",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 

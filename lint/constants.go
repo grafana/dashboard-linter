@@ -10,3 +10,9 @@ const (
 	panelTypeTimeSeries = "timeseries"
 	panelTypeTimeTable  = "table"
 )
+
+const (
+	ruleStabilityStable       = "stable"
+	ruleStabilityExperimental = "experimental"
+	ruleStabilityDeprecated   = "deprecated"
+)
