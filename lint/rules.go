@@ -26,6 +26,7 @@ func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	}
 	rr := make([]FixableResult, len(dashboardResults))
 	for i, r := range dashboardResults {
+		r := r // capture loop variable
 		var fix func(*Dashboard)
 		if r.Fix != nil {
 			fix = func(dashboard *Dashboard) {
