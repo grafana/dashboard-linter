@@ -45,7 +45,7 @@ func stringValue(name string, value interface{}, kind, format string) (string, e
 			case "iso":
 				return val.Format(time.RFC3339), nil
 			default:
-				return "", fmt.Errorf("Unsupported momentjs time format: " + format)
+				return "", fmt.Errorf("Unsupported momentjs time format: %s", format)
 			}
 		default:
 			switch format {
