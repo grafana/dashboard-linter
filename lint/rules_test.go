@@ -67,3 +67,35 @@ func TestCustomRules(t *testing.T) {
 		})
 	}
 }
+
+func TestFixableRules(t *testing.T) {
+	sampleDashboard, err := os.ReadFile("testdata/dashboard.json")
+	assert.NoError(t, err)
+
+	rule := lint.NewDashboardRuleFunc(
+		"test-fixable-rule", "Test fixable rule",
+		func(d lint.Dashboard) lint.DashboardRuleResults {
+			rr := lint.DashboardRuleResults{}
+			rr.AddFixableError(d, "fixing first issue", func(d *lint.Dashboard) {
+				d.Title += " fixed-once"
+			})
+			rr.AddFixableError(d, "fixing second issue", func(d *lint.Dashboard) {
+				d.Title += " fixed-twice"
+			})
+			return rr
+		},
+	)
+
+	rules := lint.RuleSet{}
+	rules.Add(rule)
+
+	dashboard, err := lint.NewDashboard(sampleDashboard)
+	assert.NoError(t, err)
+
+	results, err := rules.Lint([]lint.Dashboard{dashboard})
+	assert.NoError(t, err)
+
+	results.AutoFix(&dashboard)
+
+	assert.Equal(t, "Sample dashboard fixed-once fixed-twice", dashboard.Title)
+}
