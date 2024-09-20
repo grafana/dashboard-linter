@@ -133,7 +133,7 @@ func (r Result) TtyPrint() {
 	case Warning:
 		sym = Yellow + "⚠️" + Reset
 	case Error:
-		sym = Red + "x" + Reset
+		sym = Red + "❌" + Reset
 	case Quiet:
 		return
 	}
