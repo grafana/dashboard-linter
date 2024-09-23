@@ -70,12 +70,13 @@ The linter implements the following rules:
 * [panel-datasource-rule](./rules/panel-datasource-rule.md) - Checks that each panel uses the templated datasource.
 * [panel-title-description-rule](./rules/panel-title-description-rule.md) - Checks that each panel has a title and description.
 * [panel-units-rule](./rules/panel-units-rule.md) - Checks that each panel uses has valid units defined.
-* `panel-no-targets-rule` - Checks that each panel has at least one target.
+* panel-no-targets-rule - Checks that each panel has at least one target.
 * [target-promql-rule](./rules/target-promql-rule.md) - Checks that each target uses a valid PromQL query.
 * [target-rate-interval-rule](./rules/target-rate-interval-rule.md) - Checks that each target uses $__rate_interval.
 * [target-job-rule](./rules/target-job-rule.md) - Checks that every PromQL query has a job matcher.
 * [target-instance-rule](./rules/target-instance-rule.md) - Checks that every PromQL query has a instance matcher.
-* `target-counter-agg-rule` - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
+* target-counter-agg-rule - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
+* [uneditable-rule](./rules/template-uneditable-rule.md) - Checks that the dashboard is not editable.
 
 ## Related Rules
 
