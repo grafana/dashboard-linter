@@ -112,7 +112,7 @@ func TestPanelUnits(t *testing.T) {
 							"fields": "/^version$/"
 						}
 					}
-					
+
 				`),
 			},
 		},
@@ -132,7 +132,7 @@ func TestPanelUnits(t *testing.T) {
 							"fields": ""
 						}
 					}
-					
+
 				`),
 			},
 		},

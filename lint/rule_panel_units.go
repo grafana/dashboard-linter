@@ -75,14 +75,6 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 			r := PanelRuleResults{}
 			switch p.Type {
 			case panelTypeStat, panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries, panelTypeGauge:
-				configuredUnit := getConfiguredUnit(p)
-				if configuredUnit != "" {
-					for _, u := range validUnits {
-						if u == *p.FieldConfig.Defaults.Unit {
-							return r
-						}
-					}
-				}
 
 				// ignore if has reduceOptions fields (for stat panels only):
 				if p.Type == "stat" {
@@ -99,6 +91,15 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 				//ignore if has value mappings:
 				if len(getValueMappings(p)) > 0 {
 					return r
+				}
+
+				configuredUnit := getConfiguredUnit(p)
+				if configuredUnit != "" {
+					for _, u := range validUnits {
+						if u == configuredUnit {
+							return r
+						}
+					}
 				}
 				r.AddError(d, p, fmt.Sprintf("has no or invalid units defined: '%s'", configuredUnit))
 			}
