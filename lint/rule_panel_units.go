@@ -147,9 +147,5 @@ func getValueMappings(p Panel) []dashboard.ValueMapping {
 // Numeric fields are set as empty string "". Any other value means nonnumeric on grafana stat panel.
 func hasReduceOptionsNonNumericFields(reduceOpts *ReduceOptions) bool {
 
-	if reduceOpts.Fields != "" {
-		return true
-	}
-
-	return false
+	return reduceOpts.Fields != ""
 }
