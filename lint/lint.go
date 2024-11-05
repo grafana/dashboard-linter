@@ -197,18 +197,19 @@ func (a *Annotation) GetDataSource() (Datasource, error) {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Id          int          `json:"id"`
-	Title       string       `json:"title"`
-	Description string       `json:"description,omitempty"`
-	Targets     []Target     `json:"targets,omitempty"`
-	Datasource  interface{}  `json:"datasource,omitempty"`
-	Type        string       `json:"type"`
-	Panels      []Panel      `json:"panels,omitempty"`
-	FieldConfig *FieldConfig `json:"fieldConfig,omitempty"`
-	Options     []byte       `json:"options,omitempty"`
+	Id          int             `json:"id"`
+	Title       string          `json:"title"`
+	Description string          `json:"description,omitempty"`
+	Targets     []Target        `json:"targets,omitempty"`
+	Datasource  interface{}     `json:"datasource,omitempty"`
+	Type        string          `json:"type"`
+	Panels      []Panel         `json:"panels,omitempty"`
+	FieldConfig *FieldConfig    `json:"fieldConfig,omitempty"`
+	Options     json.RawMessage `json:"options,omitempty"`
 }
 
-// oversimplified stat panel options
+// Stat panel options is a deliberately incomplete representation of the stat panel options from grafana.
+// The properties which are extracted from JSON are only those used for linting purposes.
 type StatOptions struct {
 	ReduceOptions ReduceOptions `json:"reduceOptions,omitempty"`
 }
@@ -219,7 +220,7 @@ type ReduceOptions struct {
 }
 
 type FieldConfig struct {
-	Defaults dashboard.FieldConfig
+	Defaults  dashboard.FieldConfig
 	Overrides []dashboard.DashboardFieldConfigSourceOverrides
 }
 
