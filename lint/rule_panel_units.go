@@ -139,7 +139,7 @@ func getValueMappings(p Panel) []dashboard.ValueMapping {
 		}
 	}
 	if len(valueMappings) == 0 && p.FieldConfig != nil && p.FieldConfig.Defaults.Mappings != nil {
-		valueMappings = *&p.FieldConfig.Defaults.Mappings
+		valueMappings = p.FieldConfig.Defaults.Mappings
 	}
 	return valueMappings
 }
