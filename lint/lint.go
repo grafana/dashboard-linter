@@ -210,7 +210,7 @@ type Panel struct {
 
 // oversimplified stat panel options
 type StatOptions struct {
-	ReduceOptions ReduceOptions
+	ReduceOptions ReduceOptions `json:"reduceOptions,omitempty"`
 }
 
 // oversimplified Reduce options
@@ -220,7 +220,6 @@ type ReduceOptions struct {
 
 type FieldConfig struct {
 	Defaults dashboard.FieldConfig
-	//Overrides []Override `json:"overrides,omitempty"`
 	Overrides []dashboard.DashboardFieldConfigSourceOverrides
 }
 
