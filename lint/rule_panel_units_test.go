@@ -2,10 +2,27 @@ package lint
 
 import (
 	"testing"
+
+	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
 
+func ptr[T any](t T) *T { return &t }
 func TestPanelUnits(t *testing.T) {
 	linter := NewPanelUnitsRule()
+
+	testValueMap := &dashboard.ValueMap{
+		Type: "value",
+		Options: map[string]dashboard.ValueMappingResult{
+			"1": {
+				Text:  ptr("Ok"),
+				Color: ptr("green"),
+			},
+			"2": {
+				Text:  ptr("Down"),
+				Color: ptr("red"),
+			},
+		},
+	}
 
 	for _, tc := range []struct {
 		name   string
@@ -23,8 +40,8 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Defaults: Defaults{
-						Unit: "MyInvalidUnit",
+					Defaults: dashboard.FieldConfig{
+						Unit: ptr("MyInvalidUnit"),
 					},
 				},
 			},
@@ -62,8 +79,8 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Defaults: Defaults{
-						Unit: "short",
+					Defaults: dashboard.FieldConfig{
+						Unit: ptr("short"),
 					},
 				},
 			},
@@ -76,8 +93,116 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Defaults: Defaults{
-						Unit: "none",
+					Defaults: dashboard.FieldConfig{
+						Unit: ptr("none"),
+					},
+				},
+			},
+		},
+		{
+			name:   "has nonnumeric reduceOptions fields",
+			result: ResultSuccess,
+			panel: Panel{
+				Type:       "stat",
+				Datasource: "foo",
+				Title:      "bar",
+				Options: []byte(`
+					{
+						"reduceOptions": {
+						"values": false,
+							"calcs": [
+								"lastNotNull"
+							],
+							"fields": "/^version$/"
+						},
+						"orientation": "auto",
+						"textMode": "auto",
+						"wideLayout": true,
+						"colorMode": "fixed",
+						"graphMode": "none",
+						"justifyMode": "auto",
+						"showPercentChange": false,
+						"percentChangeColorMode": "standard"
+					}
+					
+				`),
+			},
+		},
+		{
+			name: "has empty reduceOptions fields(Numeric Fields default value)",
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test', panel 'bar' has no or invalid units defined: ''",
+			},
+			panel: Panel{
+				Type:       "stat",
+				Datasource: "foo",
+				Title:      "bar",
+				Options: []byte(`
+					{
+						"reduceOptions": {
+						"values": false,
+							"calcs": [
+								"lastNotNull"
+							],
+							"fields": ""
+						},
+						"orientation": "auto",
+						"textMode": "auto",
+						"wideLayout": true,
+						"colorMode": "fixed",
+						"graphMode": "none",
+						"justifyMode": "auto",
+						"showPercentChange": false,
+						"percentChangeColorMode": "standard"
+					}
+					
+				`),
+			},
+		},
+		{
+			name:   "no units but have value mappings",
+			result: ResultSuccess,
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "foo",
+				Title:      "bar",
+				FieldConfig: &FieldConfig{
+					Defaults: dashboard.FieldConfig{
+						Mappings: []dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
+							dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
+								ValueMap: testValueMap,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "no units but have value mappings in overrides",
+			result: ResultSuccess,
+			panel: Panel{
+				Type:       "singlestat",
+				Datasource: "foo",
+				Title:      "bar",
+				FieldConfig: &FieldConfig{
+					Overrides: []dashboard.DashboardFieldConfigSourceOverrides{
+						dashboard.DashboardFieldConfigSourceOverrides{
+							Matcher: dashboard.MatcherConfig{
+								Id:      "byRegexp",
+								Options: "/.*/",
+							},
+							Properties: []dashboard.DynamicConfigValue{
+								dashboard.DynamicConfigValue{
+									Id: "mappings",
+									Value: []dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
+										dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
+											ValueMap: testValueMap,
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},

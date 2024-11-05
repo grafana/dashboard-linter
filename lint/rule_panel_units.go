@@ -1,6 +1,11 @@
 package lint
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
+	"github.com/grafana/grafana-foundation-sdk/go/stat"
+)
 
 func NewPanelUnitsRule() *PanelRuleFunc {
 	validUnits := []string{
@@ -73,10 +78,36 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 				configuredUnit := getConfiguredUnit(p)
 				if configuredUnit != "" {
 					for _, u := range validUnits {
-						if u == p.FieldConfig.Defaults.Unit {
+						if u == *p.FieldConfig.Defaults.Unit {
 							return r
 						}
 					}
+				}
+
+				// ignore if has reduceOptions fields (for stat panels only):
+				if p.Type == "stat" {
+					var opts stat.Options
+					optsByte, err := p.Options.MarshalJSON()
+					if err != nil {
+						r.AddError(d, p, err.Error())
+					}
+					err = (*stat.Options).UnmarshalJSONStrict(&opts, optsByte)
+					if err != nil {
+						r.AddError(d, p, err.Error())
+					}
+					statPanel := &statPanel{
+						Panel:   p,
+						options: opts,
+					}
+
+					if hasReduceOptionsNonNumericFields(*statPanel) {
+						return r
+					}
+				}
+
+				//ignore if has value mappings:
+				if len(getValueMappings(p)) > 0 {
+					return r
 				}
 				r.AddError(d, p, fmt.Sprintf("has no or invalid units defined: '%s'", configuredUnit))
 			}
@@ -90,15 +121,41 @@ func getConfiguredUnit(p Panel) string {
 	// First check if an override with unit exists - if no override then check if standard unit is present and valid
 	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
 		for _, p := range p.FieldConfig.Overrides {
-			for _, o := range p.OverrideProperties {
+			for _, o := range p.Properties {
 				if o.Id == "unit" {
-					configuredUnit = o.Value
+					configuredUnit = o.Value.(string)
 				}
 			}
 		}
 	}
-	if configuredUnit == "" && p.FieldConfig != nil && len(p.FieldConfig.Defaults.Unit) > 0 {
-		configuredUnit = p.FieldConfig.Defaults.Unit
+	if configuredUnit == "" && p.FieldConfig != nil && p.FieldConfig.Defaults.Unit != nil {
+		configuredUnit = *p.FieldConfig.Defaults.Unit
 	}
 	return configuredUnit
+}
+
+func getValueMappings(p Panel) []dashboard.ValueMapping {
+	valueMappings := make([]dashboard.ValueMapping, 0)
+	// First check if an override with unit exists - if no override then check if standard unit is present and valid
+	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
+		for _, p := range p.FieldConfig.Overrides {
+			for _, o := range p.Properties {
+				if o.Id == "mappings" {
+					valueMappings = o.Value.([]dashboard.ValueMapping)
+				}
+			}
+		}
+	}
+	if len(valueMappings) == 0 && p.FieldConfig != nil && p.FieldConfig.Defaults.Mappings != nil {
+		valueMappings = *&p.FieldConfig.Defaults.Mappings
+	}
+	return valueMappings
+}
+
+func hasReduceOptionsNonNumericFields(p statPanel) bool {
+
+	if p.options.ReduceOptions.Fields != nil && *p.options.ReduceOptions.Fields != "" {
+		return true
+	}
+	return false
 }
