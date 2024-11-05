@@ -109,20 +109,8 @@ func TestPanelUnits(t *testing.T) {
 				Options: []byte(`
 					{
 						"reduceOptions": {
-						"values": false,
-							"calcs": [
-								"lastNotNull"
-							],
 							"fields": "/^version$/"
-						},
-						"orientation": "auto",
-						"textMode": "auto",
-						"wideLayout": true,
-						"colorMode": "fixed",
-						"graphMode": "none",
-						"justifyMode": "auto",
-						"showPercentChange": false,
-						"percentChangeColorMode": "standard"
+						}
 					}
 					
 				`),
@@ -141,20 +129,8 @@ func TestPanelUnits(t *testing.T) {
 				Options: []byte(`
 					{
 						"reduceOptions": {
-						"values": false,
-							"calcs": [
-								"lastNotNull"
-							],
 							"fields": ""
-						},
-						"orientation": "auto",
-						"textMode": "auto",
-						"wideLayout": true,
-						"colorMode": "fixed",
-						"graphMode": "none",
-						"justifyMode": "auto",
-						"showPercentChange": false,
-						"percentChangeColorMode": "standard"
+						}
 					}
 					
 				`),

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
-	"github.com/grafana/grafana-foundation-sdk/go/stat"
 )
 
 type Severity int
@@ -198,20 +197,25 @@ func (a *Annotation) GetDataSource() (Datasource, error) {
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Id          int             `json:"id"`
-	Title       string          `json:"title"`
-	Description string          `json:"description,omitempty"`
-	Targets     []Target        `json:"targets,omitempty"`
-	Datasource  interface{}     `json:"datasource,omitempty"`
-	Type        string          `json:"type"`
-	Panels      []Panel         `json:"panels,omitempty"`
-	FieldConfig *FieldConfig    `json:"fieldConfig,omitempty"`
-	Options     json.RawMessage `json:"options,omitempty"`
+	Id          int          `json:"id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description,omitempty"`
+	Targets     []Target     `json:"targets,omitempty"`
+	Datasource  interface{}  `json:"datasource,omitempty"`
+	Type        string       `json:"type"`
+	Panels      []Panel      `json:"panels,omitempty"`
+	FieldConfig *FieldConfig `json:"fieldConfig,omitempty"`
+	Options     []byte       `json:"options,omitempty"`
 }
 
-type statPanel struct {
-	options stat.Options
-	Panel
+// oversimplified stat panel options
+type StatOptions struct {
+	ReduceOptions ReduceOptions
+}
+
+// oversimplified Reduce options
+type ReduceOptions struct {
+	Fields string `json:"fields,omitempty"`
 }
 
 type FieldConfig struct {

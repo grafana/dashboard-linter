@@ -1,10 +1,10 @@
 package lint
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
-	"github.com/grafana/grafana-foundation-sdk/go/stat"
 )
 
 func NewPanelUnitsRule() *PanelRuleFunc {
@@ -86,21 +86,12 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 
 				// ignore if has reduceOptions fields (for stat panels only):
 				if p.Type == "stat" {
-					var opts stat.Options
-					optsByte, err := p.Options.MarshalJSON()
+					var opts StatOptions
+					err := json.Unmarshal(p.Options, &opts)
 					if err != nil {
 						r.AddError(d, p, err.Error())
 					}
-					err = (*stat.Options).UnmarshalJSONStrict(&opts, optsByte)
-					if err != nil {
-						r.AddError(d, p, err.Error())
-					}
-					statPanel := &statPanel{
-						Panel:   p,
-						options: opts,
-					}
-
-					if hasReduceOptionsNonNumericFields(*statPanel) {
+					if hasReduceOptionsNonNumericFields(&opts.ReduceOptions) {
 						return r
 					}
 				}
@@ -152,10 +143,12 @@ func getValueMappings(p Panel) []dashboard.ValueMapping {
 	return valueMappings
 }
 
-func hasReduceOptionsNonNumericFields(p statPanel) bool {
+// Numeric fields are set as empty string "". Any other value means nonnumeric on grafana stat panel.
+func hasReduceOptionsNonNumericFields(reduceOpts *ReduceOptions) bool {
 
-	if p.options.ReduceOptions.Fields != nil && *p.options.ReduceOptions.Fields != "" {
+	if reduceOpts.Fields != "" {
 		return true
 	}
+
 	return false
 }
