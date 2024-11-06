@@ -28,6 +28,7 @@ func (f DashboardRuleFunc) Lint(d Dashboard, s *ResultSet) {
 	}
 	rr := make([]FixableResult, len(dashboardResults))
 	for i, r := range dashboardResults {
+		r := r // capture loop variable
 		var fix func(*Dashboard)
 		if r.Fix != nil {
 			fix = func(dashboard *Dashboard) {
@@ -185,6 +186,8 @@ func NewRuleSet(experimental bool, ruleSettings ConfigurationRuleSettings) RuleS
 		NewPanelTitleDescriptionRule(),
 		NewPanelUnitsRule(),
 		NewPanelNoTargetsRule(),
+		NewTargetLogQLRule(),
+		NewTargetLogQLAutoRule(),
 		NewTargetPromQLRule(),
 		NewTargetRateIntervalRule(),
 		NewTargetJobRule(),

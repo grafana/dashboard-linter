@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
 
 type Severity int
@@ -17,6 +19,7 @@ const (
 	Fixed
 
 	Prometheus = "prometheus"
+	Loki       = "loki"
 )
 
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
@@ -175,64 +178,50 @@ type Target struct {
 	Expr       string      `json:"expr,omitempty"`
 	PanelId    int         `json:"panelId,omitempty"`
 	RefId      string      `json:"refId,omitempty"`
+	Hide       bool        `json:"hide"`
 }
 
 func (t *Target) GetDataSource() (Datasource, error) {
 	return GetDataSource(t.Datasource)
 }
 
+type Annotation struct {
+	Name       string      `json:"name"`
+	Datasource interface{} `json:"datasource,omitempty"`
+}
+
+func (a *Annotation) GetDataSource() (Datasource, error) {
+	return GetDataSource(a.Datasource)
+}
+
 // Panel is a deliberately incomplete representation of the Dashboard -> Panel type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Panel struct {
-	Id          int          `json:"id"`
-	Title       string       `json:"title"`
-	Description string       `json:"description,omitempty"`
-	Targets     []Target     `json:"targets,omitempty"`
-	Datasource  interface{}  `json:"datasource,omitempty"`
-	Type        string       `json:"type"`
-	Panels      []Panel      `json:"panels,omitempty"`
-	FieldConfig *FieldConfig `json:"fieldConfig,omitempty"`
+	Id          int             `json:"id"`
+	Title       string          `json:"title"`
+	Description string          `json:"description,omitempty"`
+	Targets     []Target        `json:"targets,omitempty"`
+	Datasource  interface{}     `json:"datasource,omitempty"`
+	Type        string          `json:"type"`
+	Panels      []Panel         `json:"panels,omitempty"`
+	FieldConfig *FieldConfig    `json:"fieldConfig,omitempty"`
+	Options     json.RawMessage `json:"options,omitempty"`
+}
+
+// Stat panel options is a deliberately incomplete representation of the stat panel options from grafana.
+// The properties which are extracted from JSON are only those used for linting purposes.
+type StatOptions struct {
+	ReduceOptions ReduceOptions `json:"reduceOptions,omitempty"`
+}
+
+// oversimplified Reduce options
+type ReduceOptions struct {
+	Fields string `json:"fields,omitempty"`
 }
 
 type FieldConfig struct {
-	Defaults  Defaults   `json:"defaults,omitempty"`
-	Overrides []Override `json:"overrides,omitempty"`
-}
-
-type Override struct {
-	OverrideProperties []OverrideProperty `json:"properties"`
-}
-
-type OverrideProperty struct {
-	Id    string `json:"id"`
-	Value string `json:"value"`
-}
-
-func (o *OverrideProperty) UnmarshalJSON(buf []byte) error {
-	// An override value can be of type string or int
-	// This function detects type mismatch and uses an int type for Value
-	var raw struct {
-		Id    string `json:"id"`
-		Value string `json:"value"`
-	}
-
-	if err := json.Unmarshal(buf, &raw); err != nil {
-		var raw struct {
-			Id    string `json:"id"`
-			Value int    `json:"value"`
-		}
-		if err := json.Unmarshal(buf, &raw); err != nil {
-			// Override can have varying different types int, string and arrays
-			// Currently only units are being checked from overrides so returning nil in case of unhandled types
-			return nil
-		}
-	}
-
-	return nil
-}
-
-type Defaults struct {
-	Unit string `json:"unit,omitempty"`
+	Defaults  dashboard.FieldConfig
+	Overrides []dashboard.DashboardFieldConfigSourceOverrides
 }
 
 // GetPanels returns the all panels nested inside the panel (inc the current panel)
@@ -271,6 +260,9 @@ type Dashboard struct {
 	Templating struct {
 		List []Template `json:"list"`
 	} `json:"templating"`
+	Annotations struct {
+		List []Annotation `json:"list"`
+	} `json:"annotations"`
 	Rows     []Row   `json:"rows,omitempty"`
 	Panels   []Panel `json:"panels,omitempty"`
 	Editable bool    `json:"editable"` // Do not omitempty, since false is seen as empty, and if it is not included, it defaults to true.

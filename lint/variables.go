@@ -395,3 +395,50 @@ func getTemplateVariableValue(v Template) string {
 	}
 	return value
 }
+
+func expandLogQLVariables(expr string, variables []Template) (string, error) {
+	lines := strings.Split(expr, "\n")
+	for i, line := range lines {
+		parts := strings.Split(line, "\"")
+		for j, part := range parts {
+			if j%2 == 1 {
+				// Inside a double quote string, just add it
+				continue
+			}
+
+			// Accumulator to store the processed submatches
+			var subparts []string
+			// Cursor indicates where we are in the part being processed
+			cursor := 0
+			for _, v := range variableRegexp.FindAllStringSubmatchIndex(part, -1) {
+				// Add all until match starts
+				subparts = append(subparts, part[cursor:v[0]])
+				// Iterate on all the subgroups and find the one that matched
+				for k := 2; k < len(v); k += 2 {
+					if v[k] < 0 {
+						continue
+					}
+					// Replace the match with sample value
+					val, err := variableSampleValue(part[v[k]:v[k+1]], variables)
+					if err != nil {
+						return "", err
+					}
+					// If the variable is within square brackets, remove the '$' prefix
+					if strings.HasPrefix(part[v[0]-1:v[0]], "[") && strings.HasSuffix(part[v[1]:v[1]+1], "]") {
+						val = strings.TrimPrefix(val, "$")
+					}
+					subparts = append(subparts, val)
+				}
+				// Move the start cursor at the end of the current match
+				cursor = v[1]
+			}
+			// Add rest of the string
+			subparts = append(subparts, part[cursor:])
+			// Merge all back into the parts
+			parts[j] = strings.Join(subparts, "")
+		}
+		lines[i] = strings.Join(parts, "\"")
+	}
+	result := strings.Join(lines, "\n")
+	return result, nil
+}

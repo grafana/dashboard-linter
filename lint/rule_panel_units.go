@@ -1,6 +1,11 @@
 package lint
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
+)
 
 func NewPanelUnitsRule() *PanelRuleFunc {
 	validUnits := []string{
@@ -71,10 +76,28 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 			r := PanelRuleResults{}
 			switch p.Type {
 			case panelTypeStat, panelTypeSingleStat, panelTypeGraph, panelTypeTimeTable, panelTypeTimeSeries, panelTypeGauge:
+
+				// ignore if has reduceOptions fields (for stat panels only):
+				if p.Type == "stat" {
+					var opts StatOptions
+					err := json.Unmarshal(p.Options, &opts)
+					if err != nil {
+						r.AddError(d, p, err.Error())
+					}
+					if hasReduceOptionsNonNumericFields(&opts.ReduceOptions) {
+						return r
+					}
+				}
+
+				//ignore if has value mappings:
+				if len(getValueMappings(p)) > 0 {
+					return r
+				}
+
 				configuredUnit := getConfiguredUnit(p)
 				if configuredUnit != "" {
 					for _, u := range validUnits {
-						if u == p.FieldConfig.Defaults.Unit {
+						if u == configuredUnit {
 							return r
 						}
 					}
@@ -91,15 +114,39 @@ func getConfiguredUnit(p Panel) string {
 	// First check if an override with unit exists - if no override then check if standard unit is present and valid
 	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
 		for _, p := range p.FieldConfig.Overrides {
-			for _, o := range p.OverrideProperties {
+			for _, o := range p.Properties {
 				if o.Id == "unit" {
-					configuredUnit = o.Value
+					configuredUnit = o.Value.(string)
 				}
 			}
 		}
 	}
-	if configuredUnit == "" && p.FieldConfig != nil && len(p.FieldConfig.Defaults.Unit) > 0 {
-		configuredUnit = p.FieldConfig.Defaults.Unit
+	if configuredUnit == "" && p.FieldConfig != nil && p.FieldConfig.Defaults.Unit != nil {
+		configuredUnit = *p.FieldConfig.Defaults.Unit
 	}
 	return configuredUnit
+}
+
+func getValueMappings(p Panel) []dashboard.ValueMapping {
+	valueMappings := make([]dashboard.ValueMapping, 0)
+	// First check if an override with unit exists - if no override then check if standard unit is present and valid
+	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
+		for _, p := range p.FieldConfig.Overrides {
+			for _, o := range p.Properties {
+				if o.Id == "mappings" {
+					valueMappings = o.Value.([]dashboard.ValueMapping)
+				}
+			}
+		}
+	}
+	if len(valueMappings) == 0 && p.FieldConfig != nil && p.FieldConfig.Defaults.Mappings != nil {
+		valueMappings = p.FieldConfig.Defaults.Mappings
+	}
+	return valueMappings
+}
+
+// Numeric fields are set as empty string "". Any other value means nonnumeric on grafana stat panel.
+func hasReduceOptionsNonNumericFields(reduceOpts *ReduceOptions) bool {
+
+	return reduceOpts.Fields != ""
 }

@@ -68,6 +68,11 @@ func TestParseDashboard(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, dashboard.GetPanels(), 4)
 	})
+	t.Run("Annotations", func(t *testing.T) {
+		dashboard, err := NewDashboard(sampleDashboard)
+		assert.NoError(t, err)
+		assert.Len(t, dashboard.Annotations.List, 1)
+	})
 }
 
 func TestParseTemplateValue(t *testing.T) {

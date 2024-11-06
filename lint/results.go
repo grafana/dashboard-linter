@@ -131,18 +131,23 @@ type ResultContext struct {
 }
 
 func (r Result) TtyPrint() {
+	var Reset = "\033[0m"
+	var Red = "\033[31m"
+	var Green = "\033[32m"
+	var Yellow = "\033[33m"
+	var Orange = "\033[38;5;208m"
 	var sym string
 	switch s := r.Severity; s {
 	case Success:
-		sym = "✔️"
+		sym = Green + "✔️" + Reset
 	case Fixed:
-		sym = "❌ (fixed)"
+		sym = Orange + "🛠️ (fixed)" + Reset
 	case Exclude:
 		sym = "➖"
 	case Warning:
-		sym = "⚠️"
+		sym = Yellow + "⚠️" + Reset
 	case Error:
-		sym = "❌"
+		sym = Red + "❌" + Reset
 	case Quiet:
 		return
 	}
