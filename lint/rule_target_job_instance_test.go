@@ -29,6 +29,19 @@ func testTargetRequiredMatcherRule(t *testing.T, matcher string) {
 				Expr: fmt.Sprintf(`sum(rate(foo{%s=~"$%s"}[5m]))`, matcher, matcher),
 			},
 		},
+		// Happy path (multiple matchers where at least one matches)
+		{
+			result: ResultSuccess,
+			target: Target{
+				Expr: fmt.Sprintf(`sum(rate(foo{%s="integrations/bar", %s=~"$%s"}[5m]))`, matcher, matcher, matcher),
+			},
+		},
+		{
+			result: ResultSuccess,
+			target: Target{
+				Expr: fmt.Sprintf(`sum(rate(foo{%s=~"$%s", %s="integrations/bar"}[5m]))`, matcher, matcher, matcher),
+			},
+		},
 		// Also happy when the promql is invalid
 		{
 			result: ResultSuccess,
