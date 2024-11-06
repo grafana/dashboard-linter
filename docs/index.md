@@ -2,6 +2,24 @@
 All Commands:
 
 [embedmd]:# (_intermediate/help.txt)
+```txt
+A command-line application to lint Grafana dashboards.
+
+Usage:
+  dashboard-linter [flags]
+  dashboard-linter [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  lint        Lint a dashboard
+  rules       Print documentation about each lint rule.
+
+Flags:
+  -h, --help   help for dashboard-linter
+
+Use "dashboard-linter [command] --help" for more information about a command.
+```
 
 ```txt
 A command-line application to lint Grafana dashboards.
@@ -25,6 +43,24 @@ Use "dashboard-linter [command] --help" for more information about a command.
 ## Completion
 
 [embedmd]:# (_intermediate/completion.txt)
+```txt
+Generate the autocompletion script for dashboard-linter for the specified shell.
+See each sub-command's help for details on how to use the generated script.
+
+Usage:
+  dashboard-linter completion [command]
+
+Available Commands:
+  bash        Generate the autocompletion script for bash
+  fish        Generate the autocompletion script for fish
+  powershell  Generate the autocompletion script for powershell
+  zsh         Generate the autocompletion script for zsh
+
+Flags:
+  -h, --help   help for completion
+
+Use "dashboard-linter completion [command] --help" for more information about a command.
+```
 
 ```txt
 Generate the autocompletion script for dashboard-linter for the specified shell.
@@ -48,6 +84,21 @@ Use "dashboard-linter completion [command] --help" for more information about a 
 ## Lint
 
 [embedmd]:# (_intermediate/lint.txt)
+```txt
+Returns warnings or errors for dashboard which do not adhere to accepted standards
+
+Usage:
+  dashboard-linter lint [dashboard.json] [flags]
+
+Flags:
+  -c, --config string   path to a configuration file
+      --experimental    enable experimental rules
+      --fix             automatically fix problems if possible
+  -h, --help            help for lint
+      --stdin           read from stdin
+      --strict          fail upon linting error or warning
+      --verbose         show more information about linting
+```
 
 ```txt
 Returns warnings or errors for dashboard which do not adhere to accepted standards
@@ -84,6 +135,8 @@ The linter implements the following rules:
 * [target-instance-rule](./rules/target-instance-rule) - `stable` - Checks that every PromQL query has a instance matcher.
 * [target-counter-agg-rule](./rules/target-counter-agg-rule) - `stable` - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
 * [uneditable-dashboard-rule](./rules/uneditable-dashboard-rule) - `stable` - Checks that the dashboard is not editable.
+* [target-logql-rule](./rules/target-logql-rule) - `experimental` - Checks that each target uses a valid LogQL query.
+* [target-logql-auto-rule](./rules/target-logql-auto-rule) - `experimental` - Checks that each Loki target uses $__auto for range vectors when appropriate.
 * [target-required-matchers-rule](./rules/target-required-matchers-rule) - `experimental` - Checks that target PromQL query has the required matchers
 * [template-required-variables-rule](./rules/template-required-variables-rule) - `experimental` - Checks that the dashboard has a template variable for required variables or matchers that use variables
 
