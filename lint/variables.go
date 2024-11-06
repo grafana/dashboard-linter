@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	auto         = "__auto"
 	rateInterval = "__rate_interval"
 	interval     = "__interval"
 	intervalMs   = "__interval_ms"
@@ -38,6 +39,9 @@ const (
 	valTypeString valType = iota
 	valTypeTimeRange
 	valTypeEpoch
+	// This is effectively a valTypeTimeRange, but it will always have 's' appended to it to identify that the duration unit is seconds.
+	// Initially used only for logql which is more strict about requiring the duration unit for range vectors, while promql implies 's' as the unit of duration if not specified.
+	valTypeDuration
 )
 
 type valType int
@@ -123,6 +127,10 @@ var globalVariables = []*placeholder{
 		variable: timeFilter2,
 		valType:  valTypeString, // not really a string, but currently we do only support prometheus queries, and this would not be a valid prometheus query...
 	},
+	{
+		variable: auto,
+		valType:  valTypeDuration,
+	},
 }
 
 // var supportedFormatOptions = []string{"csv", "distributed", "doublequote", "glob", "json", "lucene", "percentencode", "pipe", "raw", "regex", "singlequote", "sqlstring", "text", "queryparam"}
@@ -135,7 +143,9 @@ var variableRegexp = regexp.MustCompile(
 	}, "|"),
 )
 
-func expandVariables(expr string, variables []Template) (string, error) {
+// Initializes the global variables if not already initialized.
+// Creates placeholders for every variable found in the expression, returning the expression with placeholders
+func expandVariables(expr string, variables []Template) string {
 	// initialize global variables if not already initialized
 	if !globalVariablesInit {
 		for _, v := range globalVariables {
@@ -174,6 +184,11 @@ func expandVariables(expr string, variables []Template) (string, error) {
 	}
 
 	expr = variableRegexp.ReplaceAllStringFunc(expr, RegexpExpandVariables)
+	return expr
+}
+
+func expandPromQlVariables(expr string, variables []Template) (string, error) {
+	expr = expandVariables(expr, variables)
 
 	// Check if the expression can be parsed
 	_, err := parser.ParseExpr(expr)
@@ -318,6 +333,11 @@ func createPlaceholder(variable string, valType valType) string {
 			timeRange := magicTimeRange + counter
 			value = strconv.Itoa(timeRange)
 		}
+		if valType == valTypeDuration {
+			// Using magicTimeRange as a seed for the placeholder
+			duration := magicTimeRange + counter
+			value = strconv.Itoa(duration) + "s"
+		}
 		if valType == valTypeEpoch {
 			// Using magicEpoch as a seed for the placeholder
 			epoch := magicEpoch + float64(counter)
@@ -397,48 +417,7 @@ func getTemplateVariableValue(v Template) string {
 }
 
 func expandLogQLVariables(expr string, variables []Template) (string, error) {
-	lines := strings.Split(expr, "\n")
-	for i, line := range lines {
-		parts := strings.Split(line, "\"")
-		for j, part := range parts {
-			if j%2 == 1 {
-				// Inside a double quote string, just add it
-				continue
-			}
-
-			// Accumulator to store the processed submatches
-			var subparts []string
-			// Cursor indicates where we are in the part being processed
-			cursor := 0
-			for _, v := range variableRegexp.FindAllStringSubmatchIndex(part, -1) {
-				// Add all until match starts
-				subparts = append(subparts, part[cursor:v[0]])
-				// Iterate on all the subgroups and find the one that matched
-				for k := 2; k < len(v); k += 2 {
-					if v[k] < 0 {
-						continue
-					}
-					// Replace the match with sample value
-					val, err := variableSampleValue(part[v[k]:v[k+1]], variables)
-					if err != nil {
-						return "", err
-					}
-					// If the variable is within square brackets, remove the '$' prefix
-					if strings.HasPrefix(part[v[0]-1:v[0]], "[") && strings.HasSuffix(part[v[1]:v[1]+1], "]") {
-						val = strings.TrimPrefix(val, "$")
-					}
-					subparts = append(subparts, val)
-				}
-				// Move the start cursor at the end of the current match
-				cursor = v[1]
-			}
-			// Add rest of the string
-			subparts = append(subparts, part[cursor:])
-			// Merge all back into the parts
-			parts[j] = strings.Join(subparts, "")
-		}
-		lines[i] = strings.Join(parts, "\"")
-	}
-	result := strings.Join(lines, "\n")
-	return result, nil
+	expr = expandVariables(expr, variables)
+	// TODO: Use the logql parsing to validate this is parsable logql.
+	return expr, nil
 }

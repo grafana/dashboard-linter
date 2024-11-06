@@ -23,7 +23,7 @@ func panelHasQueries(p Panel) bool {
 // replacing eg [$__rate_interval] with [5m] so queries parse correctly.
 // We also replace various other Grafana global variables.
 func parsePromQL(expr string, variables []Template) (parser.Expr, error) {
-	expr, err := expandVariables(expr, variables)
+	expr, err := expandPromQlVariables(expr, variables)
 	if err != nil {
 		return nil, fmt.Errorf("could not expand variables: %w", err)
 	}

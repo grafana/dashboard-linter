@@ -203,7 +203,7 @@ func TestVariableExpansion(t *testing.T) {
 			result: "sum (rate(cpu{}[11277982]))",
 		},
 	} {
-		s, err := expandVariables(tc.expr, tc.variables)
+		s, err := expandPromQlVariables(tc.expr, tc.variables)
 		require.Equal(t, tc.err, err)
 		require.Equal(t, tc.result, s, tc.desc)
 	}

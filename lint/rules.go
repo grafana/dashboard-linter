@@ -186,8 +186,6 @@ func NewRuleSet(experimental bool, ruleSettings ConfigurationRuleSettings) RuleS
 		NewPanelTitleDescriptionRule(),
 		NewPanelUnitsRule(),
 		NewPanelNoTargetsRule(),
-		NewTargetLogQLRule(),
-		NewTargetLogQLAutoRule(),
 		NewTargetPromQLRule(),
 		NewTargetRateIntervalRule(),
 		NewTargetJobRule(),
@@ -198,6 +196,8 @@ func NewRuleSet(experimental bool, ruleSettings ConfigurationRuleSettings) RuleS
 	// Add experimental rules here
 	if experimental {
 		rules = append(rules,
+			NewTargetLogQLRule(),
+			NewTargetLogQLAutoRule(),
 			NewTargetRequiredMatchersRule(ruleSettings.TargetRequiredMatchersRule),
 			NewTemplateRequiredVariablesRule(ruleSettings.TemplateRequiredVariablesRule, ruleSettings.TargetRequiredMatchersRule),
 		)

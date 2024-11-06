@@ -73,7 +73,7 @@ func TestFixableRules(t *testing.T) {
 	assert.NoError(t, err)
 
 	rule := lint.NewDashboardRuleFunc(
-		"test-fixable-rule", "Test fixable rule",
+		"test-fixable-rule", "Test fixable rule", "stable",
 		func(d lint.Dashboard) lint.DashboardRuleResults {
 			rr := lint.DashboardRuleResults{}
 			rr.AddFixableError(d, "fixing first issue", func(d *lint.Dashboard) {
