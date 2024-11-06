@@ -54,7 +54,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		{
 			result: []Result{{
 				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'foo(bar.baz)': 1:8: parse error: unexpected character: '.'",
+				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query 'foo(bar.baz)': could not expand variables: failed to parse expression: foo(bar.baz)",
 			}},
 			panel: Panel{
 				Title: "panel",
@@ -113,7 +113,7 @@ func TestTargetPromQLRule(t *testing.T) {
 				Type:  "singlestat",
 				Targets: []Target{
 					{
-						Expr: `sum (rate(foo[$interval:$resolution]))`,
+						Expr: `max by($var) (rate(cpu{}[$interval:$resolution]))`,
 					},
 				},
 			},
@@ -134,7 +134,7 @@ func TestTargetPromQLRule(t *testing.T) {
 		{
 			result: []Result{{
 				Severity: Error,
-				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': unknown position: parse error: no expression found in input",
+				Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': could not expand variables: failed to parse expression: ",
 			}},
 			panel: Panel{
 				Title: "panel",
@@ -155,7 +155,7 @@ func TestTargetPromQLRule(t *testing.T) {
 				},
 				{
 					Severity: Error,
-					Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': unknown position: parse error: no expression found in input",
+					Message:  "Dashboard 'dashboard', panel 'panel', target idx '0' invalid PromQL query '': could not expand variables: failed to parse expression: ",
 				},
 			},
 			panel: Panel{
@@ -193,6 +193,11 @@ func TestTargetPromQLRule(t *testing.T) {
 						Type:    "interval",
 						Name:    "sampling",
 						Current: map[string]interface{}{"value": "$__auto_interval_sampling"},
+					},
+					{
+						Name:    "var",
+						Type:    "query",
+						Current: map[string]interface{}{"value": "value"},
 					},
 					{
 						Type: "resolution",

@@ -4,6 +4,7 @@ func NewPanelNoTargetsRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-no-targets-rule",
 		description: "Checks that each panel has at least one target.",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard, p Panel) PanelRuleResults {
 			r := PanelRuleResults{}
 			switch p.Type {

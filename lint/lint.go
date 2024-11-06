@@ -265,7 +265,7 @@ type Dashboard struct {
 	} `json:"annotations"`
 	Rows     []Row   `json:"rows,omitempty"`
 	Panels   []Panel `json:"panels,omitempty"`
-	Editable bool    `json:"editable,omitempty"`
+	Editable bool    `json:"editable"` // Do not omitempty, since false is seen as empty, and if it is not included, it defaults to true.
 }
 
 // GetPanels returns the all panels whether they are nested in the (now deprecated) "rows" property or

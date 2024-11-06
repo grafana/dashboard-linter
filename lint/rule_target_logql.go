@@ -8,6 +8,7 @@ func NewTargetLogQLRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-logql-rule",
 		description: "Checks that each target uses a valid LogQL query.",
+		stability:   ruleStabilityExperimental,
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 

@@ -19,7 +19,7 @@ func TestCustomRules(t *testing.T) {
 		{
 			desc: "Should allow addition of dashboard rule",
 			rule: lint.NewDashboardRuleFunc(
-				"test-dashboard-rule", "Test dashboard rule",
+				"test-dashboard-rule", "Test dashboard rule", "stable",
 				func(lint.Dashboard) lint.DashboardRuleResults {
 					return lint.DashboardRuleResults{Results: []lint.DashboardResult{{
 						Result: lint.Result{Severity: lint.Error, Message: "Error found"},
@@ -30,7 +30,7 @@ func TestCustomRules(t *testing.T) {
 		{
 			desc: "Should allow addition of panel rule",
 			rule: lint.NewPanelRuleFunc(
-				"test-panel-rule", "Test panel rule",
+				"test-panel-rule", "Test panel rule", "stable",
 				func(d lint.Dashboard, p lint.Panel) lint.PanelRuleResults {
 					return lint.PanelRuleResults{Results: []lint.PanelResult{{
 						Result: lint.Result{Severity: lint.Error, Message: "Error found"},
@@ -41,7 +41,7 @@ func TestCustomRules(t *testing.T) {
 		{
 			desc: "Should allow addition of target rule",
 			rule: lint.NewTargetRuleFunc(
-				"test-target-rule", "Test target rule",
+				"test-target-rule", "Test target rule", "stable",
 				func(lint.Dashboard, lint.Panel, lint.Target) lint.TargetRuleResults {
 					return lint.TargetRuleResults{Results: []lint.TargetResult{{
 						Result: lint.Result{Severity: lint.Error, Message: "Error found"},
@@ -73,7 +73,7 @@ func TestFixableRules(t *testing.T) {
 	assert.NoError(t, err)
 
 	rule := lint.NewDashboardRuleFunc(
-		"test-fixable-rule", "Test fixable rule",
+		"test-fixable-rule", "Test fixable rule", "stable",
 		func(d lint.Dashboard) lint.DashboardRuleResults {
 			rr := lint.DashboardRuleResults{}
 			rr.AddFixableError(d, "fixing first issue", func(d *lint.Dashboard) {

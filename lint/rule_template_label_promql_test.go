@@ -57,7 +57,7 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 			name: "Error",
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'test' template 'namespaces' invalid templated label 'label_values(up{, namespace)': 1:4: parse error: unexpected "," in label matching, expected identifier or "}"`,
+				Message:  `Dashboard 'test' template 'namespaces' invalid templated label 'label_values(up{, namespace)': could not expand variables: failed to parse expression: up{`,
 			},
 			dashboard: Dashboard{
 				Title: "test",
@@ -84,7 +84,7 @@ func TestTemplateLabelPromQLRule(t *testing.T) {
 			name: "Invalid function.",
 			result: Result{
 				Severity: Error,
-				Message:  `Dashboard 'test' template 'namespaces' invalid templated label 'foo(up, namespace)': invalid 'function': foo`,
+				Message:  `Dashboard 'test' template 'namespaces' invalid templated label 'foo(up, namespace)': invalid 'query': foo(up, namespace)`,
 			},
 			dashboard: Dashboard{
 				Title: "test",

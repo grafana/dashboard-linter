@@ -8,6 +8,7 @@ func NewPanelDatasourceRule() *PanelRuleFunc {
 	return &PanelRuleFunc{
 		name:        "panel-datasource-rule",
 		description: "Checks that each panel uses the templated datasource.",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard, p Panel) PanelRuleResults {
 			r := PanelRuleResults{}
 

@@ -23,7 +23,7 @@ func panelHasQueries(p Panel) bool {
 // replacing eg [$__rate_interval] with [5m] so queries parse correctly.
 // We also replace various other Grafana global variables.
 func parsePromQL(expr string, variables []Template) (parser.Expr, error) {
-	expr, err := expandVariables(expr, variables)
+	expr, err := expandPromQlVariables(expr, variables)
 	if err != nil {
 		return nil, fmt.Errorf("could not expand variables: %w", err)
 	}
@@ -39,6 +39,7 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 	return &TargetRuleFunc{
 		name:        "target-promql-rule",
 		description: "Checks that each target uses a valid PromQL query.",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 

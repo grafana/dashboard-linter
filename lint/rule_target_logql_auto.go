@@ -17,14 +17,10 @@ func parseLogQL(expr string, variables []Template) (syntax.Expr, error) {
 }
 
 func NewTargetLogQLAutoRule() *TargetRuleFunc {
-	autoDuration, err := time.ParseDuration(globalVariables["__auto"].(string))
-	if err != nil {
-		panic(err)
-	}
-
 	return &TargetRuleFunc{
 		name:        "target-logql-auto-rule",
 		description: "Checks that each Loki target uses $__auto for range vectors when appropriate.",
+		stability:   ruleStabilityExperimental,
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 
@@ -49,6 +45,11 @@ func NewTargetLogQLAutoRule() *TargetRuleFunc {
 			// skip if the panel does not have queries
 			if !panelHasQueries(p) {
 				return r
+			}
+
+			autoDuration, err := time.ParseDuration(placeholderByVariable["$__auto"].value)
+			if err != nil {
+				panic(err)
 			}
 
 			parsedExpr, err := parseLogQL(t.Expr, d.Templating.List)

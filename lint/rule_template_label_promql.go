@@ -5,34 +5,45 @@ import (
 	"regexp"
 )
 
-var templatedLabelRegexp = regexp.MustCompile(`([a-z_]+)\((.+)\)`)
+var (
+	lvNoQueryRegexp = regexp.MustCompile(`(?s)label_values\((.+)\)`)    // label_values(label)
+	lvRegexp        = regexp.MustCompile(`(?s)label_values\((.+),.+\)`) // label_values(metric, label)
+	mRegexp         = regexp.MustCompile(`(?s)metrics\((.+)\)`)         // metrics(metric)
+	lnRegexp        = regexp.MustCompile(`(?s)label_names\((.+)\)`)     // label_names()
+	qrRegexp        = regexp.MustCompile(`(?s)query_result\((.+)\)`)    // query_result(query)
+)
 
-func labelHasValidDataSourceFunction(name string) bool {
-	// https://grafana.com/docs/grafana/v8.1/datasources/prometheus/#query-variable
-	names := []string{"label_names", "label_values", "metrics", "query_result"}
-	for _, n := range names {
-		if name == n {
-			return true
-		}
+func extractPromQLQuery(q string) []string {
+	// label_values(query, label)
+	switch {
+	case lvRegexp.MatchString(q):
+		return lvRegexp.FindStringSubmatch(q)
+	case lvNoQueryRegexp.MatchString(q):
+		return nil // No query so no metric.
+	case mRegexp.MatchString(q):
+		return mRegexp.FindStringSubmatch(q)
+	case lnRegexp.MatchString(q):
+		return lnRegexp.FindStringSubmatch(q)
+	case qrRegexp.MatchString(q):
+		return qrRegexp.FindStringSubmatch(q)
+	default:
+		return nil
 	}
-	return false
 }
 
 // parseTemplatedLabelPromQL returns error in case
 // 1) The given PromQL expressions is invalid
 // 2) Use of invalid label function
 func parseTemplatedLabelPromQL(t Template, variables []Template) error {
-	// regex capture must return slice of 3 strings.
-	// 1) given query 2) function name 3) function arg.
-	tokens := templatedLabelRegexp.FindStringSubmatch(t.Query)
+	// regex capture must return slice of 2 strings.
+	// 1) given query 2) function arg.
+
+	tokens := extractPromQLQuery(t.Query)
 	if tokens == nil {
 		return fmt.Errorf("invalid 'query': %v", t.Query)
 	}
 
-	if !labelHasValidDataSourceFunction(tokens[1]) {
-		return fmt.Errorf("invalid 'function': %v", tokens[1])
-	}
-	expr, err := parsePromQL(tokens[2], variables)
+	expr, err := parsePromQL(tokens[1], variables)
 	if expr != nil {
 		return nil
 	}
@@ -43,6 +54,7 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 	return &DashboardRuleFunc{
 		name:        "template-label-promql-rule",
 		description: "Checks that the dashboard templated labels have proper PromQL expressions.",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard) DashboardRuleResults {
 			r := DashboardRuleResults{}
 
@@ -58,7 +70,6 @@ func NewTemplateLabelPromQLRule() *DashboardRuleFunc {
 					r.AddError(d, fmt.Sprintf("template '%s' invalid templated label '%s': %v", template.Name, template.Query, err))
 				}
 			}
-
 			return r
 		},
 	}

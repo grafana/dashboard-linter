@@ -2,6 +2,24 @@
 All Commands:
 
 [embedmd]:# (_intermediate/help.txt)
+```txt
+A command-line application to lint Grafana dashboards.
+
+Usage:
+  dashboard-linter [flags]
+  dashboard-linter [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  lint        Lint a dashboard
+  rules       Print documentation about each lint rule.
+
+Flags:
+  -h, --help   help for dashboard-linter
+
+Use "dashboard-linter [command] --help" for more information about a command.
+```
 
 ```txt
 A command-line application to lint Grafana dashboards.
@@ -25,6 +43,24 @@ Use "dashboard-linter [command] --help" for more information about a command.
 ## Completion
 
 [embedmd]:# (_intermediate/completion.txt)
+```txt
+Generate the autocompletion script for dashboard-linter for the specified shell.
+See each sub-command's help for details on how to use the generated script.
+
+Usage:
+  dashboard-linter completion [command]
+
+Available Commands:
+  bash        Generate the autocompletion script for bash
+  fish        Generate the autocompletion script for fish
+  powershell  Generate the autocompletion script for powershell
+  zsh         Generate the autocompletion script for zsh
+
+Flags:
+  -h, --help   help for completion
+
+Use "dashboard-linter completion [command] --help" for more information about a command.
+```
 
 ```txt
 Generate the autocompletion script for dashboard-linter for the specified shell.
@@ -48,6 +84,21 @@ Use "dashboard-linter completion [command] --help" for more information about a 
 ## Lint
 
 [embedmd]:# (_intermediate/lint.txt)
+```txt
+Returns warnings or errors for dashboard which do not adhere to accepted standards
+
+Usage:
+  dashboard-linter lint [dashboard.json] [flags]
+
+Flags:
+  -c, --config string   path to a configuration file
+      --experimental    enable experimental rules
+      --fix             automatically fix problems if possible
+  -h, --help            help for lint
+      --stdin           read from stdin
+      --strict          fail upon linting error or warning
+      --verbose         show more information about linting
+```
 
 ```txt
 Returns warnings or errors for dashboard which do not adhere to accepted standards
@@ -57,6 +108,7 @@ Usage:
 
 Flags:
   -c, --config string   path to a configuration file
+      --experimental    enable experimental rules
       --fix             automatically fix problems if possible
   -h, --help            help for lint
       --stdin           read from stdin
@@ -68,23 +120,34 @@ Flags:
 
 The linter implements the following rules:
 
-* [template-datasource-rule](./rules/template-datasource-rule.md) - Checks that the dashboard has a templated datasource.
-* [template-job-rule](./rules/template-job-rule.md) - Checks that the dashboard has a templated job.
-* [template-instance-rule](./rules/template-instance-rule.md) - Checks that the dashboard has a templated instance.
-* [template-label-promql-rule](./rules/template-label-promql-rule.md) - Checks that the dashboard templated labels have proper PromQL expressions.
-* [template-on-time-change-reload-rule](./rules/template-on-time-change-reload-rule.md) - Checks that the dashboard template variables are configured to reload on time change.
-* [panel-datasource-rule](./rules/panel-datasource-rule.md) - Checks that each panel uses the templated datasource.
-* [panel-title-description-rule](./rules/panel-title-description-rule.md) - Checks that each panel has a title and description.
-* [panel-units-rule](./rules/panel-units-rule.md) - Checks that each panel uses has valid units defined.
-* `panel-no-targets-rule` - Checks that each panel has at least one target.
-* [target-logql-rule](./rules/target-logql-rule.md) - Checks that each target uses a valid LogQL query.
-* [target-logql-auto-rule](./rules/target-logql-auto-rule.md) - Checks that each Loki target uses $__auto for range vectors when appropriate.
-* [target-promql-rule](./rules/target-promql-rule.md) - Checks that each target uses a valid PromQL query.
-* [target-rate-interval-rule](./rules/target-rate-interval-rule.md) - Checks that each target uses $__rate_interval.
-* [target-job-rule](./rules/target-job-rule.md) - Checks that every PromQL query has a job matcher.
-* [target-instance-rule](./rules/target-instance-rule.md) - Checks that every PromQL query has a instance matcher.
-* `target-counter-agg-rule` - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
-* `uneditable-dashboard` - Checks that the dashboard is not editable.
+* [template-datasource-rule](./rules/template-datasource-rule) - ``stable`` - Checks that the dashboard has a templated datasource.
+* [template-job-rule](./rules/template-job-rule) - `stable` - Checks that the dashboard has a templated job.
+* [template-instance-rule](./rules/template-instance-rule) - `stable` - Checks that the dashboard has a templated instance.
+* [template-label-promql-rule](./rules/template-label-promql-rule) - `stable` - Checks that the dashboard templated labels have proper PromQL expressions.
+* [template-on-time-change-reload-rule](./rules/template-on-time-change-reload-rule) - `stable` - Checks that the dashboard template variables are configured to reload on time change.
+* [panel-datasource-rule](./rules/panel-datasource-rule) - `stable` - Checks that each panel uses the templated datasource.
+* [panel-title-description-rule](./rules/panel-title-description-rule) - `stable` - Checks that each panel has a title and description.
+* [panel-units-rule](./rules/panel-units-rule) - `stable` - Checks that each panel uses has valid units defined.
+* [panel-no-targets-rule](./rules/panel-no-targets-rule) - `stable` - Checks that each panel has at least one target.
+* [target-promql-rule](./rules/target-promql-rule) - `stable` - Checks that each target uses a valid PromQL query.
+* [target-rate-interval-rule](./rules/target-rate-interval-rule) - `stable` - Checks that each target uses $__rate_interval.
+* [target-job-rule](./rules/target-job-rule) - `stable` - Checks that every PromQL query has a job matcher.
+* [target-instance-rule](./rules/target-instance-rule) - `stable` - Checks that every PromQL query has a instance matcher.
+* [target-counter-agg-rule](./rules/target-counter-agg-rule) - `stable` - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
+* [uneditable-dashboard-rule](./rules/uneditable-dashboard-rule) - `stable` - Checks that the dashboard is not editable.
+* [target-logql-rule](./rules/target-logql-rule) - `experimental` - Checks that each target uses a valid LogQL query.
+* [target-logql-auto-rule](./rules/target-logql-auto-rule) - `experimental` - Checks that each Loki target uses $__auto for range vectors when appropriate.
+* [target-required-matchers-rule](./rules/target-required-matchers-rule) - `experimental` - Checks that target PromQL query has the required matchers
+* [template-required-variables-rule](./rules/template-required-variables-rule) - `experimental` - Checks that the dashboard has a template variable for required variables or matchers that use variables
+
+## Rule stability
+- **Stable** rules have gone through testing and been widely adopted.
+
+- **Experimental** rules are for new and experimental features.
+  These rules are not enabled by default, but can be enabled by providing the `experimental` flag.
+  Allowing early adopters to gain confidence with new features.
+
+- **Deprecated** rules may be removed or replaced when they are marked as deprecated.
 
 ## Related Rules
 

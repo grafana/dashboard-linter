@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
@@ -19,14 +20,10 @@ func (f inspector) Visit(node parser.Node, path []parser.Node) (parser.Visitor, 
 // NewTargetRateIntervalRule builds a lint rule for panels with Prometheus queries which checks
 // all range vector selectors use $__rate_interval.
 func NewTargetRateIntervalRule() *TargetRuleFunc {
-	rateIntervalMagicDuration, err := time.ParseDuration(globalVariables["__rate_interval"].(string))
-	if err != nil {
-		// Will not happen
-		panic(err)
-	}
 	return &TargetRuleFunc{
 		name:        "target-rate-interval-rule",
 		description: "Checks that each target uses $__rate_interval.",
+		stability:   ruleStabilityStable,
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
@@ -44,6 +41,11 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 				// Invalid PromQL is another rule
 				return r
 			}
+			rateIntervalMagicDuration, err := model.ParseDuration(placeholderByVariable["$__rate_interval"].value + "s")
+			if err != nil {
+				// Will not happen
+				panic(err)
+			}
 			err = parser.Walk(inspector(func(node parser.Node, parents []parser.Node) error {
 				selector, ok := node.(*parser.MatrixSelector)
 				if !ok {
@@ -51,7 +53,7 @@ func NewTargetRateIntervalRule() *TargetRuleFunc {
 					return nil
 				}
 
-				if selector.Range == rateIntervalMagicDuration {
+				if selector.Range == time.Duration(rateIntervalMagicDuration) {
 					// Range vector selector is $__rate_interval
 					return nil
 				}
