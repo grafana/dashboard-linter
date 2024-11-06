@@ -17,7 +17,7 @@ const (
 	rangeMs      = "__range_ms"
 	rangeS       = "__range_s"
 	rangeVar     = "__range"
-	dashboard    = "__dashboard"
+	dashboardVar = "__dashboard"
 	from         = "__from"
 	to           = "__to"
 	name         = "__name"
@@ -80,7 +80,7 @@ var globalVariables = []*placeholder{
 		valType:  valTypeTimeRange,
 	},
 	{
-		variable: dashboard,
+		variable: dashboardVar,
 		valType:  valTypeString,
 	},
 	{
