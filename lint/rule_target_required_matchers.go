@@ -45,7 +45,7 @@ func NewTargetRequiredMatchersRule(config *TargetRequiredMatchersRuleSettings) *
 							}
 						}
 						if err := checkForMatcher(selector, m.Name, mType, m.Value); err != nil {
-							r.AddFixableError(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err), fixTargetRequiredMatcherRule(m.Name, labels.MatchType(m.Type), m.Value))
+							r.AddFixableError(d, p, t, fmt.Sprintf("invalid PromQL query '%s': %v", t.Expr, err), fixTargetRequiredMatcherRule(m.Name, mType, m.Value))
 						}
 					}
 				}
