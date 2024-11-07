@@ -38,6 +38,7 @@ const (
 	valTypeString valType = iota
 	valTypeTimeRange
 	valTypeEpoch
+	valTypeMatcher
 )
 
 type valType int
@@ -300,6 +301,11 @@ func getValueType(value string) valType {
 	if _, err := strconv.ParseFloat(value, 64); err == nil {
 		return valTypeEpoch
 	}
+	// naive check if variable is a matcher
+	if strings.Contains(value, "=") && strings.Contains(value, "\"") {
+		return valTypeMatcher
+	}
+	// default to string
 	return valTypeString
 }
 
@@ -323,6 +329,10 @@ func createPlaceholder(variable string, valType valType) string {
 			epoch := magicEpoch + float64(counter)
 			// trim epoch to 3 decimal places since that is the precision used in prometheus
 			value = fmt.Sprintf("%.3f", epoch)
+		}
+		if valType == valTypeMatcher {
+			part := fmt.Sprintf("%s_%s_%d", magicString, trimVariableSyntax(variable), counter)
+			value = fmt.Sprintf(`%s="%s"`, part, part)
 		}
 		if valType == valTypeString {
 			value = fmt.Sprintf("%s_%s_%d", magicString, trimVariableSyntax(variable), counter)
