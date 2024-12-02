@@ -266,6 +266,12 @@ type Dashboard struct {
 	Rows     []Row   `json:"rows,omitempty"`
 	Panels   []Panel `json:"panels,omitempty"`
 	Editable bool    `json:"editable,omitempty"`
+
+	// Kubernetes shaped dashboards will include an APIVersion and Kind
+	APIVersion string `json:"apiVersion,omitempty"`
+
+	// When reading a kubernetes encoded dashboard, the Dashboard will be
+	Spec json.RawMessage `json:"spec,omitempty"`
 }
 
 // GetPanels returns the all panels whether they are nested in the (now deprecated) "rows" property or
@@ -307,6 +313,20 @@ func NewDashboard(buf []byte) (Dashboard, error) {
 	var dash Dashboard
 	if err := json.Unmarshal(buf, &dash); err != nil {
 		return dash, err
+	}
+
+	// Support kubernetes flavored dashboards
+	if dash.Spec != nil {
+		apiVersion := dash.APIVersion
+		if apiVersion != "" {
+			if !(strings.HasPrefix(apiVersion, "v0") || strings.HasPrefix(apiVersion, "v1")) {
+				return dash, fmt.Errorf("unsupported apiVersion")
+			}
+		}
+		if err := json.Unmarshal(dash.Spec, &dash); err != nil {
+			return dash, err
+		}
+		dash.APIVersion = apiVersion // preserve the original APIVersion
 	}
 	return dash, nil
 }
