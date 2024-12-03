@@ -73,6 +73,19 @@ func TestParseDashboard(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, dashboard.Annotations.List, 1)
 	})
+
+	t.Run("v0alpha1 dashboard", func(t *testing.T) {
+		wrap := `{
+			"apiVersion": "v0alpha1",
+			"kind": "Dashboard",
+			"spec": ` + string(sampleDashboard) + `
+		}`
+
+		dashboard, err := NewDashboard([]byte(wrap))
+		assert.NoError(t, err)
+		assert.Len(t, dashboard.Annotations.List, 1)
+		assert.Equal(t, "v0alpha1", dashboard.APIVersion)
+	})
 }
 
 func TestParseTemplateValue(t *testing.T) {
