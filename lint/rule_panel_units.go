@@ -80,10 +80,7 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 				if p.Type == "stat" {
 					var opts StatOptions
 					err := json.Unmarshal(p.Options, &opts)
-					if err != nil {
-						r.AddError(d, p, err.Error())
-					}
-					if hasReduceOptionsNonNumericFields(&opts.ReduceOptions) {
+					if err == nil && hasReduceOptionsNonNumericFields(&opts.ReduceOptions) {
 						return r
 					}
 				}
@@ -114,7 +111,7 @@ func getConfiguredUnit(p Panel) string {
 	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
 		for _, p := range p.FieldConfig.Overrides {
 			for _, o := range p.Properties {
-				if o.Id == "unit" {
+				if o.Id == "unit" && o.Value != nil {
 					configuredUnit = o.Value.(string)
 				}
 			}
@@ -128,12 +125,15 @@ func getConfiguredUnit(p Panel) string {
 
 func getValueMappings(p Panel) []dashboard.ValueMapping {
 	valueMappings := make([]dashboard.ValueMapping, 0)
-	// First check if an override with unit exists - if no override then check if standard unit is present and valid
+	// First check if an override with value mapping exists - if no override then check if standard value mapping is present and valid
 	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
 		for _, p := range p.FieldConfig.Overrides {
 			for _, o := range p.Properties {
 				if o.Id == "mappings" {
-					valueMappings = o.Value.([]dashboard.ValueMapping)
+					vm, ok := o.Value.([]dashboard.ValueMapping)
+					if ok {
+						valueMappings = vm
+					}
 				}
 			}
 		}
