@@ -3,8 +3,6 @@ package lint
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
 
 func NewPanelUnitsRule() *PanelRuleFunc {
@@ -85,8 +83,12 @@ func NewPanelUnitsRule() *PanelRuleFunc {
 					}
 				}
 
-				//ignore if has value mappings:
-				if len(getValueMappings(p)) > 0 {
+				//ignore this rule if has value mappings:
+				valueMappings, err := getValueMappings(p)
+				if err != nil {
+					r.AddError(d, p, err.Error())
+				}
+				if valueMappings != nil {
 					return r
 				}
 
@@ -109,43 +111,46 @@ func getConfiguredUnit(p Panel) string {
 	configuredUnit := ""
 	// First check if an override with unit exists - if no override then check if standard unit is present and valid
 	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
-		for _, p := range p.FieldConfig.Overrides {
-			for _, o := range p.Properties {
-				if o.Id == "unit" && o.Value != nil {
-					configuredUnit = o.Value.(string)
-				}
-			}
-		}
-	}
-	if configuredUnit == "" && p.FieldConfig != nil && p.FieldConfig.Defaults.Unit != nil {
-		configuredUnit = *p.FieldConfig.Defaults.Unit
-	}
-	return configuredUnit
-}
-
-func getValueMappings(p Panel) []dashboard.ValueMapping {
-	valueMappings := make([]dashboard.ValueMapping, 0)
-	// First check if an override with value mapping exists - if no override then check if standard value mapping is present and valid
-	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
-		for _, p := range p.FieldConfig.Overrides {
-			for _, o := range p.Properties {
-				if o.Id == "mappings" {
-					vm, ok := o.Value.([]dashboard.ValueMapping)
-					if ok {
-						valueMappings = vm
+		for _, override := range p.FieldConfig.Overrides {
+			if len(override.OverrideProperties) > 0 {
+				for _, o := range override.OverrideProperties {
+					if o.Id == "unit" {
+						configuredUnit = o.Value.(string)
 					}
 				}
 			}
 		}
 	}
-	if len(valueMappings) == 0 && p.FieldConfig != nil && p.FieldConfig.Defaults.Mappings != nil {
-		valueMappings = p.FieldConfig.Defaults.Mappings
+	if configuredUnit == "" && p.FieldConfig != nil && p.FieldConfig.Defaults.Unit != "" {
+		configuredUnit = p.FieldConfig.Defaults.Unit
 	}
-	return valueMappings
+	return configuredUnit
+}
+
+func getValueMappings(p Panel) (any, error) {
+	var valueMappings any
+	// First check if an override with unit exists - if no override then check if standard unit is present and valid
+	if p.FieldConfig != nil && len(p.FieldConfig.Overrides) > 0 {
+		for _, override := range p.FieldConfig.Overrides {
+			if len(override.OverrideProperties) > 0 {
+				for _, o := range override.OverrideProperties {
+					if o.Id == "mappings" && o.Value != nil {
+						return o.Value, nil
+					}
+				}
+			}
+		}
+	}
+	if p.FieldConfig != nil && p.FieldConfig.Defaults.Mappings != nil {
+		err := json.Unmarshal(p.FieldConfig.Defaults.Mappings, &valueMappings)
+		if err != nil {
+			return valueMappings, err
+		}
+	}
+	return valueMappings, nil
 }
 
 // Numeric fields are set as empty string "". Any other value means nonnumeric on grafana stat panel.
 func hasReduceOptionsNonNumericFields(reduceOpts *ReduceOptions) bool {
-
 	return reduceOpts.Fields != ""
 }
