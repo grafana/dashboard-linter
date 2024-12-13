@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-func ptr[T any](t T) *T { return &t }
 func TestPanelUnits(t *testing.T) {
 	linter := NewPanelUnitsRule()
 	var overrides = make([]Override, 0)
