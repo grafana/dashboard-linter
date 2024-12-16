@@ -2,28 +2,35 @@ package lint
 
 import (
 	"testing"
-
-	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
 
-func ptr[T any](t T) *T { return &t }
 func TestPanelUnits(t *testing.T) {
 	linter := NewPanelUnitsRule()
-
-	testValueMap := &dashboard.ValueMap{
-		Type: "value",
-		Options: map[string]dashboard.ValueMappingResult{
-			"1": {
-				Text:  ptr("Ok"),
-				Color: ptr("green"),
-			},
-			"2": {
-				Text:  ptr("Down"),
-				Color: ptr("red"),
+	var overrides = make([]Override, 0)
+	overrides = append(overrides, Override{
+		OverrideProperties: []OverrideProperty{
+			{
+				Id: "mappings",
+				Value: []byte(`[
+						{
+						"type": "value",
+						"options": {
+						"1": {
+							"text": "OK",
+							"color": "green",
+							"index": 0
+						},
+						"2": {
+							"text": "Problem",
+							"color": "red",
+							"index": 1
+						}
+						}
+					}
+				]`),
 			},
 		},
-	}
-
+	})
 	for _, tc := range []struct {
 		name   string
 		result Result
@@ -40,8 +47,8 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Defaults: dashboard.FieldConfig{
-						Unit: ptr("MyInvalidUnit"),
+					Defaults: Defaults{
+						Unit: "MyInvalidUnit",
 					},
 				},
 			},
@@ -79,8 +86,8 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Defaults: dashboard.FieldConfig{
-						Unit: ptr("short"),
+					Defaults: Defaults{
+						Unit: "short",
 					},
 				},
 			},
@@ -93,8 +100,8 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Defaults: dashboard.FieldConfig{
-						Unit: ptr("none"),
+					Defaults: Defaults{
+						Unit: "none",
 					},
 				},
 			},
@@ -144,12 +151,26 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Defaults: dashboard.FieldConfig{
-						Mappings: []dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
-							dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
-								ValueMap: testValueMap,
-							},
-						},
+					Defaults: Defaults{
+						Mappings: []byte(`
+							[
+								{
+								"options": {
+									"0": {
+									"color": "red",
+									"index": 1,
+									"text": "DOWN"
+									},
+									"1": {
+									"color": "green",
+									"index": 0,
+									"text": "UP"
+									}
+								},
+								"type": "value"
+								}
+							]`,
+						),
 					},
 				},
 			},
@@ -162,24 +183,7 @@ func TestPanelUnits(t *testing.T) {
 				Datasource: "foo",
 				Title:      "bar",
 				FieldConfig: &FieldConfig{
-					Overrides: []dashboard.DashboardFieldConfigSourceOverrides{
-						dashboard.DashboardFieldConfigSourceOverrides{
-							Matcher: dashboard.MatcherConfig{
-								Id:      "byRegexp",
-								Options: "/.*/",
-							},
-							Properties: []dashboard.DynamicConfigValue{
-								dashboard.DynamicConfigValue{
-									Id: "mappings",
-									Value: []dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
-										dashboard.ValueMapOrRangeMapOrRegexMapOrSpecialValueMap{
-											ValueMap: testValueMap,
-										},
-									},
-								},
-							},
-						},
-					},
+					Overrides: overrides,
 				},
 			},
 		},

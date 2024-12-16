@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
 
 type Severity int
@@ -208,20 +206,37 @@ type Panel struct {
 	Options     json.RawMessage `json:"options,omitempty"`
 }
 
+type FieldConfig struct {
+	Defaults  Defaults   `json:"defaults,omitempty"`
+	Overrides []Override `json:"overrides,omitempty"`
+}
+
+type Override struct {
+	OverrideProperties []OverrideProperty `json:"properties"`
+}
+
+type OverrideProperty struct {
+	Id    string `json:"id"`
+	Value any    `json:"value"`
+}
+
+// oversimplified Reduce options
+type ReduceOptions struct {
+	Fields string   `json:"fields,omitempty"`
+	Calcs  []string `json:"[]calcs,omitempty"`
+	Values bool     `json:"values,omitempty"`
+	Limit  int      `json:"limit,omitempty"`
+}
+
 // Stat panel options is a deliberately incomplete representation of the stat panel options from grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type StatOptions struct {
 	ReduceOptions ReduceOptions `json:"reduceOptions,omitempty"`
 }
 
-// oversimplified Reduce options
-type ReduceOptions struct {
-	Fields string `json:"fields,omitempty"`
-}
-
-type FieldConfig struct {
-	Defaults  dashboard.FieldConfig
-	Overrides []dashboard.DashboardFieldConfigSourceOverrides
+type Defaults struct {
+	Unit     string          `json:"unit,omitempty"`
+	Mappings json.RawMessage `json:"mappings,omitempty"`
 }
 
 // GetPanels returns the all panels nested inside the panel (inc the current panel)
@@ -269,7 +284,6 @@ type Dashboard struct {
 
 	// Kubernetes shaped dashboards will include an APIVersion and Kind
 	APIVersion string `json:"apiVersion,omitempty"`
-
 	// When reading a kubernetes encoded dashboard, the Dashboard will be
 	Spec json.RawMessage `json:"spec,omitempty"`
 }
@@ -314,7 +328,6 @@ func NewDashboard(buf []byte) (Dashboard, error) {
 	if err := json.Unmarshal(buf, &dash); err != nil {
 		return dash, err
 	}
-
 	// Support kubernetes flavored dashboards
 	if dash.Spec != nil {
 		apiVersion := dash.APIVersion
