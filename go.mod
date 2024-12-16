@@ -5,11 +5,12 @@ go 1.21.8
 toolchain go1.23.1
 
 require (
+	github.com/grafana/grafana-foundation-sdk/go v0.0.0-20241101005901-83e3491f2a70
 	github.com/grafana/loki/v3 v3.2.0
 	github.com/prometheus/prometheus v0.54.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/zeitlinger/conflate v0.0.0-20230622100834-279724abda8c
 	golang.org/x/text v0.19.0
 	gopkg.in/yaml.v3 v3.0.1
