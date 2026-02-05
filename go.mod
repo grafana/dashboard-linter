@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/prometheus v0.55.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/zeitlinger/conflate v0.0.0-20240927101413-c06be92f798f
 	golang.org/x/text v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
