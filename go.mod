@@ -2,7 +2,7 @@ module github.com/grafana/dashboard-linter
 
 go 1.23
 
-toolchain go1.23.1
+toolchain go1.26.0
 
 require (
 	github.com/grafana/loki/v3 v3.3.2
