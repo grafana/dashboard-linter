@@ -27,7 +27,7 @@ func parsePromQL(expr string, variables []Template) (parser.Expr, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not expand variables: %w", err)
 	}
-	return parser.ParseExpr(expr)
+	return parser.NewParser(parser.Options{}).ParseExpr(expr)
 }
 
 // NewTargetPromQLRule builds a lint rule for panels with Prometheus queries which checks:

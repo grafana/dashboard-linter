@@ -332,7 +332,7 @@ func NewDashboard(buf []byte) (Dashboard, error) {
 	if dash.Spec != nil {
 		apiVersion := dash.APIVersion
 		if apiVersion != "" {
-			if !(strings.HasPrefix(apiVersion, "v0") || strings.HasPrefix(apiVersion, "v1")) {
+			if !strings.HasPrefix(apiVersion, "v0") && !strings.HasPrefix(apiVersion, "v1") {
 				return dash, fmt.Errorf("unsupported apiVersion")
 			}
 		}
