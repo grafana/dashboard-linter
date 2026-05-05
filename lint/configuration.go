@@ -41,23 +41,22 @@ func (cre *ConfigurationRuleEntries) AddEntry(e ConfigurationEntry) {
 }
 
 func (ce *ConfigurationEntry) IsMatch(r ResultContext) bool {
-	ret := true
 	if ce.Dashboard != "" && r.Dashboard != nil && ce.Dashboard != r.Dashboard.Title {
-		ret = false
+		return false
 	}
 
 	if ce.Panel != "" && r.Panel != nil && ce.Panel != r.Panel.Title {
-		ret = false
+		return false
 	}
 
 	if r.Target != nil && ce.TargetIdx != "" {
 		idx, err := strconv.Atoi(ce.TargetIdx)
 		if err == nil && idx != r.Target.Idx {
-			ret = false
+			return false
 		}
 	}
 
-	return ret
+	return true
 }
 
 func (cf *ConfigurationFile) Apply(res ResultContext) ResultContext {
@@ -134,7 +133,7 @@ func (cf *ConfigurationFile) Load(path string) error {
 	} else if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	dec := yaml.NewDecoder(f)
 	if err = dec.Decode(cf); err != nil {
