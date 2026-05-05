@@ -2,10 +2,6 @@ version: 2
 
 project_name: dashboard-linter
 
-before:
-  hooks:
-    - go mod tidy
-
 builds:
   - id: dashboard-linter
     main: .

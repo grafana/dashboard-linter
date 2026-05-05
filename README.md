@@ -19,12 +19,16 @@ Each release also publishes a `checksums.txt` you can verify against.
 
 ### From source
 
+`go install github.com/grafana/dashboard-linter@<version>` does not currently work because `go.mod` contains a `replace` directive — Go refuses to install a module with replaces. Build from a checkout instead:
+
 ```
-$ go install github.com/grafana/dashboard-linter@latest
-$ dashboard-linter lint dashboard.json
+$ git clone https://github.com/grafana/dashboard-linter.git
+$ cd dashboard-linter
+$ go build -o dashboard-linter .
+$ ./dashboard-linter lint dashboard.json
 ```
 
-Note: `go install ...@<version>` (including `@latest`) currently fails because `go.mod` contains a `replace` directive — Go refuses to install a module with replaces. Build locally with `go build` from a checkout if you need to install from source. The prebuilt binaries above are the supported path for CI.
+The prebuilt binaries above are the supported path for CI.
 
 This tool is a work in progress and it's still very early days. The current capabilities are focused exclusively on dashboards that use a Prometheus data source.
 
