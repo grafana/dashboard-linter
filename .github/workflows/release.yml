@@ -27,9 +27,7 @@ jobs:
 
       # GoReleaser builds the binaries AND creates the GitHub Release with
       # artifacts + checksums attached, driven by the `release:` block in
-      # .goreleaser.yaml. No separate softprops/action-gh-release step is
-      # needed (that pattern is for projects that build artifacts outside
-      # goreleaser, e.g. kubernetes-mixin's `make && zip` flow).
+      # .goreleaser.yaml.
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8 # v7.2.1
         with:
