@@ -23,6 +23,7 @@ const (
 // Target is a deliberately incomplete representation of the Dashboard -> Template type in grafana.
 // The properties which are extracted from JSON are only those used for linting purposes.
 type Template struct {
+	Idx        int                `json:"-"` // This is the only (best?) way to uniquely identify a template, it is set by GetTemplateByType
 	Name       string             `json:"name"`
 	Label      string             `json:"label"`
 	Type       string             `json:"type"`
@@ -311,7 +312,8 @@ func (d *Dashboard) GetPanels() []Panel {
 // is case insensitive as it uses strings.EqualFold()
 func (d *Dashboard) GetTemplateByType(t string) []Template {
 	var retval []Template
-	for _, templ := range d.Templating.List {
+	for i, templ := range d.Templating.List {
+		templ.Idx = i
 		if strings.EqualFold(templ.Type, t) {
 			retval = append(retval, templ)
 		}
