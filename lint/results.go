@@ -138,7 +138,7 @@ func (r Result) TtyPrint() {
 		return
 	}
 
-	fmt.Fprintf(os.Stdout, "[%s] %s\n", sym, r.Message)
+	_, _ = fmt.Fprintf(os.Stdout, "[%s] %s\n", sym, r.Message)
 }
 
 type ResultSet struct {
@@ -196,7 +196,7 @@ func (rs *ResultSet) ReportByRule() {
 	sort.Strings(rules)
 
 	for _, rule := range rules {
-		fmt.Fprintln(os.Stdout, byRule[rule][0].Rule.Description())
+		_, _ = fmt.Fprintln(os.Stdout, byRule[rule][0].Rule.Description())
 		for _, rr := range byRule[rule] {
 			for _, r := range rr.Result.Results {
 				if r.Severity == Exclude && !rs.config.Verbose {
@@ -216,7 +216,7 @@ func (rs *ResultSet) AutoFix(d *Dashboard) int {
 				// Fix is only present when something can be fixed
 				fixableResult.Fix(d)
 				changes++
-				r.Result.Results[i].Result.Severity = Fixed
+				r.Result.Results[i].Severity = Fixed
 			}
 		}
 	}

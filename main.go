@@ -121,7 +121,7 @@ var rulesCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		rules := lint.NewRuleSet()
 		for _, rule := range rules.Rules() {
-			fmt.Fprintf(os.Stdout, "* `%s` - %s\n", rule.Name(), rule.Description())
+			_, _ = fmt.Fprintf(os.Stdout, "* `%s` - %s\n", rule.Name(), rule.Description())
 		}
 		return nil
 	},

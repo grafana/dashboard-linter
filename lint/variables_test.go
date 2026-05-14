@@ -70,7 +70,7 @@ func TestVariableExpansion(t *testing.T) {
 		{
 			desc: "Should not support $__from/$__to with momentjs formatting option (iso)",
 			expr: "sum(http_requests_total{method=\"GET\"} @ ${__from:date:YYYY-MM})",
-			err:  fmt.Errorf("Unsupported momentjs time format: YYYY-MM"),
+			err:  fmt.Errorf("unsupported momentjs time format: YYYY-MM"),
 		},
 		// https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/
 		{

@@ -63,7 +63,7 @@ func NewTargetLogQLAutoRule() *TargetRuleFunc {
 
 			// Inspect the parsed expression to check for fixed durations
 			Inspect(parsedExpr, func(node syntax.Expr) bool {
-				if logRange, ok := node.(*syntax.LogRange); ok {
+				if logRange, ok := node.(*syntax.LogRangeExpr); ok {
 					if logRange.Interval != autoDuration && !strings.Contains(originalExpr, "$__auto") {
 						hasFixedDuration = true
 						return false
@@ -95,7 +95,7 @@ func Inspect(node syntax.Expr, f func(syntax.Expr) bool) {
 		Inspect(n.Left, f)
 	case *syntax.LabelReplaceExpr:
 		Inspect(n.Left, f)
-	case *syntax.LogRange:
+	case *syntax.LogRangeExpr:
 		Inspect(n.Left, f)
 	case *syntax.PipelineExpr:
 		Inspect(n.Left, f)
