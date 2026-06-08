@@ -29,10 +29,15 @@ func newDashboardFromV2(spec json.RawMessage, apiVersion string) (Dashboard, err
 		return Dashboard{}, fmt.Errorf("parsing v2 dashboard spec: %w", err)
 	}
 
+	panels, err := panelsFromV2(s.Elements)
+	if err != nil {
+		return Dashboard{}, err
+	}
+
 	d := Dashboard{
 		Title:      s.Title,
 		APIVersion: apiVersion,
-		Panels:     panelsFromV2(s.Elements),
+		Panels:     panels,
 	}
 	if s.Editable != nil {
 		d.Editable = *s.Editable
@@ -46,19 +51,23 @@ func newDashboardFromV2(spec json.RawMessage, apiVersion string) (Dashboard, err
 // Library panels are skipped because they carry no inline spec to lint.
 // Panels are sorted by id so output is deterministic (the element map has no
 // inherent order; layout/order is irrelevant to linting).
-func panelsFromV2(elements map[string]dashv2.DashboardElement) []Panel {
+func panelsFromV2(elements map[string]dashv2.DashboardElement) ([]Panel, error) {
 	var panels []Panel
 	for _, el := range elements {
 		if el.PanelKind == nil {
 			continue
 		}
-		panels = append(panels, panelFromV2(el.PanelKind.Spec))
+		p, err := panelFromV2(el.PanelKind.Spec)
+		if err != nil {
+			return nil, err
+		}
+		panels = append(panels, p)
 	}
 	sort.Slice(panels, func(i, j int) bool { return panels[i].Id < panels[j].Id })
-	return panels
+	return panels, nil
 }
 
-func panelFromV2(ps dashv2.DashboardPanelSpec) Panel {
+func panelFromV2(ps dashv2.DashboardPanelSpec) (Panel, error) {
 	p := Panel{
 		Id:          int(ps.Id),
 		Title:       ps.Title,
@@ -70,16 +79,24 @@ func panelFromV2(ps dashv2.DashboardPanelSpec) Panel {
 	}
 
 	// The v2 fieldConfig and panel options mirror the classic JSON shape, so a
-	// JSON round-trip is the most robust way to populate them.
-	if fc, err := json.Marshal(ps.VizConfig.Spec.FieldConfig); err == nil {
-		var lf FieldConfig
-		if json.Unmarshal(fc, &lf) == nil {
-			p.FieldConfig = &lf
-		}
+	// JSON round-trip is the most robust way to populate them. Surface any
+	// failure so a malformed payload fails fast rather than being partially
+	// linted.
+	fc, err := json.Marshal(ps.VizConfig.Spec.FieldConfig)
+	if err != nil {
+		return Panel{}, fmt.Errorf("panel %q fieldConfig: %w", ps.Title, err)
 	}
-	if opts, err := json.Marshal(ps.VizConfig.Spec.Options); err == nil {
-		p.Options = opts
+	var lf FieldConfig
+	if err := json.Unmarshal(fc, &lf); err != nil {
+		return Panel{}, fmt.Errorf("panel %q fieldConfig: %w", ps.Title, err)
 	}
+	p.FieldConfig = &lf
+
+	opts, err := json.Marshal(ps.VizConfig.Spec.Options)
+	if err != nil {
+		return Panel{}, fmt.Errorf("panel %q options: %w", ps.Title, err)
+	}
+	p.Options = opts
 
 	// Classic panels carry a panel-level datasource that the panel-datasource
 	// rule inspects. v2 only has per-query datasources, so derive the panel
@@ -88,7 +105,7 @@ func panelFromV2(ps dashv2.DashboardPanelSpec) Panel {
 	if len(p.Targets) > 0 {
 		p.Datasource = p.Targets[0].Datasource
 	}
-	return p
+	return p, nil
 }
 
 func targetsFromV2(queries []dashv2.DashboardPanelQueryKind) []Target {
@@ -138,22 +155,26 @@ func templateFromV2(v dashv2.DashboardVariableKind) (Template, bool) {
 			Name:       s.Name,
 			Label:      deref(s.Label),
 			Multi:      s.Multi,
+			AllValue:   deref(s.AllValue),
+			Refresh:    refreshFromV2(s.Refresh),
 			Query:      stringFromQuerySpec(s.Query, "query"),
 			Datasource: datasourceFromV2(s.Query),
 		}, true
 	case v.DatasourceVariableKind != nil:
 		s := v.DatasourceVariableKind.Spec
 		return Template{
-			Type:  "datasource",
-			Name:  s.Name,
-			Label: deref(s.Label),
-			Multi: s.Multi,
+			Type:     "datasource",
+			Name:     s.Name,
+			Label:    deref(s.Label),
+			Multi:    s.Multi,
+			AllValue: deref(s.AllValue),
+			Refresh:  refreshFromV2(s.Refresh),
 			// The datasource type drives prometheus/loki detection in the rules.
 			Query: s.PluginId,
 		}, true
 	case v.CustomVariableKind != nil:
 		s := v.CustomVariableKind.Spec
-		return Template{Type: "custom", Name: s.Name, Label: deref(s.Label), Multi: s.Multi, Query: s.Query}, true
+		return Template{Type: "custom", Name: s.Name, Label: deref(s.Label), Multi: s.Multi, AllValue: deref(s.AllValue), Query: s.Query}, true
 	case v.IntervalVariableKind != nil:
 		s := v.IntervalVariableKind.Spec
 		return Template{Type: "interval", Name: s.Name, Label: deref(s.Label), Query: s.Query}, true
@@ -198,6 +219,20 @@ func stringFromQuerySpec(q dashv2.DashboardDataQueryKind, key string) string {
 		return s
 	}
 	return ""
+}
+
+// refreshFromV2 maps the v2 string refresh enum to the classic integer the rules
+// expect (2 == "On Time Range Change", which template-on-time-change-reload-rule
+// requires for query variables).
+func refreshFromV2(r dashv2.DashboardVariableRefresh) int {
+	switch r {
+	case dashv2.DashboardVariableRefreshOnTimeRangeChanged:
+		return 2
+	case dashv2.DashboardVariableRefreshOnDashboardLoad:
+		return 1
+	default: // "never" / unset
+		return 0
+	}
 }
 
 func deref(s *string) string {

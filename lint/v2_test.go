@@ -25,6 +25,7 @@ const v2Dashboard = `{
 				"kind": "QueryVariable",
 				"spec": {
 					"name": "cluster", "label": "cluster", "multi": true,
+					"refresh": "onTimeRangeChanged", "allValue": "all-clusters",
 					"query": {
 						"kind": "DataQuery", "group": "prometheus", "version": "v0",
 						"datasource": { "name": "${datasource}" },
@@ -117,10 +118,34 @@ func TestParseV2Dashboard(t *testing.T) {
 		assert.Equal(t, "cluster", queryVars[0].Name)
 		assert.True(t, queryVars[0].Multi)
 		assert.Equal(t, "label_values(up, cluster)", queryVars[0].Query)
+		// "onTimeRangeChanged" maps to the classic refresh value 2.
+		assert.Equal(t, 2, queryVars[0].Refresh)
+		// AllValue is copied through verbatim (distinctive value catches a
+		// wrong-field mapping, e.g. Regex -> AllValue).
+		assert.Equal(t, "all-clusters", queryVars[0].AllValue)
 	})
 
 	t.Run("annotations", func(t *testing.T) {
 		require.Len(t, d.Annotations.List, 1)
 		assert.Equal(t, "Annotations & Alerts", d.Annotations.List[0].Name)
 	})
+}
+
+// TestLintV2Dashboard exercises the full rule set against a v2 dashboard
+func TestLintV2Dashboard(t *testing.T) {
+	d, err := NewDashboard([]byte(v2Dashboard))
+	require.NoError(t, err)
+
+	rs := NewRuleSet()
+	results, err := rs.Lint([]Dashboard{d})
+	require.NoError(t, err)
+
+	// The fixture's query variable is "onTimeRangeChanged" (refresh value 2),
+	// so the on-time-range rule must not raise an error for it now that Refresh
+	// is mapped.
+	for _, rc := range results.ByRule()["template-on-time-change-reload-rule"] {
+		for _, r := range rc.Result.Results {
+			assert.NotEqual(t, Error, r.Severity, "unexpected on-time-range finding: %s", r.Message)
+		}
+	}
 }
