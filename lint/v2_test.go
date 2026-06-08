@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -131,21 +132,56 @@ func TestParseV2Dashboard(t *testing.T) {
 	})
 }
 
-// TestLintV2Dashboard exercises the full rule set against a v2 dashboard
+// ruleHasError reports whether the named rule produced any Error-severity result.
+func ruleHasError(results *ResultSet, rule string) bool {
+	for _, rc := range results.ByRule()[rule] {
+		for _, r := range rc.Result.Results {
+			if r.Severity == Error {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// TestLintV2Dashboard exercises the full rule set against a v2 dashboard to verify
+// the adapter feeds each mapped field into the rules end-to-end.
 func TestLintV2Dashboard(t *testing.T) {
 	d, err := NewDashboard([]byte(v2Dashboard))
 	require.NoError(t, err)
-
 	rs := NewRuleSet()
 	results, err := rs.Lint([]Dashboard{d})
 	require.NoError(t, err)
 
-	// The fixture's query variable is "onTimeRangeChanged" (refresh value 2),
-	// so the on-time-range rule must not raise an error for it now that Refresh
-	// is mapped.
-	for _, rc := range results.ByRule()["template-on-time-change-reload-rule"] {
-		for _, r := range rc.Result.Results {
-			assert.NotEqual(t, Error, r.Severity, "unexpected on-time-range finding: %s", r.Message)
+	// Each rule here passes only if a specific adapter mapping is correct, so a
+	// regression turns one into a false-positive lint error.
+	t.Run("adapter mappings produce no false positives", func(t *testing.T) {
+		mustPass := map[string]string{
+			"template-on-time-change-reload-rule": "Refresh enum -> int",
+			"template-datasource-rule":            "datasource variable (pluginId -> Query)",
+			"panel-datasource-rule":               "per-query datasource name -> panel uid",
+			"panel-units-rule":                    "vizConfig fieldConfig unit round-trip",
+			"panel-title-description-rule":        "panel title/description",
+			"panel-no-targets-rule":               "panel queries -> targets",
+			"target-promql-rule":                  "query expr extraction (valid, non-empty)",
 		}
-	}
+		for rule, mapped := range mustPass {
+			assert.Falsef(t, ruleHasError(results, rule),
+				"%s should pass (validates: %s)", rule, mapped)
+		}
+	})
+
+	// Behavioral round-trip: the mapped Refresh value must actually be consumed by
+	// the rule. Flip the fixture's query var to onDashboardLoad (-> 1) and the
+	// on-time-range rule must now fire, proving the mapping distinguishes pass/fail.
+	t.Run("mapped Refresh is consumed by the on-time-range rule", func(t *testing.T) {
+		load := strings.Replace(v2Dashboard, `"onTimeRangeChanged"`, `"onDashboardLoad"`, 1)
+		d, err := NewDashboard([]byte(load))
+		require.NoError(t, err)
+		rs := NewRuleSet()
+		results, err := rs.Lint([]Dashboard{d})
+		require.NoError(t, err)
+		assert.True(t, ruleHasError(results, "template-on-time-change-reload-rule"),
+			"on-time-range rule should fire for an onDashboardLoad query variable")
+	})
 }
