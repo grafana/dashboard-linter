@@ -331,6 +331,10 @@ func NewDashboard(buf []byte) (Dashboard, error) {
 	// Support kubernetes flavored dashboards
 	if dash.Spec != nil {
 		apiVersion := dash.APIVersion
+		// The v2 schema is structurally different and handled by its own adapter.
+		if isV2APIVersion(apiVersion) {
+			return newDashboardFromV2(dash.Spec, apiVersion)
+		}
 		if apiVersion != "" {
 			if !strings.HasPrefix(apiVersion, "v0") && !strings.HasPrefix(apiVersion, "v1") {
 				return dash, fmt.Errorf("unsupported apiVersion")
