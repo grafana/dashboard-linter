@@ -23,10 +23,18 @@ func isV2APIVersion(apiVersion string) bool {
 
 // newDashboardFromV2 converts a v2 dashboard spec into the linter's internal
 // Dashboard model so that all existing rules can run against it unchanged.
+// If the spec cannot be fully parsed (e.g. a required field has the wrong type)
+// we return a minimal Dashboard with APIVersion and Spec populated so that
+// v2-required-fields-rule can report the specific problem rather than aborting.
 func newDashboardFromV2(spec json.RawMessage, apiVersion string) (Dashboard, error) {
 	var s dashv2.DashboardSpec
 	if err := json.Unmarshal(spec, &s); err != nil {
-		return Dashboard{}, fmt.Errorf("parsing v2 dashboard spec: %w", err)
+		// Partial parse to salvage the title for readable error messages.
+		var partial struct {
+			Title string `json:"title"`
+		}
+		_ = json.Unmarshal(spec, &partial)
+		return Dashboard{Title: partial.Title, APIVersion: apiVersion, Spec: spec}, nil
 	}
 
 	panels, err := panelsFromV2(s.Elements)
@@ -38,6 +46,7 @@ func newDashboardFromV2(spec json.RawMessage, apiVersion string) (Dashboard, err
 		Title:      s.Title,
 		APIVersion: apiVersion,
 		Panels:     panels,
+		Spec:       spec,
 	}
 	if s.Editable != nil {
 		d.Editable = *s.Editable

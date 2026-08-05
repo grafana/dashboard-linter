@@ -190,6 +190,7 @@ func NewRuleSet() RuleSet {
 			NewTargetInstanceRule(),
 			NewTargetCounterAggRule(),
 			NewUneditableRule(),
+			NewV2RequiredFieldsRule(),
 		},
 	}
 }
