@@ -1,7 +1,6 @@
 package lint
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -85,7 +84,7 @@ func TestV2RequiredFieldsRule_EndToEnd(t *testing.T) {
 
 func TestV2RequiredFieldsRule_WrongTypeEndToEnd(t *testing.T) {
 	// Simulate the exact error from the bug report: annotations is an object, not array.
-	wrongAnnotations := fmt.Sprintf(`{
+	wrongAnnotations := `{
 		"apiVersion": "dashboard.grafana.app/v2",
 		"kind": "Dashboard",
 		"spec": {
@@ -100,7 +99,7 @@ func TestV2RequiredFieldsRule_WrongTypeEndToEnd(t *testing.T) {
 			"timeSettings": {"from": "now-6h", "to": "now"},
 			"variables": []
 		}
-	}`)
+	}`
 	// Must not return a parse error — degraded dashboard returned instead.
 	d, err := NewDashboard([]byte(wrongAnnotations))
 	require.NoError(t, err)
@@ -109,4 +108,45 @@ func TestV2RequiredFieldsRule_WrongTypeEndToEnd(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, ruleHasError(results, "v2-required-fields-rule"),
 		"wrong type for annotations must be reported by the rule, not abort parsing")
+}
+
+func TestV2RequiredFieldsRule_ParseErrorSuppressesOtherRules(t *testing.T) {
+	// A dashboard whose annotations field has the wrong type causes a parse
+	// failure. Only v2-required-fields-rule should fire — no false positives
+	// from other rules running against the empty/zero-value degraded struct.
+	wrongAnnotations := `{
+		"apiVersion": "dashboard.grafana.app/v2",
+		"kind": "Dashboard",
+		"spec": {
+			"title": "Bad",
+			"cursorSync": "Off",
+			"preload": false,
+			"annotations": {"builtin": 0},
+			"elements": {},
+			"layout": {"kind": "GridLayout", "spec": {"items": []}},
+			"links": [],
+			"tags": [],
+			"timeSettings": {"from": "now-6h", "to": "now"},
+			"variables": []
+		}
+	}`
+	d, err := NewDashboard([]byte(wrongAnnotations))
+	require.NoError(t, err)
+	require.True(t, d.V2ParseError)
+
+	rs := NewRuleSet()
+	results, err := rs.Lint([]Dashboard{d})
+	require.NoError(t, err)
+
+	for rule, ctxs := range results.ByRule() {
+		if rule == "v2-required-fields-rule" {
+			continue
+		}
+		for _, ctx := range ctxs {
+			for _, r := range ctx.Result.Results {
+				assert.NotEqualf(t, Error, r.Severity,
+					"rule %q must not fire on a v2 parse-error dashboard", rule)
+			}
+		}
+	}
 }

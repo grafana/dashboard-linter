@@ -42,7 +42,7 @@ func NewV2RequiredFieldsRule() *DashboardRuleFunc {
 
 			var raw map[string]json.RawMessage
 			if err := json.Unmarshal(d.Spec, &raw); err != nil {
-				r.AddError(d, fmt.Sprintf("v2 spec is not valid JSON: %v", err))
+				r.AddError(d, "v2 spec must be a JSON object")
 				return r
 			}
 

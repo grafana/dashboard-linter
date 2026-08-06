@@ -207,6 +207,11 @@ func (s *RuleSet) Lint(dashboards []Dashboard) (*ResultSet, error) {
 	resSet := &ResultSet{}
 	for _, d := range dashboards {
 		for _, r := range s.rules {
+			// When a v2 spec failed to unmarshal, skip all rules except
+			// v2-required-fields-rule to avoid false positives from empty fields.
+			if d.V2ParseError && r.Name() != "v2-required-fields-rule" {
+				continue
+			}
 			r.Lint(d, resSet)
 		}
 	}

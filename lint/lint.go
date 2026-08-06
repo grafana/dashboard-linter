@@ -286,6 +286,10 @@ type Dashboard struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 	// When reading a kubernetes encoded dashboard, the Dashboard will be
 	Spec json.RawMessage `json:"spec,omitempty"`
+	// V2ParseError is set when a v2 spec could not be fully unmarshalled.
+	// Rules other than v2-required-fields-rule are skipped for such dashboards
+	// to avoid false positives from empty/zero-value fields.
+	V2ParseError bool `json:"-"`
 }
 
 // GetPanels returns the all panels whether they are nested in the (now deprecated) "rows" property or
