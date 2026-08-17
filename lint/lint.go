@@ -289,7 +289,8 @@ type Dashboard struct {
 	// V2ParseError is set when a v2 spec could not be fully unmarshalled.
 	// Rules other than v2-required-fields-rule are skipped for such dashboards
 	// to avoid false positives from empty/zero-value fields.
-	V2ParseError bool `json:"-"`
+	V2ParseError    bool   `json:"-"`
+	V2ParseErrorMsg string `json:"-"`
 }
 
 // GetPanels returns the all panels whether they are nested in the (now deprecated) "rows" property or

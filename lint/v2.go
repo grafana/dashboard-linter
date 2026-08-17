@@ -34,7 +34,7 @@ func newDashboardFromV2(spec json.RawMessage, apiVersion string) (Dashboard, err
 			Title string `json:"title"`
 		}
 		_ = json.Unmarshal(spec, &partial)
-		return Dashboard{Title: partial.Title, APIVersion: apiVersion, Spec: spec, V2ParseError: true}, nil
+		return Dashboard{Title: partial.Title, APIVersion: apiVersion, Spec: spec, V2ParseError: true, V2ParseErrorMsg: err.Error()}, nil
 	}
 
 	panels, err := panelsFromV2(s.Elements)

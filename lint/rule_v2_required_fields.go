@@ -67,6 +67,12 @@ func NewV2RequiredFieldsRule() *DashboardRuleFunc {
 					r.AddError(d, fmt.Sprintf("v2 spec property %q has wrong type (expected %s)", f.name, jsonKindName(f.firstByte)))
 				}
 			}
+			// If the spec had a parse error but none of the required-field checks
+			// fired (e.g. a non-required field has the wrong type), surface the raw
+			// parse error so the problem is still reported.
+			if d.V2ParseError && len(r.Results) == 0 {
+				r.AddError(d, fmt.Sprintf("v2 spec could not be parsed: %s", d.V2ParseErrorMsg))
+			}
 			return r
 		},
 	}
