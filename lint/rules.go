@@ -98,9 +98,13 @@ func (f PanelRuleFunc) Lint(d Dashboard, s *ResultSet) {
 
 func fixPanel(pi int, r PanelResult) func(dashboard *Dashboard) {
 	return func(dashboard *Dashboard) {
-		p := dashboard.GetPanels()[pi]
-		r.Fix(*dashboard, &p)
-		dashboard.Panels[pi] = p
+		p := dashboard.PanelAt(pi)
+		if p == nil {
+			return
+		}
+		cp := *p
+		r.Fix(*dashboard, &cp)
+		*p = cp
 	}
 }
 
@@ -157,12 +161,40 @@ func (f TargetRuleFunc) Lint(d Dashboard, s *ResultSet) {
 
 func fixTarget(pi int, ti int, r TargetResult) func(dashboard *Dashboard) {
 	return func(dashboard *Dashboard) {
-		p := dashboard.GetPanels()[pi]
-		t := p.Targets[ti]
-		r.Fix(*dashboard, p, &t)
-		p.Targets[ti] = t
-		dashboard.Panels[pi] = p
+		p := dashboard.PanelAt(pi)
+		if p == nil || ti >= len(p.Targets) {
+			return
+		}
+		r.Fix(*dashboard, *p, &p.Targets[ti])
 	}
+}
+
+// PanelAt returns a pointer to the panel at the given flattened index in the
+// dashboard tree, matching the order produced by GetPanels (rows first, then
+// top-level panels, depth-first). It is used by the autofix machinery to
+// write fixes back to the correct location, including panels nested in rows
+// or collapsible sections.
+func (d *Dashboard) PanelAt(idx int) *Panel {
+	i := 0
+	var walk func(panels []Panel) *Panel
+	walk = func(panels []Panel) *Panel {
+		for j := range panels {
+			if i == idx {
+				return &panels[j]
+			}
+			i++
+			if p := walk(panels[j].Panels); p != nil {
+				return p
+			}
+		}
+		return nil
+	}
+	for _, row := range d.Rows {
+		if p := walk(row.Panels); p != nil {
+			return p
+		}
+	}
+	return walk(d.Panels)
 }
 
 // RuleSet contains a list of linting rules.

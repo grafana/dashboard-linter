@@ -99,3 +99,85 @@ func TestFixableRules(t *testing.T) {
 
 	assert.Equal(t, "Sample dashboard fixed-once fixed-twice", dashboard.Title)
 }
+
+func TestFixableRulesNestedPanels(t *testing.T) {
+	dashboardJSON := `{
+		"title": "nested",
+		"rows": [{"panels": [
+			{"id": 1, "title": "row-panel", "type": "timeseries",
+			 "targets": [{"expr": "up", "refId": "A"}]}
+		]}],
+		"panels": [{"id": 2, "title": "top-panel", "type": "timeseries", "panels": [
+			{"id": 3, "title": "nested-panel", "type": "timeseries",
+			 "targets": [{"expr": "up", "refId": "A"}]}
+		]}]
+	}`
+
+	panelRule := lint.NewPanelRuleFunc(
+		"test-panel-fix-rule", "Test panel fix rule",
+		func(d lint.Dashboard, p lint.Panel) lint.PanelRuleResults {
+			return lint.PanelRuleResults{Results: []lint.PanelResult{{
+				Result: lint.Result{Severity: lint.Error, Message: "fixing panel"},
+				Fix: func(d lint.Dashboard, p *lint.Panel) {
+					p.Title += "-fixed"
+				},
+			}}}
+		},
+	)
+	targetRule := lint.NewTargetRuleFunc(
+		"test-target-fix-rule", "Test target fix rule",
+		func(d lint.Dashboard, p lint.Panel, t lint.Target) lint.TargetRuleResults {
+			return lint.TargetRuleResults{Results: []lint.TargetResult{{
+				Result: lint.Result{Severity: lint.Error, Message: "fixing target"},
+				Fix: func(d lint.Dashboard, p lint.Panel, t *lint.Target) {
+					t.Expr = "up{job=\"$job\"}"
+				},
+			}}}
+		},
+	)
+
+	rules := lint.RuleSet{}
+	rules.Add(panelRule)
+	rules.Add(targetRule)
+
+	dashboard, err := lint.NewDashboard([]byte(dashboardJSON))
+	assert.NoError(t, err)
+	panels := dashboard.GetPanels()
+	assert.Len(t, panels, 3)
+
+	results, err := rules.Lint([]lint.Dashboard{dashboard})
+	assert.NoError(t, err)
+	results.AutoFix(&dashboard)
+
+	// Правки должны попасть в исходное дерево: в строку, в топ-уровень
+	// и во вложенную панель, а не только в первый слой dashboard.Panels.
+	assert.Equal(t, "row-panel-fixed", dashboard.Rows[0].Panels[0].Title)
+	assert.Equal(t, "top-panel-fixed", dashboard.Panels[0].Title)
+	assert.Equal(t, "nested-panel-fixed", dashboard.Panels[0].Panels[0].Title)
+	assert.Equal(t, "up{job=\"$job\"}", dashboard.Rows[0].Panels[0].Targets[0].Expr)
+	assert.Equal(t, "up{job=\"$job\"}", dashboard.Panels[0].Panels[0].Targets[0].Expr)
+}
+
+func TestPanelAt(t *testing.T) {
+	dashboardJSON := `{
+		"title": "nested",
+		"rows": [{"panels": [
+			{"id": 1, "title": "row-panel", "type": "timeseries",
+			 "panels": [{"id": 11, "title": "row-nested", "type": "timeseries"}]}
+		]}],
+		"panels": [
+			{"id": 2, "title": "top-panel", "type": "timeseries",
+			 "panels": [{"id": 22, "title": "top-nested", "type": "timeseries"}]},
+			{"id": 3, "title": "last-panel", "type": "timeseries"}
+		]
+	}`
+
+	dashboard, err := lint.NewDashboard([]byte(dashboardJSON))
+	assert.NoError(t, err)
+
+	// Индексы должны соответствовать порядку GetPanels: строки сначала,
+	// потом топ-уровневые панели, в глубину.
+	for i, want := range []string{"row-panel", "row-nested", "top-panel", "top-nested", "last-panel"} {
+		assert.Equal(t, want, dashboard.PanelAt(i).Title, "index %d", i)
+	}
+}
