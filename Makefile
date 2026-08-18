@@ -25,8 +25,17 @@ fmt:
 	@gofmt -s -w $(FILES_TO_FMT)
 	@goimports -w $(FILES_TO_FMT)
 
-check-fmt: fmt
-	@git diff --exit-code -- $(FILES_TO_FMT)
+check-fmt:
+	@if [ -n "$$(gofmt -s -l $(FILES_TO_FMT))" ]; then \
+		echo "Файлы требуют gofmt:"; \
+		gofmt -s -l $(FILES_TO_FMT); \
+		exit 1; \
+	fi
+	@if [ -n "$$(goimports -l $(FILES_TO_FMT))" ]; then \
+		echo "Файлы требуют goimports:"; \
+		goimports -l $(FILES_TO_FMT); \
+		exit 1; \
+	fi
 
 .PHONY: test
 test:
