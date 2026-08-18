@@ -17,16 +17,17 @@ func parseLogQL(expr string, variables []Template) (syntax.Expr, error) {
 }
 
 func NewTargetLogQLAutoRule() *TargetRuleFunc {
-	autoDuration, err := time.ParseDuration(globalVariables["__auto"].(string))
-	if err != nil {
-		panic(err)
-	}
-
 	return &TargetRuleFunc{
 		name:        "target-logql-auto-rule",
 		description: "Checks that each Loki target uses $__auto for range vectors when appropriate.",
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
+
+			autoDuration, err := time.ParseDuration(globalVariables["__auto"].(string))
+			if err != nil {
+				// Не должно случиться: значение задано константой выше.
+				return r
+			}
 
 			// skip hidden targets
 			if t.Hide {

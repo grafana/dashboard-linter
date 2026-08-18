@@ -19,16 +19,16 @@ func (f inspector) Visit(node parser.Node, path []parser.Node) (parser.Visitor, 
 // NewTargetRateIntervalRule builds a lint rule for panels with Prometheus queries which checks
 // all range vector selectors use $__rate_interval.
 func NewTargetRateIntervalRule() *TargetRuleFunc {
-	rateIntervalMagicDuration, err := time.ParseDuration(globalVariables["__rate_interval"].(string))
-	if err != nil {
-		// Will not happen
-		panic(err)
-	}
 	return &TargetRuleFunc{
 		name:        "target-rate-interval-rule",
 		description: "Checks that each target uses $__rate_interval.",
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
+			rateIntervalMagicDuration, err := time.ParseDuration(globalVariables["__rate_interval"].(string))
+			if err != nil {
+				// Не должно случиться: значение задано константой выше.
+				return r
+			}
 			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
 				// Missing template datasources is a separate rule.
 				return r
