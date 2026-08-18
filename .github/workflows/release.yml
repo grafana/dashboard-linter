@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: x64
+    runs-on: ubuntu-latest
     permissions:
       contents: write  # required to create the GitHub Release and upload artifacts
     steps:
