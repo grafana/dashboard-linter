@@ -166,6 +166,10 @@ func (rs *ResultSet) MaximumSeverity() Severity {
 	retVal := Success
 	for _, res := range rs.results {
 		for _, r := range res.Result.Results {
+			// Fixed means the problem was resolved by autofix, it is not a failure.
+			if r.Severity == Fixed {
+				continue
+			}
 			if r.Severity > retVal {
 				retVal = r.Severity
 			}

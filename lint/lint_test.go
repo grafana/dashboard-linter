@@ -95,6 +95,17 @@ func TestResultSet(t *testing.T) {
 		require.Equal(t, r.MaximumSeverity(), Error)
 	})
 
+	t.Run("MaximumSeverity ignores Fixed", func(t *testing.T) {
+		r := ResultSet{
+			results: []ResultContext{
+				{Result: newRuleResults(Result{Severity: Fixed})},
+				{Result: newRuleResults(Result{Severity: Success})},
+			},
+		}
+
+		require.Equal(t, r.MaximumSeverity(), Success)
+	})
+
 	t.Run("ByRule", func(t *testing.T) {
 		r := ResultSet{
 			results: []ResultContext{
