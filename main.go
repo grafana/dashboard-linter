@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/zeitlinger/conflate"
 
 	"github.com/grafana/dashboard-linter/lint"
 )
@@ -98,23 +98,100 @@ var lintCmd = &cobra.Command{
 	},
 }
 
+// write merges the linted dashboard back into the original file, preserving
+// all fields the linter's model does not know about. Values from the linted
+// dashboard win, arrays are replaced wholesale, and null values never
+// overwrite existing content.
 func write(dashboard lint.Dashboard, filename string, old []byte) error {
 	newBytes, err := dashboard.Marshal()
 	if err != nil {
 		return err
 	}
-	c := conflate.New()
-	err = c.AddData(old, newBytes)
-	if err != nil {
-		return err
-	}
-	b, err := c.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	json := strings.ReplaceAll(string(b), "\"options\": null,", "\"options\": [],")
 
-	return os.WriteFile(filename, []byte(json), 0600)
+	var oldMap, newMap map[string]interface{}
+	if err := json.Unmarshal(old, &oldMap); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(newBytes, &newMap); err != nil {
+		return err
+	}
+	stripped := stripNulls(newMap)
+	newMap, _ = stripped.(map[string]interface{})
+
+	b, err := json.MarshalIndent(mergeMaps(oldMap, newMap), "", "  ")
+	if err != nil {
+		return err
+	}
+	b = append(b, '\n')
+	out := strings.ReplaceAll(string(b), "\"options\": null,", "\"options\": [],")
+
+	perm := os.FileMode(0600)
+	if info, err := os.Stat(filename); err == nil {
+		perm = info.Mode().Perm()
+	}
+	return os.WriteFile(filename, []byte(out), perm)
+}
+
+// stripNulls recursively removes null values and empty objects/arrays from a
+// JSON tree, so that fields the linter's model does not populate (e.g. nil
+// slices) do not end up polluting the fixed dashboard.
+func stripNulls(v interface{}) interface{} {
+	switch t := v.(type) {
+	case map[string]interface{}:
+		out := make(map[string]interface{}, len(t))
+		for k, val := range t {
+			if val == nil {
+				continue
+			}
+			if s := stripNulls(val); s != nil {
+				out[k] = s
+			}
+		}
+		if len(out) == 0 {
+			return nil
+		}
+		return out
+	case []interface{}:
+		out := make([]interface{}, 0, len(t))
+		for _, val := range t {
+			if s := stripNulls(val); s != nil {
+				out = append(out, s)
+			}
+		}
+		if len(out) == 0 {
+			return nil
+		}
+		return out
+	default:
+		return v
+	}
+}
+
+// mergeMaps recursively merges new into old: values from new win, arrays are
+// replaced entirely, and a null value in new keeps the old value.
+func mergeMaps(old, new map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(old))
+	for k, v := range old {
+		out[k] = v
+	}
+	for k, v := range new {
+		if v == nil {
+			continue
+		}
+		oldVal, ok := out[k]
+		if !ok {
+			out[k] = v
+			continue
+		}
+		oldMap, oldIsMap := oldVal.(map[string]interface{})
+		newMap, newIsMap := v.(map[string]interface{})
+		if oldIsMap && newIsMap {
+			out[k] = mergeMaps(oldMap, newMap)
+			continue
+		}
+		out[k] = v
+	}
+	return out
 }
 
 var rulesCmd = &cobra.Command{

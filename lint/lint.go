@@ -196,7 +196,7 @@ type Target struct {
 	Expr       string      `json:"expr,omitempty"`
 	PanelId    int         `json:"panelId,omitempty"`
 	RefId      string      `json:"refId,omitempty"`
-	Hide       bool        `json:"hide"`
+	Hide       bool        `json:"hide,omitempty"`
 }
 
 func (t *Target) GetDataSource() (Datasource, error) {
@@ -300,7 +300,10 @@ type Dashboard struct {
 	} `json:"annotations"`
 	Rows     []Row   `json:"rows,omitempty"`
 	Panels   []Panel `json:"panels,omitempty"`
-	Editable bool    `json:"editable,omitempty"`
+	// Editable intentionally has no omitempty: autofix must be able to
+	// serialize the fixed value (false), otherwise it is dropped from the
+	// output and the original value survives any merge.
+	Editable bool `json:"editable"`
 
 	// Kubernetes shaped dashboards will include an APIVersion and Kind
 	APIVersion string `json:"apiVersion,omitempty"`
