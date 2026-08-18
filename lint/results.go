@@ -116,8 +116,26 @@ type ResultContext struct {
 	Target    *Target
 }
 
+// useColor is true when stdout is a terminal; ANSI codes are omitted otherwise
+// (CI logs, pipes), keeping the output readable.
+var useColor = isTerminal()
+
+func isTerminal() bool {
+	info, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeCharDevice != 0
+}
+
+func colorize(s string, colorCode string) string {
+	if !useColor {
+		return s
+	}
+	return colorCode + s + "\033[0m"
+}
+
 func (r Result) TtyPrint() {
-	var Reset = "\033[0m"
 	var Red = "\033[31m"
 	var Green = "\033[32m"
 	var Yellow = "\033[33m"
@@ -125,15 +143,15 @@ func (r Result) TtyPrint() {
 	var sym string
 	switch s := r.Severity; s {
 	case Success:
-		sym = Green + "✔️" + Reset
+		sym = colorize("✔️", Green)
 	case Fixed:
-		sym = Orange + "🛠️ (fixed)" + Reset
+		sym = colorize("🛠️ (fixed)", Orange)
 	case Exclude:
 		sym = "➖"
 	case Warning:
-		sym = Yellow + "⚠️" + Reset
+		sym = colorize("⚠️", Yellow)
 	case Error:
-		sym = Red + "❌" + Reset
+		sym = colorize("❌", Red)
 	case Quiet:
 		return
 	}
