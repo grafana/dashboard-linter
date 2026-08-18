@@ -27,13 +27,13 @@ type ConfigurationRuleEntries struct {
 // to the combination of attributes set. Reason will not be evaluated, and is an opportunity for
 // the author to explain why the exception, or downgrade to warning exists.
 type ConfigurationEntry struct {
-	Reason    string `json:"reason,omitempty"`
-	Dashboard string `json:"dashboard,omitempty"`
-	Panel     string `json:"panel,omitempty"`
+	Reason    string `json:"reason,omitempty" yaml:"reason,omitempty"`
+	Dashboard string `json:"dashboard,omitempty" yaml:"dashboard,omitempty"`
+	Panel     string `json:"panel,omitempty" yaml:"panel,omitempty"`
 	// Alerts are currently included, so we can read in configuration for Mixtool.
-	Alert string `json:"alert,omitempty"`
+	Alert string `json:"alert,omitempty" yaml:"alert,omitempty"`
 	// This gets (un)marshalled as a string, because a 0 index is valid, but also the zero value of an int
-	TargetIdx string `json:"targetIdx"`
+	TargetIdx string `json:"targetIdx" yaml:"targetIdx"`
 }
 
 func (cre *ConfigurationRuleEntries) AddEntry(e ConfigurationEntry) {
