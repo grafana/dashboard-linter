@@ -45,6 +45,9 @@ var lintCmd = &cobra.Command{
 				return fmt.Errorf("failed to read stdin: %v", err)
 			}
 		} else {
+			if len(args) == 0 {
+				return fmt.Errorf("no dashboard file specified, use 'lint <dashboard.json>' or 'lint --stdin'")
+			}
 			filename = args[0]
 			buf, err = os.ReadFile(filename)
 			if err != nil {
