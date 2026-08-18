@@ -80,7 +80,11 @@ func (t *Template) UnmarshalJSON(buf []byte) error {
 		case map[string]interface{}:
 			query, ok := v[targetTypeQuery]
 			if ok {
-				t.Query = query.(string)
+				queryStr, ok := query.(string)
+				if !ok {
+					return fmt.Errorf("invalid type for field 'query': %v", query)
+				}
+				t.Query = queryStr
 			}
 		default:
 			return fmt.Errorf("invalid type for field 'query': %v", v)
@@ -105,7 +109,15 @@ func (raw *RawTemplateValue) Get() (TemplateValue, error) {
 		case string:
 			t.Text = txt.(string)
 		case []interface{}:
-			t.Text = txt.([]interface{})[0].(string)
+			arr, ok := txt.([]interface{})
+			if len(arr) == 0 {
+				return t, fmt.Errorf("invalid type for field 'text': empty array")
+			}
+			str, ok := arr[0].(string)
+			if !ok {
+				return t, fmt.Errorf("invalid type for field 'text': %v", arr[0])
+			}
+			t.Text = str
 		default:
 			return t, fmt.Errorf("invalid type for field 'text': %v", tt)
 		}
@@ -117,7 +129,15 @@ func (raw *RawTemplateValue) Get() (TemplateValue, error) {
 		case string:
 			t.Value = val.(string)
 		case []interface{}:
-			t.Value = val.([]interface{})[0].(string)
+			arr, ok := val.([]interface{})
+			if len(arr) == 0 {
+				return t, fmt.Errorf("invalid type for field 'value': empty array")
+			}
+			str, ok := arr[0].(string)
+			if !ok {
+				return t, fmt.Errorf("invalid type for field 'value': %v", arr[0])
+			}
+			t.Value = str
 		default:
 			return t, fmt.Errorf("invalid type for field 'value': %v", vt)
 		}

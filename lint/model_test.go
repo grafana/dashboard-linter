@@ -119,6 +119,24 @@ func TestParseTemplateValue(t *testing.T) {
 			input:    []byte(`{"text": "text"}`),
 			expected: TemplateValue{Text: "text", Value: ""},
 		},
+		{
+			input: []byte(`{"text": [], "value": "value"}`),
+			err:   errors.New("invalid type for field 'text': empty array"),
+		},
+		{
+			input: []byte(`{"text": [1], "value": "value"}`),
+			err:   errors.New("invalid type for field 'text': 1"),
+		},
+		{
+			input:    []byte(`{"text": "text", "value": []}`),
+			expected: TemplateValue{Text: "text"},
+			err:      errors.New("invalid type for field 'value': empty array"),
+		},
+		{
+			input:    []byte(`{"text": "text", "value": [1]}`),
+			expected: TemplateValue{Text: "text"},
+			err:      errors.New("invalid type for field 'value': 1"),
+		},
 	} {
 		var raw RawTemplateValue
 		err := json.Unmarshal(tc.input, &raw)
@@ -140,9 +158,21 @@ func TestParseTemplate(t *testing.T) {
 			input:    []byte(`{ "type": "query", "query": {} }`),
 			expected: Template{Type: "query", RawQuery: map[string]interface{}{}},
 		},
+		{
+			input: []byte(`{ "type": "query", "query": { "query": 123 } }`),
+			err:   errors.New("invalid type for field 'query': 123"),
+		},
+		{
+			input: []byte(`{ "type": "query", "query": { "query": { "expr": "up" } } }`),
+			err:   errors.New("invalid type for field 'query': map[expr:up]"),
+		},
 	} {
 		var actual Template
 		err := json.Unmarshal(tc.input, &actual)
+		if tc.err != nil {
+			require.Equal(t, tc.err, err)
+			continue
+		}
 		require.NoError(t, err)
 		require.Equal(t, tc.expected, actual)
 	}
