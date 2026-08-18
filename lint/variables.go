@@ -177,46 +177,15 @@ var variableRegexp = regexp.MustCompile(
 	}, "|"),
 )
 
-func expandVariables(expr string, variables []Template) (string, error) {
-	parts := strings.Split(expr, "\"")
-	for i, part := range parts {
-		if i%2 == 1 {
-			// Inside a double quote string, just add it
-			continue
-		}
-
-		// Accumulator to store the processed submatches
-		var subparts []string
-		// Cursor indicates where we are in the part being processed
-		cursor := 0
-		for _, v := range variableRegexp.FindAllStringSubmatchIndex(part, -1) {
-			// Add all until match starts
-			subparts = append(subparts, part[cursor:v[0]])
-			// Iterate on all the subgroups and find the one that matched
-			for j := 2; j < len(v); j += 2 {
-				if v[j] < 0 {
-					continue
-				}
-				// Replace the match with sample value
-				val, err := variableSampleValue(part[v[j]:v[j+1]], variables)
-				if err != nil {
-					return "", err
-				}
-				subparts = append(subparts, val)
-			}
-			// Move the start cursor at the end of the current match
-			cursor = v[1]
-		}
-		// Add rest of the string
-		subparts = append(subparts, parts[i][cursor:])
-		// Merge all back into the parts
-		parts[i] = strings.Join(subparts, "")
+// expandVariablesWithOptions replaces variable references in an expression
+// with sample values. When trimDollarInBrackets is set (LogQL), each line is
+// processed separately and a '$' prefix is stripped from values expanded
+// inside square brackets.
+func expandVariablesWithOptions(expr string, variables []Template, trimDollarInBrackets bool) (string, error) {
+	lines := []string{expr}
+	if trimDollarInBrackets {
+		lines = strings.Split(expr, "\n")
 	}
-	return strings.Join(parts, "\""), nil
-}
-
-func expandLogQLVariables(expr string, variables []Template) (string, error) {
-	lines := strings.Split(expr, "\n")
 	for i, line := range lines {
 		parts := strings.Split(line, "\"")
 		for j, part := range parts {
@@ -243,7 +212,8 @@ func expandLogQLVariables(expr string, variables []Template) (string, error) {
 						return "", err
 					}
 					// If the variable is within square brackets, remove the '$' prefix
-					if strings.HasPrefix(part[v[0]-1:v[0]], "[") && strings.HasSuffix(part[v[1]:v[1]+1], "]") {
+					if trimDollarInBrackets && v[0] > 0 && v[1] < len(part) &&
+						strings.HasPrefix(part[v[0]-1:v[0]], "[") && strings.HasSuffix(part[v[1]:v[1]+1], "]") {
 						val = strings.TrimPrefix(val, "$")
 					}
 					subparts = append(subparts, val)
@@ -252,12 +222,19 @@ func expandLogQLVariables(expr string, variables []Template) (string, error) {
 				cursor = v[1]
 			}
 			// Add rest of the string
-			subparts = append(subparts, part[cursor:])
+			subparts = append(subparts, parts[j][cursor:])
 			// Merge all back into the parts
 			parts[j] = strings.Join(subparts, "")
 		}
 		lines[i] = strings.Join(parts, "\"")
 	}
-	result := strings.Join(lines, "\n")
-	return result, nil
+	return strings.Join(lines, "\n"), nil
+}
+
+func expandVariables(expr string, variables []Template) (string, error) {
+	return expandVariablesWithOptions(expr, variables, false)
+}
+
+func expandLogQLVariables(expr string, variables []Template) (string, error) {
+	return expandVariablesWithOptions(expr, variables, true)
 }
