@@ -242,10 +242,9 @@ type OverrideProperty struct {
 
 // oversimplified Reduce options
 type ReduceOptions struct {
-	Fields string   `json:"fields,omitempty"`
-	Calcs  []string `json:"[]calcs,omitempty"`
-	Values bool     `json:"values,omitempty"`
-	Limit  int      `json:"limit,omitempty"`
+	Fields string `json:"fields,omitempty"`
+	Values bool   `json:"values,omitempty"`
+	Limit  int    `json:"limit,omitempty"`
 }
 
 // Stat panel options is a deliberately incomplete representation of the stat panel options from grafana.
