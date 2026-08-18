@@ -187,7 +187,7 @@ func TestPanelUnits(t *testing.T) {
 				},
 			},
 		},
-	{
+		{
 			name: "non-string unit override",
 			result: Result{
 				Severity: Error,

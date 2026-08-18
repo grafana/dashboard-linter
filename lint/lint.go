@@ -297,8 +297,8 @@ type Dashboard struct {
 	Annotations struct {
 		List []Annotation `json:"list"`
 	} `json:"annotations"`
-	Rows     []Row   `json:"rows,omitempty"`
-	Panels   []Panel `json:"panels,omitempty"`
+	Rows   []Row   `json:"rows,omitempty"`
+	Panels []Panel `json:"panels,omitempty"`
 	// Editable intentionally has no omitempty: autofix must be able to
 	// serialize the fixed value (false), otherwise it is dropped from the
 	// output and the original value survives any merge.
