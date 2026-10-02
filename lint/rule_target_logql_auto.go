@@ -33,16 +33,8 @@ func NewTargetLogQLAutoRule() *TargetRuleFunc {
 				return r
 			}
 
-			// check if the datasource is Loki
-			isLoki := false
-			if templateDS := getTemplateDatasource(d); templateDS != nil && templateDS.Query == Loki {
-				isLoki = true
-			} else if ds, err := t.GetDataSource(); err == nil && ds.Type == Loki {
-				isLoki = true
-			}
-
 			// skip if the datasource is not Loki
-			if !isLoki {
+			if !d.targetIsLoki(t) {
 				return r
 			}
 
