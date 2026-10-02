@@ -2,6 +2,8 @@ package lint
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestTargetPromQLRule(t *testing.T) {
@@ -214,5 +216,53 @@ func TestTargetPromQLRule(t *testing.T) {
 		}
 
 		testMultiResultRule(t, linter, dashboard, tc.result)
+	}
+}
+
+// A dashboard can query more than one datasource: one datasource variable per
+// datasource, and each target names the variable it queries. The rule checks
+// the targets that query Prometheus and skips the ones that query another
+// datasource, such as Loki.
+func TestTargetPromQLRuleMixedDatasourceDashboards(t *testing.T) {
+	linter := NewTargetPromQLRule()
+
+	dashboard := Dashboard{
+		Title: "mixed datasource dashboard",
+		Templating: struct {
+			List []Template `json:"list"`
+		}{List: []Template{
+			{Type: "datasource", Name: "prometheus_datasource", Query: "prometheus"},
+			{Name: "loki_datasource", Type: "datasource", Query: "loki"},
+		}},
+		Panels: []Panel{
+			{
+				Title: "metrics",
+				Type:  "timeseries",
+				Targets: []Target{
+					{Expr: `up{job=~"$job", instance=~"$instance"}`, Datasource: "${prometheus_datasource}"},
+				},
+			},
+			{
+				Title: "logs",
+				Type:  "timeseries",
+				Targets: []Target{
+					{Expr: `{app="foo"} | json`, Datasource: "${loki_datasource}"},
+				},
+			},
+		},
+	}
+
+	rs := ResultSet{}
+	linter.Lint(dashboard, &rs)
+	require.Len(t, rs.results, 2)
+	for _, rc := range rs.results {
+		for _, r := range rc.Result.Results {
+			// A skipped target produces Quiet, a valid PromQL target
+			// produces Success. Both mean the rule did not report the
+			// target.
+			if r.Severity != Quiet {
+				require.Equal(t, ResultSuccess.Severity, r.Severity, "panel %s", rc.Panel.Title)
+			}
+		}
 	}
 }

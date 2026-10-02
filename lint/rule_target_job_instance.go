@@ -15,9 +15,10 @@ func newTargetRequiredMatcherRule(matcher string) *TargetRuleFunc {
 			r := TargetRuleResults{}
 			// TODO: The RuleSet should be responsible for routing rule checks based on their query type (prometheus, loki, mysql, etc)
 			// and for ensuring that the datasource is set.
-			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
-				// Missing template datasource is a separate rule.
-				// Non prometheus datasources don't have rules yet
+			if !d.targetIsPrometheus(t) {
+				// The target resolves to another datasource, or the
+				// dashboard-level datasource is not Prometheus. Missing
+				// template datasource is a separate rule.
 				return r
 			}
 
