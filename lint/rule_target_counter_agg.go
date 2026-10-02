@@ -13,6 +13,14 @@ func NewTargetCounterAggRule() *TargetRuleFunc {
 		description: "Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.",
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
+			if plugin, ok := targetPlugin(d, t); ok && plugin != Prometheus {
+				// The target resolves to another datasource, such as Loki.
+				// The PromQL parse below skips the LogQL queries that do
+				// not parse, but a Loki query that parses as PromQL, such
+				// as a bare counter metric, would be a false positive.
+				return r
+			}
+
 			expr, err := parsePromQL(t.Expr, d.Templating.List)
 			if err != nil {
 				// Invalid PromQL is another rule
