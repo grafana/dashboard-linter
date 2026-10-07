@@ -2,6 +2,8 @@ package lint
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestTargetLogQLRule(t *testing.T) {
@@ -137,5 +139,49 @@ func TestTargetLogQLRule(t *testing.T) {
 			Panels: []Panel{tc.panel},
 		}
 		testRule(t, linter, dashboard, tc.result)
+	}
+}
+
+// The datasource variable that a target reference names decides the datasource
+// of the target. On a dashboard that queries Prometheus and Loki, the LogQL
+// rules check the Loki targets and skip the Prometheus targets.
+func TestTargetLogQLRuleMixedDatasourceDashboards(t *testing.T) {
+	linter := NewTargetLogQLRule()
+
+	dashboard := Dashboard{
+		Title: "mixed datasource dashboard",
+		Templating: struct {
+			List []Template `json:"list"`
+		}{List: []Template{
+			{Type: "datasource", Name: "prometheus_datasource", Query: "prometheus"},
+			{Name: "loki_datasource", Type: "datasource", Query: "loki"},
+		}},
+		Panels: []Panel{
+			{
+				Title: "logs",
+				Type:  "timeseries",
+				Targets: []Target{
+					{Expr: `{app="foo"} | json`, Datasource: "${loki_datasource}"},
+				},
+			},
+			{
+				Title: "metrics",
+				Type:  "timeseries",
+				Targets: []Target{
+					{Expr: `sum(rate(foo[5m]))`, Datasource: "${prometheus_datasource}"},
+				},
+			},
+		},
+	}
+
+	rs := ResultSet{}
+	linter.Lint(dashboard, &rs)
+	require.Len(t, rs.results, 2)
+	for _, rc := range rs.results {
+		for _, r := range rc.Result.Results {
+			if r.Severity != Quiet {
+				require.Equal(t, ResultSuccess.Severity, r.Severity, "panel %s", rc.Panel.Title)
+			}
+		}
 	}
 }
