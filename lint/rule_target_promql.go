@@ -42,8 +42,10 @@ func NewTargetPromQLRule() *TargetRuleFunc {
 		fn: func(d Dashboard, p Panel, t Target) TargetRuleResults {
 			r := TargetRuleResults{}
 
-			if t := getTemplateDatasource(d); t == nil || t.Query != Prometheus {
-				// Missing template datasources is a separate rule.
+			if !d.targetIsPrometheus(t) {
+				// The target resolves to another datasource, or the
+				// dashboard-level datasource is not Prometheus. Missing
+				// template datasources is a separate rule.
 				return r
 			}
 
