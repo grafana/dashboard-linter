@@ -328,7 +328,26 @@ func (d *Dashboard) Marshal() ([]byte, error) {
 	return json.Marshal(d)
 }
 
+// dashboardEnvelope is a lightweight probe for routing v2 dashboard payloads.
+// Grafana v13+ exports may include legacy top-level compatibility fields
+// (e.g. "templating", "panels") with null values that the classic struct rejects,
+// so we inspect apiVersion before attempting a full unmarshal.
+type dashboardEnvelope struct {
+	APIVersion string          `json:"apiVersion"`
+	Spec       json.RawMessage `json:"spec"`
+}
+
 func NewDashboard(buf []byte) (Dashboard, error) {
+	var env dashboardEnvelope
+	if err := json.Unmarshal(buf, &env); err != nil {
+		return Dashboard{}, err
+	}
+
+	// Route v2 payloads before the classic struct can reject their legacy compat fields.
+	if env.Spec != nil && isV2APIVersion(env.APIVersion) {
+		return newDashboardFromV2(env.Spec, env.APIVersion)
+	}
+
 	var dash Dashboard
 	if err := json.Unmarshal(buf, &dash); err != nil {
 		return dash, err
@@ -336,10 +355,6 @@ func NewDashboard(buf []byte) (Dashboard, error) {
 	// Support kubernetes flavored dashboards
 	if dash.Spec != nil {
 		apiVersion := dash.APIVersion
-		// The v2 schema is structurally different and handled by its own adapter.
-		if isV2APIVersion(apiVersion) {
-			return newDashboardFromV2(dash.Spec, apiVersion)
-		}
 		if apiVersion != "" {
 			if !strings.HasPrefix(apiVersion, "v0") && !strings.HasPrefix(apiVersion, "v1") {
 				return dash, fmt.Errorf("unsupported apiVersion")
