@@ -11,5 +11,9 @@
       matchManagers: ["gomod"],
       groupName: "go",
     },
+    {
+      matchManagers: ["dockerfile"],
+      groupName: "docker",
+    },
   ],
 }

@@ -39,6 +39,30 @@ checksum:
   name_template: 'checksums.txt'
   algorithm: sha256
 
+dockers_v2:
+  - id: dashboard-linter
+    ids:
+      - dashboard-linter
+    images:
+      - ghcr.io/grafana/dashboard-linter
+    tags:
+      - "v{{ .Version }}"
+      - "{{ if not .Prerelease }}v{{ .Major }}.{{ .Minor }}{{ end }}"
+      - "{{ if not .Prerelease }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    extra_files:
+      - LICENSE
+    labels:
+      org.opencontainers.image.title: "{{ .ProjectName }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.version: "{{ .Version }}"
+    annotations:
+      org.opencontainers.image.source: "{{ .GitURL }}"
+      org.opencontainers.image.description: "A command-line application to lint Grafana dashboards."
+      org.opencontainers.image.licenses: "Apache-2.0"
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
