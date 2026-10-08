@@ -191,6 +191,7 @@ func NewRuleSet() RuleSet {
 			NewTargetCounterAggRule(),
 			NewUneditableRule(),
 			NewV2RequiredFieldsRule(),
+			NewElementReferenceRule(),
 		},
 	}
 }
