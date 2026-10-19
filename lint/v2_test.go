@@ -132,6 +132,36 @@ func TestParseV2Dashboard(t *testing.T) {
 	})
 }
 
+// Grafana v13 exports of v2-schema dashboards keep a legacy top-level
+// "templating"/"panels" block for older tooling that doesn't understand v2
+// yet. That compatibility block only carries placeholder values (e.g. a
+// `null` "query" field) since the actual variable/panel definitions live
+// under "spec". NewDashboard must route to the v2 adapter without ever
+// unmarshaling that legacy block into the classic (strict) Dashboard struct.
+const v2DashboardWithLegacyCompatBlock = `{
+	"apiVersion": "dashboard.grafana.app/v2",
+	"kind": "Dashboard",
+	"panels": [],
+	"templating": {
+		"list": [
+			{ "current": null, "name": "cluster", "options": null, "query": null, "refresh": 2, "type": "query" },
+			{ "current": null, "name": "namespace", "options": null, "query": null, "refresh": 0, "type": "constant" }
+		]
+	},
+	"spec": {
+		"title": "V2 Test With Legacy Block",
+		"variables": [],
+		"elements": {}
+	}
+}`
+
+func TestParseV2DashboardWithLegacyCompatBlock(t *testing.T) {
+	d, err := NewDashboard([]byte(v2DashboardWithLegacyCompatBlock))
+	require.NoError(t, err)
+	assert.Equal(t, "V2 Test With Legacy Block", d.Title)
+	assert.Equal(t, "dashboard.grafana.app/v2", d.APIVersion)
+}
+
 // ruleHasError reports whether the named rule produced any Error-severity result.
 func ruleHasError(results *ResultSet, rule string) bool {
 	for _, rc := range results.ByRule()[rule] {
