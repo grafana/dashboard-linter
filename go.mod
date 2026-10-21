@@ -1,6 +1,6 @@
 module github.com/grafana/dashboard-linter
 
-go 1.27.0
+go 1.27.3
 
 require (
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20261013113655-af4a33e37865
