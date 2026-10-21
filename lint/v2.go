@@ -80,7 +80,7 @@ func panelFromV2(ps dashv2.DashboardPanelSpec) (Panel, error) {
 	p := Panel{
 		Id:          int(ps.Id),
 		Title:       ps.Title,
-		Description: ps.Description,
+		Description: deref(ps.Description),
 		// In v2 the panel type is the visualization plugin id ("timeseries",
 		// "stat", "table", "text", ...).
 		Type:    ps.VizConfig.Group,
