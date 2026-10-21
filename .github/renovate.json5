@@ -15,5 +15,24 @@
       matchManagers: ["dockerfile"],
       groupName: "docker",
     },
+    {
+      // Subdirectory modules with no tags of their own. This runner resolves
+      // github.com/grafana from git tags, so Renovate proposes parent-repo tags
+      // that go cannot fetch and then fails to update go.sum.
+      matchManagers: ["gomod"],
+      matchDepNames: [
+        "github.com/grafana/grafana/apps/dashboard",
+        "github.com/grafana/grafana/pkg/apimachinery",
+        "github.com/grafana/loki/pkg/push",
+      ],
+      enabled: false,
+    },
+    {
+      // v0.4.2+ declares module github.com/hashicorp/go-metrics. Loki, Prometheus,
+      // dskit, and serf still import this path at v0.4.1.
+      matchManagers: ["gomod"],
+      matchDepNames: ["github.com/armon/go-metrics"],
+      allowedVersions: "<=0.4.1",
+    },
   ],
 }
