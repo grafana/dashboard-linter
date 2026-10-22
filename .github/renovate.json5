@@ -16,11 +16,98 @@
       groupName: "docker",
     },
     {
-      // Subdirectory modules with no tags of their own. This runner resolves
-      // github.com/grafana from git tags, so Renovate proposes parent-repo tags
-      // that go cannot fetch and then fails to update go.sum.
+      matchManagers: ["github-actions"],
+      matchPackageNames: ["golangci/golangci-lint"],
+      pinDigests: false,
+    },
+    {
+      matchManagers: ["github-actions"],
+      matchDepNames: ["golangci/golangci-lint"],
+      pinDigests: false,
+    },
+    {
+      // v0.4.2+ declares module github.com/hashicorp/go-metrics. Loki, Prometheus,
+      // dskit, and serf still import this path at v0.4.1.
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/armon/go-metrics"],
+      allowedVersions: "<=0.4.1",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchDepNames: ["github.com/armon/go-metrics"],
+      allowedVersions: "<=0.4.1",
+    },
+    {
+      // v0.7.0 removes go-metrics/compat, which the grafana memberlist fork
+      // in the replace directive still imports.
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/hashicorp/go-metrics"],
+      allowedVersions: "<=0.6.1",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchDepNames: ["github.com/hashicorp/go-metrics"],
+      allowedVersions: "<=0.6.1",
+    },
+    {
+      // v0.11.0 requires go-metrics v0.7.0, so tidy upgrades go-metrics
+      // to v0.7.0 even if go-metrics itself is held at v0.6.1.
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/hashicorp/serf"],
+      allowedVersions: "<=0.10.4",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchDepNames: ["github.com/hashicorp/serf"],
+      allowedVersions: "<=0.10.4",
+    },
+    {
+      // v3.7 drops clientv3.Cmp fields that dskit still uses. v3.6.15 builds.
+      matchManagers: ["gomod"],
+      matchPackageNames: [
+        "go.etcd.io/etcd/api/v3",
+        "go.etcd.io/etcd/client/pkg/v3",
+        "go.etcd.io/etcd/client/v3",
+      ],
+      allowedVersions: "<3.7.0",
+    },
+    {
       matchManagers: ["gomod"],
       matchDepNames: [
+        "go.etcd.io/etcd/api/v3",
+        "go.etcd.io/etcd/client/pkg/v3",
+        "go.etcd.io/etcd/client/v3",
+      ],
+      allowedVersions: "<3.7.0",
+    },
+    {
+      // v0.58.0+ requires dskit from 2026-08-14, which does not compile against
+      // the memberlist fork this repo replaces to. v0.60.0+ also requires
+      // etcd v3.7, and that dskit does not compile against etcd v3.7 either.
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/grafana/grafana-app-sdk"],
+      allowedVersions: "<=0.57.1",
+    },
+    {
+      matchManagers: ["gomod"],
+      matchDepNames: ["github.com/grafana/grafana-app-sdk"],
+      allowedVersions: "<=0.57.1",
+    },
+    {
+      // Indirect majors rewrite the module path (.../v5 -> .../v7). Nothing
+      // here imports the new path, and tidy drops the bump.
+      matchManagers: ["gomod"],
+      matchDepTypes: ["indirect"],
+      matchUpdateTypes: ["major"],
+      enabled: false,
+    },
+    {
+      // Subdirectory modules with no tags of their own. This runner resolves
+      // github.com/grafana from git tags, so Renovate proposes parent-repo tags
+      // (v0.0.85-test, v13.2.4, v0.4.0) that go cannot fetch. go.sum is then
+      // left untouched and CI fails with missing sums.
+      matchManagers: ["gomod"],
+      matchPackageNames: [
         "github.com/grafana/grafana/apps/dashboard",
         "github.com/grafana/grafana/pkg/apimachinery",
         "github.com/grafana/loki/pkg/push",
@@ -28,11 +115,13 @@
       enabled: false,
     },
     {
-      // v0.4.2+ declares module github.com/hashicorp/go-metrics. Loki, Prometheus,
-      // dskit, and serf still import this path at v0.4.1.
       matchManagers: ["gomod"],
-      matchDepNames: ["github.com/armon/go-metrics"],
-      allowedVersions: "<=0.4.1",
+      matchDepNames: [
+        "github.com/grafana/grafana/apps/dashboard",
+        "github.com/grafana/grafana/pkg/apimachinery",
+        "github.com/grafana/loki/pkg/push",
+      ],
+      enabled: false,
     },
   ],
 }
