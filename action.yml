@@ -1,0 +1,57 @@
+# Composite action so a downstream workflow can pin
+# grafana/dashboard-linter@<release> instead of downloading release archives.
+# The release tag selects this action and, unless `version` is set, the binary.
+
+name: Dashboard Linter
+description: Install Grafana dashboard-linter and lint dashboard JSON files.
+author: Grafana Labs
+
+branding:
+  icon: check-square
+  color: orange
+
+inputs:
+  version:
+    description: "Release to install, such as v0.4.0. Defaults to this action's ref when that ref is a release tag."
+    required: false
+    default: ""
+  files:
+    description: "Newline-separated dashboard files, directories, or globs. Directories are searched recursively for *.json and node_modules is skipped. When empty, the binary is installed onto PATH and no lint is run."
+    required: false
+    default: ""
+  args:
+    description: "Extra arguments appended to `dashboard-linter lint` for each file, split on whitespace. Example: --strict --config .lint"
+    required: false
+    default: ""
+
+outputs:
+  version:
+    description: Release tag that was installed.
+    value: ${{ steps.install.outputs.version }}
+  bin:
+    description: Path to the installed dashboard-linter binary.
+    value: ${{ steps.install.outputs.bin }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install dashboard-linter
+      id: install
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        # Composite run steps leave these empty unless they are copied here.
+        # https://github.com/actions/runner/issues/2473
+        GITHUB_ACTION_REPOSITORY: ${{ github.action_repository }}
+        GITHUB_ACTION_REF: ${{ github.action_ref }}
+        # Used only when an anonymous download of the release asset fails.
+        GITHUB_TOKEN: ${{ github.token }}
+      run: bash "$GITHUB_ACTION_PATH/action/install.sh"
+    - name: Lint dashboards
+      if: inputs.files != ''
+      shell: bash
+      env:
+        INPUT_FILES: ${{ inputs.files }}
+        INPUT_ARGS: ${{ inputs.args }}
+        DASHBOARD_LINTER_BIN: ${{ steps.install.outputs.bin }}
+      run: bash "$GITHUB_ACTION_PATH/action/lint.sh"

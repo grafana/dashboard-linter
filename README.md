@@ -9,13 +9,54 @@ This tool is a command-line application to lint Grafana dashboards for common mi
 Download a release archive from the [releases page](https://github.com/grafana/dashboard-linter/releases) and extract the `dashboard-linter` binary onto your `PATH`. Example for Linux on amd64:
 
 ```
-VERSION=v0.1.0
-curl -sSfL "https://github.com/grafana/dashboard-linter/releases/download/${VERSION}/dashboard-linter_${VERSION}_linux_amd64.tar.gz" \
+TAG=v0.4.0
+curl -sSfL "https://github.com/grafana/dashboard-linter/releases/download/${TAG}/dashboard-linter_${TAG#v}_linux_amd64.tar.gz" \
   | tar -xz -C /usr/local/bin dashboard-linter
 dashboard-linter lint dashboard.json
 ```
 
-Each release also publishes a `checksums.txt` you can verify against.
+The archive name uses the version without the leading `v`. Each release also publishes a `checksums.txt` you can verify against.
+
+### GitHub Action
+
+Pin the action to a release tag. It downloads that release's binary for the runner's OS and architecture, verifies `checksums.txt`, and adds `dashboard-linter` to `PATH`.
+
+```yaml
+- uses: grafana/dashboard-linter@vX.Y.Z
+  with:
+    files: dashboards
+    args: --strict
+```
+
+Replace `vX.Y.Z` with the full release tag you want to run. The action is on tags created after this file is merged, and that same tag is the binary that gets installed. The calling workflow only needs `permissions: contents: read`.
+
+`files` is newline-separated dashboard files, directories, or globs such as `dashboards/*.json`. A directory is searched recursively for `*.json` (`node_modules` is skipped), and each file is linted with its own process. With no `--config`, each dashboard still uses a `.lint` file in its own directory, as the binary does. `args` is split on whitespace, so a path with spaces goes in `files` rather than in `args`.
+
+```yaml
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@<pinned sha>
+      - uses: grafana/dashboard-linter@vX.Y.Z
+        with:
+          files: |
+            dashboards/overview.json
+            dashboards/extra.json
+          args: --config .lint --strict
+```
+
+`--fix` writes files as the job user. `--stdin` is not combined with `files`; omit `files` and run the binary, which is also how to print rules or pass a flag value that contains spaces:
+
+```yaml
+- uses: grafana/dashboard-linter@vX.Y.Z
+- run: dashboard-linter lint --stdin --strict < dashboards/overview.json
+```
+
+Set `version` when the action ref is a branch or commit, or when the binary should be a different published release than the action tag. The `version` output is the installed tag. The `bin` output is the binary path.
 
 ### Docker image
 
@@ -65,7 +106,7 @@ $ go build -o dashboard-linter .
 $ ./dashboard-linter lint dashboard.json
 ```
 
-The prebuilt binaries and Docker image above are the supported paths for CI.
+The prebuilt binaries, GitHub Action, and Docker image above are the supported paths for CI.
 
 This tool is a work in progress and it's still very early days. The current capabilities are focused exclusively on dashboards that use a Prometheus data source.
 
