@@ -25,6 +25,7 @@ builds:
 
 archives:
   - id: dashboard-linter
+    # action/lib.sh release_asset builds this same name. Update both together.
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
     formats: [tar.gz]
