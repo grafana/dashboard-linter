@@ -284,12 +284,24 @@ printf 'ok %s\n' "reject --stdin with files"
 if (
   GITHUB_ACTIONS=true
   unset GITHUB_ACTION_REPOSITORY
+  unset GITHUB_ACTION_PATH
   action_repository
 ) >/dev/null 2>&1; then
-  echo "FAIL Actions should require GITHUB_ACTION_REPOSITORY" >&2
+  echo "FAIL Actions should not guess the action repository" >&2
   exit 1
 fi
-assert_eq "$(unset GITHUB_ACTIONS; unset GITHUB_ACTION_REPOSITORY; action_repository)" "grafana/dashboard-linter" "default repository outside Actions"
+assert_eq "$(
+  GITHUB_ACTIONS=true
+  unset GITHUB_ACTION_REPOSITORY
+  GITHUB_ACTION_PATH=/home/runner/work/_actions/grafana/dashboard-linter/8ce5fef
+  action_repository
+)" "grafana/dashboard-linter" "repository from action path"
+assert_eq "$(
+  unset GITHUB_ACTIONS
+  unset GITHUB_ACTION_REPOSITORY
+  unset GITHUB_ACTION_PATH
+  action_repository
+)" "grafana/dashboard-linter" "default repository outside Actions"
 
 mkdir -p "$tmp/bin"
 cat >"$tmp/bin/curl" <<'EOF'

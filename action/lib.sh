@@ -136,32 +136,39 @@ detect_runner_arch() {
   esac
 }
 
+# repository_from_action_path PATH prints owner/repo from an action directory
+# such as /home/runner/work/_actions/grafana/dashboard-linter/<ref>.
+repository_from_action_path() {
+  local path="$1"
+  local rest="${path#*_actions/}"
+  local owner=""
+  local name=""
+  if [ "$rest" = "$path" ]; then
+    return 1
+  fi
+  owner="${rest%%/*}"
+  rest="${rest#*/}"
+  name="${rest%%/*}"
+  if [ -z "$owner" ] || [ -z "$name" ] || [ "$name" = "$rest" ]; then
+    return 1
+  fi
+  printf '%s/%s' "$owner" "$name"
+}
+
 action_repository() {
-  local repo="${GITHUB_ACTION_REPOSITORY:-}"
+  local repo=""
+  repo="$(trim "${GITHUB_ACTION_REPOSITORY:-}")"
+  if [ -z "$repo" ] && [ -n "${GITHUB_ACTION_PATH:-}" ]; then
+    repo="$(repository_from_action_path "$GITHUB_ACTION_PATH" || true)"
+  fi
   if [ -z "$repo" ]; then
-    # Inside Actions the repository must come from the runner. Falling back
-    # to the upstream repo would let a fork action download upstream assets
-    # without that being visible in the uses: line.
     if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
-      echo "GITHUB_ACTION_REPOSITORY is not set" >&2
+      echo "could not determine the action repository from GITHUB_ACTION_REPOSITORY or GITHUB_ACTION_PATH" >&2
       return 1
     fi
     repo="grafana/dashboard-linter"
   fi
-  # shellcheck disable=SC2076
-  local repo_re='^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'
-  case "$repo" in
-    *$'\n'* | *$'\r'* | *..* | */*/*) 
-      echo "invalid action repository: ${repo}" >&2
-      return 1
-      ;;
-  esac
-  # shellcheck disable=SC2076
-  if [[ ! "$repo" =~ $repo_re ]]; then
-    echo "invalid action repository: ${repo}" >&2
-    return 1
-  fi
-  printf '%s' "$repo"
+  action_repository_value "$repo"
 }
 
 # release_download_url REPO VERSION ASSET prints an https URL under

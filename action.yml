@@ -40,6 +40,10 @@ runs:
       shell: bash
       env:
         INPUT_VERSION: ${{ inputs.version }}
+        # Composite run steps leave these empty unless they are copied here.
+        # https://github.com/actions/runner/issues/2473
+        GITHUB_ACTION_REPOSITORY: ${{ github.action_repository }}
+        GITHUB_ACTION_REF: ${{ github.action_ref }}
         # Used only when an anonymous download of the release asset fails.
         GITHUB_TOKEN: ${{ github.token }}
       run: bash "$GITHUB_ACTION_PATH/action/install.sh"
