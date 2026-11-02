@@ -2,6 +2,11 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["config:recommended"],
   schedule: ["on Monday"],
+  ignoreDeps: [
+    "github.com/grafana/grafana/apps/dashboard",
+    "github.com/grafana/grafana/pkg/apimachinery",
+    "github.com/grafana/loki/pkg/push",
+  ],
   packageRules: [
     {
       matchManagers: ["github-actions"],
@@ -94,33 +99,9 @@
       allowedVersions: "<=0.57.1",
     },
     {
-      // Indirect majors rewrite the module path (.../v5 -> .../v7). Nothing
-      // here imports the new path, and tidy drops the bump.
       matchManagers: ["gomod"],
       matchDepTypes: ["indirect"],
       matchUpdateTypes: ["major"],
-      force: { enabled: false },
-    },
-    {
-      // Subdirectory modules with no tags of their own. This runner resolves
-      // github.com/grafana from git tags, so Renovate proposes parent-repo tags
-      // (v0.0.85-test, v13.2.4, v0.4.0) that go cannot fetch. go.sum is then
-      // left untouched and CI fails with missing sums.
-      matchManagers: ["gomod"],
-      matchPackageNames: [
-        "github.com/grafana/grafana/apps/dashboard",
-        "github.com/grafana/grafana/pkg/apimachinery",
-        "github.com/grafana/loki/pkg/push",
-      ],
-      force: { enabled: false },
-    },
-    {
-      matchManagers: ["gomod"],
-      matchDepNames: [
-        "github.com/grafana/grafana/apps/dashboard",
-        "github.com/grafana/grafana/pkg/apimachinery",
-        "github.com/grafana/loki/pkg/push",
-      ],
       force: { enabled: false },
     },
   ],
