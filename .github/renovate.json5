@@ -99,7 +99,7 @@
       matchManagers: ["gomod"],
       matchDepTypes: ["indirect"],
       matchUpdateTypes: ["major"],
-      enabled: false,
+      force: { enabled: false },
     },
     {
       // Subdirectory modules with no tags of their own. This runner resolves
@@ -112,7 +112,7 @@
         "github.com/grafana/grafana/pkg/apimachinery",
         "github.com/grafana/loki/pkg/push",
       ],
-      enabled: false,
+      force: { enabled: false },
     },
     {
       matchManagers: ["gomod"],
@@ -121,7 +121,7 @@
         "github.com/grafana/grafana/pkg/apimachinery",
         "github.com/grafana/loki/pkg/push",
       ],
-      enabled: false,
+      force: { enabled: false },
     },
   ],
 }
