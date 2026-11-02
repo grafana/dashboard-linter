@@ -12,7 +12,7 @@ jobs:
     name: action
     # GitHub-hosted, like the Docker workflow: fork PRs cannot use the
     # repo's self-hosted `x64` runners.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       # Published release. This job checks the action's download, checksum,
       # and exec path. The linter itself is covered by the Test workflow.
