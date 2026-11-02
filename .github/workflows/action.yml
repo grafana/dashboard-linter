@@ -1,0 +1,39 @@
+name: Action
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  action:
+    name: action
+    # GitHub-hosted, like the Docker workflow: fork PRs cannot use the
+    # repo's self-hosted `x64` runners.
+    runs-on: ubuntu-24.04
+    env:
+      # Published release. This job checks the action's download, checksum,
+      # and exec path. The linter itself is covered by the Test workflow.
+      DASHBOARD_LINTER_VERSION: v0.4.0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Script tests
+        run: bash action/test.sh
+
+      - name: Install and lint testdata
+        # $/ is this repository at the commit that is running, not the
+        # checked-out workspace. Checkout is still required so the linter
+        # can read lint/testdata. actionlint 1.7.12 does not parse $/ yet.
+        uses: "$/"
+        with:
+          version: ${{ env.DASHBOARD_LINTER_VERSION }}
+          files: lint/testdata
+
+      - name: Binary is on PATH
+        run: dashboard-linter rules
