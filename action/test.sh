@@ -290,6 +290,22 @@ if (
   echo "FAIL Actions should not guess the action repository" >&2
   exit 1
 fi
+if (
+  GITHUB_ACTIONS=true
+  GITHUB_ACTION_REPOSITORY=
+  unset GITHUB_ACTION_PATH
+  action_repository
+) >/dev/null 2>&1; then
+  echo "FAIL an empty action repository should not be guessed" >&2
+  exit 1
+fi
+assert_eq "$(
+  GITHUB_ACTIONS=true
+  GITHUB_ACTION_REPOSITORY=
+  unset GITHUB_ACTION_PATH
+  export GITHUB_ACTION_REPOSITORY=grafana/dashboard-linter
+  action_repository
+)" "grafana/dashboard-linter" "repository assigned inside the step"
 assert_eq "$(
   GITHUB_ACTIONS=true
   unset GITHUB_ACTION_REPOSITORY
