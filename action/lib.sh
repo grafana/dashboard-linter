@@ -3,6 +3,9 @@
 #   {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
 # with tar.gz everywhere except windows, which is a zip. .Version has no "v".
 
+# nocasematch would let a URL or tag slip past the literal case patterns below.
+shopt -u nocasematch
+
 # trim removes leading and trailing whitespace, including CR.
 trim() {
   local s="$1"
@@ -26,19 +29,399 @@ version_is_valid() {
   [ "${#version}" -le 64 ]
 }
 
+# is_commit_sha REF is true for a full Git commit object name.
+# GitHub action pins use lowercase hex.
+is_commit_sha() {
+  local ref="$1"
+  # shellcheck disable=SC2076
+  local sha_re='^[0-9a-f]{40}$'
+  [ "${#ref}" -eq 40 ] || return 1
+  # shellcheck disable=SC2076
+  [[ "$ref" =~ $sha_re ]]
+}
+
+# list_has_line NEEDLE LIST is true when NEEDLE is one entire line of LIST.
+# The comparison is literal, so a tag name cannot act as a glob.
+list_has_line() {
+  local needle="$1"
+  local list="$2"
+  local item=""
+  [ -n "$needle" ] || return 1
+  while IFS= read -r item || [ -n "$item" ]; do
+    if [ "$item" = "$needle" ]; then
+      return 0
+    fi
+  done <<< "$list"
+  return 1
+}
+
+# parse_ls_remote_tag LINE sets TAG_OBJECT, TAG_NAME, and TAG_PEELED.
+# TAG_PEELED is 1 for the peeled commit line of an annotated tag
+# ("refs/tags/<name>^{}"). Lines that are not tag refs are rejected.
+parse_ls_remote_tag() {
+  local line="$1"
+  local ref=""
+  local name=""
+  TAG_OBJECT=""
+  TAG_NAME=""
+  TAG_PEELED=0
+  case "$line" in
+    *$'\t'*) ;;
+    *) return 1 ;;
+  esac
+  TAG_OBJECT="${line%%$'\t'*}"
+  ref="${line#*$'\t'}"
+  case "$ref" in
+    *$'\t'* | *[[:space:]]*) return 1 ;;
+  esac
+  case "$ref" in
+    refs/tags/*) ;;
+    *) return 1 ;;
+  esac
+  is_commit_sha "$TAG_OBJECT" || return 1
+  name="${ref#refs/tags/}"
+  case "$name" in
+    *'^{}')
+      TAG_PEELED=1
+      name="${name%'^{}'}"
+      ;;
+  esac
+  case "$name" in
+    "" | */* | *'^{}'* | *$'\n'* | *$'\r'* | *[[:space:]]*) return 1 ;;
+  esac
+  TAG_NAME="$name"
+}
+
+# version_from_tag_lines SHA LINES prints the one release tag whose commit is SHA.
+# LINES is `git ls-remote --tags` output. Annotated tags match the peeled
+# commit, not the tag object. More than one release tag fails: a second tag
+# created after the pin must not change which release is downloaded.
+version_from_tag_lines() {
+  local sha="$1"
+  local lines="$2"
+  local line=""
+  local annotated=""
+  local matches=""
+  local match=""
+  local display=""
+  local match_count=0
+
+  # A caller may have turned this back on after the file was sourced.
+  shopt -u nocasematch
+
+  if ! is_commit_sha "$sha"; then
+    echo "invalid commit sha" >&2
+    return 1
+  fi
+  # A hostile tag advertisement must not pin the runner in an O(n^2) parse.
+  if [ "${#lines}" -gt 262144 ]; then
+    echo "tag list is too large to map ${sha} to a release; set version" >&2
+    return 1
+  fi
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="$(trim "$line")"
+    [ -n "$line" ] || continue
+    parse_ls_remote_tag "$line" || continue
+    if [ "$TAG_PEELED" -ne 1 ]; then
+      continue
+    fi
+    if ! list_has_line "$TAG_NAME" "$annotated"; then
+      annotated="${annotated}${TAG_NAME}"$'\n'
+    fi
+    if [ "$TAG_OBJECT" = "$sha" ] && version_is_valid "$TAG_NAME"; then
+      if ! list_has_line "$TAG_NAME" "$matches"; then
+        matches="${matches}${TAG_NAME}"$'\n'
+      fi
+    fi
+  done <<< "$lines"
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="$(trim "$line")"
+    [ -n "$line" ] || continue
+    parse_ls_remote_tag "$line" || continue
+    if [ "$TAG_PEELED" -eq 1 ]; then
+      continue
+    fi
+    # This line is the tag object of an annotated tag, not the commit.
+    if list_has_line "$TAG_NAME" "$annotated"; then
+      continue
+    fi
+    if [ "$TAG_OBJECT" = "$sha" ] && version_is_valid "$TAG_NAME"; then
+      if ! list_has_line "$TAG_NAME" "$matches"; then
+        matches="${matches}${TAG_NAME}"$'\n'
+      fi
+    fi
+  done <<< "$lines"
+
+  while IFS= read -r match || [ -n "$match" ]; do
+    [ -n "$match" ] || continue
+    match_count=$((match_count + 1))
+    if [ -z "$display" ]; then
+      display="$match"
+    else
+      display="${display}, ${match}"
+    fi
+  done <<< "$matches"
+
+  if [ "$match_count" -eq 1 ]; then
+    printf '%s' "$display"
+    return 0
+  fi
+  if [ "$match_count" -eq 0 ]; then
+    echo "no release tag points at ${sha}; set version" >&2
+    return 1
+  fi
+  echo "commit ${sha} matches more than one release tag (${display}); set version" >&2
+  return 1
+}
+
+# git_executable prints an absolute path to git.
+# In Actions, a git binary under the workspace or temp dir is refused:
+# an earlier step can prepend PATH and plant a fake git that forges tags.
+git_executable() {
+  local bin=""
+  bin="$(command -v git 2>/dev/null)" || {
+    echo "git is required to map a pinned action sha to a release tag; set version instead" >&2
+    return 1
+  }
+  case "$bin" in
+    /*) ;;
+    *)
+      echo "refusing to run git from a relative path" >&2
+      return 1
+      ;;
+  esac
+  case "$bin" in
+    *$'\n'* | *$'\r'*)
+      echo "refusing to run git from a path that contains a newline" >&2
+      return 1
+      ;;
+  esac
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    case "$bin" in
+      "${GITHUB_WORKSPACE:-/nonexistent-workspace}"/* | \
+        "${RUNNER_TEMP:-/nonexistent-runner-temp}"/* | \
+        "${TMPDIR:-/tmp}"/*)
+        echo "refusing to run git from the workspace or a temp directory" >&2
+        return 1
+        ;;
+    esac
+  fi
+  printf '%s' "$bin"
+}
+
+# git_ls_remote_tags URL [auth] prints `git ls-remote --tags` for URL.
+# The command runs outside any repository, with TLS verification forced and
+# only the https protocol allowed, so a checkout cannot redirect it with
+# url.insteadOf, a custom CA, or a credential helper. auth sends GITHUB_TOKEN
+# through askpass. The token is not placed on the git command line.
+# Anonymous mode removes it from the environment first.
+git_ls_remote_tags() {
+  local url="$1"
+  local mode="${2:-anon}"
+  local work=""
+  local askpass=""
+  local token_file=""
+  local path_after_host=""
+  local git_bin=""
+  local old_umask=""
+  local status=0
+  local errexit=0
+
+  shopt -u nocasematch
+  case "$url" in
+    https://github.com/*/*.git) ;;
+    *)
+      echo "refusing tag lookup for unexpected URL" >&2
+      return 1
+      ;;
+  esac
+  path_after_host="${url#https://github.com/}"
+  case "$path_after_host" in
+    */*/* | *[!A-Za-z0-9_./-]*)
+      echo "refusing tag lookup for unexpected URL" >&2
+      return 1
+      ;;
+  esac
+  git_bin="$(git_executable)" || return 1
+
+  if [ "$mode" = "auth" ]; then
+    # GitHub tokens are letters, digits, and underscore. Anything else is
+    # refused so the askpass exchange cannot be split or expanded.
+    case "${GITHUB_TOKEN:-}" in
+      "")
+        echo "could not list release tags: no token for authenticated retry" >&2
+        return 1
+        ;;
+      *[!A-Za-z0-9_]*)
+        echo "refusing to use a token that contains unexpected characters" >&2
+        return 1
+        ;;
+    esac
+    if [ "${#GITHUB_TOKEN}" -gt 512 ]; then
+      echo "refusing to use a token that is too long" >&2
+      return 1
+    fi
+  fi
+
+  old_umask="$(umask)"
+  umask 077
+  work="$(mktemp -d)" || {
+    umask "$old_umask"
+    return 1
+  }
+  chmod 700 "$work" || {
+    rm -rf "$work"
+    umask "$old_umask"
+    return 1
+  }
+  if [ "$mode" = "auth" ]; then
+    # The token is a file, not an environment variable, so a traced askpass
+    # shell cannot print it. The file is mode 600 inside a 700 directory.
+    token_file="${work}/token"
+    printf '%s\n' "$GITHUB_TOKEN" >"$token_file" || {
+      rm -rf "$work"
+      umask "$old_umask"
+      return 1
+    }
+    chmod 600 "$token_file" || {
+      rm -rf "$work"
+      umask "$old_umask"
+      return 1
+    }
+    askpass="${work}/askpass"
+    cat >"$askpass" <<'EOF'
+#!/bin/sh
+case "$1" in
+  *Username*) printf '%s\n' "x-access-token" ;;
+  *) cat -- "$TOKEN_PATH" ;;
+esac
+EOF
+    chmod 700 "$askpass" || {
+      rm -rf "$work"
+      umask "$old_umask"
+      return 1
+    }
+  fi
+  umask "$old_umask"
+
+  case $- in
+    *e*) errexit=1 ;;
+  esac
+  set +e
+  (
+    # SHELLOPTS is readonly. set +x covers this shell; the askpass script
+    # reads the token from a file so a traced child does not expand it.
+    set +x
+    set +v
+    unset CDPATH BASH_ENV ENV \
+      LD_PRELOAD DYLD_INSERT_LIBRARIES DYLD_LIBRARY_PATH \
+      GIT_DIR GIT_WORK_TREE GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_NAMESPACE \
+      GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT \
+      GIT_SSL_NO_VERIFY GIT_SSL_CAINFO GIT_SSL_CAPATH GIT_SSL_VERSION \
+      GIT_CURL_VERBOSE GIT_TRACE GIT_TRACE_PACKET GIT_TRACE_PERFORMANCE \
+      GIT_TRACE_SETUP GIT_TRACE_CURL GIT_TRANSFER_TRACE \
+      GIT_SSH GIT_SSH_COMMAND GIT_SSH_VARIANT GIT_PROXY_COMMAND \
+      SSL_CERT_FILE SSL_CERT_DIR CURL_CA_BUNDLE REQUESTS_CA_BUNDLE
+    cd -P "$work" >/dev/null || exit 1
+    export HOME="$work"
+    export XDG_CONFIG_HOME="$work"
+    export GIT_TERMINAL_PROMPT=0
+    export GIT_CONFIG_NOSYSTEM=1
+    export GIT_CONFIG_GLOBAL=/dev/null
+    export GIT_CONFIG_SYSTEM=/dev/null
+    export GIT_CEILING_DIRECTORIES="$work"
+    export GIT_ALLOW_PROTOCOL=https
+    unset GITHUB_TOKEN GH_TOKEN GITHUB_ENTERPRISE_TOKEN GH_ENTERPRISE_TOKEN
+    if [ "$mode" != "auth" ]; then
+      export GIT_ASKPASS=true
+      unset SSH_ASKPASS SSH_ASKPASS_REQUIRE TOKEN_PATH
+    else
+      export TOKEN_PATH="$token_file"
+      export GIT_ASKPASS="$askpass"
+      export SSH_ASKPASS="$askpass"
+      export SSH_ASKPASS_REQUIRE=force
+    fi
+    "$git_bin" \
+      -c credential.helper= \
+      -c http.sslVerify=true \
+      -c http.sslVersion=tlsv1.2 \
+      -c http.followRedirects=false \
+      -c http.connectTimeout=20 \
+      -c http.lowSpeedLimit=1000 \
+      -c http.lowSpeedTime=30 \
+      -c protocol.file.allow=never \
+      ls-remote --tags -- "$url"
+  )
+  status=$?
+  if [ "$errexit" -eq 1 ]; then
+    set -e
+  fi
+  rm -rf "$work"
+  return "$status"
+}
+
+# fetch_remote_tags REPO prints tags for owner/repo.
+# Public repositories are listed anonymously. GITHUB_TOKEN is sent only when
+# that fails, matching the release download.
+fetch_remote_tags() {
+  local repo="$1"
+  local url=""
+  local tags=""
+  repo="$(action_repository_value "$repo")" || return 1
+  url="https://github.com/${repo}.git"
+  if tags="$(git_ls_remote_tags "$url")"; then
+    printf '%s\n' "$tags"
+    return 0
+  fi
+  if [ -z "${GITHUB_TOKEN:-}" ]; then
+    echo "could not list release tags for ${repo}; set version to skip the lookup" >&2
+    return 1
+  fi
+  echo "anonymous tag lookup failed; retrying with credentials" >&2
+  if ! tags="$(git_ls_remote_tags "$url" auth)"; then
+    echo "could not list release tags for ${repo}; set version to skip the lookup" >&2
+    return 1
+  fi
+  printf '%s\n' "$tags"
+}
+
+# version_for_pinned_sha SHA prints the release tag that points at SHA.
+version_for_pinned_sha() {
+  local sha="$1"
+  local repo=""
+  local tags=""
+  local version=""
+  if ! is_commit_sha "$sha"; then
+    echo "invalid commit sha" >&2
+    return 1
+  fi
+  repo="$(action_repository)" || return 1
+  tags="$(fetch_remote_tags "$repo")" || return 1
+  version="$(version_from_tag_lines "$sha" "$tags")" || return 1
+  echo "resolved release ${version} from action ref ${sha}" >&2
+  printf '%s' "$version"
+}
+
 # resolve_version INPUT REF prints the release tag to install.
-# An explicit input wins. Otherwise REF must already be a release tag
-# (GITHUB_ACTION_REF is "v0.4.0" when the action is pinned to that tag).
+# An explicit input wins. Otherwise REF may be a release tag
+# (GITHUB_ACTION_REF is "v0.4.0" when the action is pinned to that tag)
+# or the commit a single release tag points at.
 resolve_version() {
   local input="$1"
   local ref="$2"
   local version=""
   input="$(trim "$input")"
+  ref="$(trim "$ref")"
   if [ -n "$input" ]; then
     version="$input"
   else
     version="${ref#refs/tags/}"
     version="$(trim "$version")"
+    if ! version_is_valid "$version" && is_commit_sha "$version"; then
+      version="$(version_for_pinned_sha "$version")" || return 1
+    fi
   fi
   if ! version_is_valid "$version"; then
     if [ -n "$input" ]; then

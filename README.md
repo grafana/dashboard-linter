@@ -19,7 +19,7 @@ The archive name uses the version without the leading `v`. Each release also pub
 
 ### GitHub Action
 
-Pin the action to a release tag. It downloads that release's binary for the runner's OS and architecture, verifies `checksums.txt`, and adds `dashboard-linter` to `PATH`.
+Pin the action to a release tag, or to the commit that tag points at. It downloads that release's binary for the runner's OS and architecture, verifies `checksums.txt`, and adds `dashboard-linter` to `PATH`.
 
 ```yaml
 - uses: grafana/dashboard-linter@vX.Y.Z
@@ -28,7 +28,16 @@ Pin the action to a release tag. It downloads that release's binary for the runn
     args: --strict
 ```
 
-Replace `vX.Y.Z` with the full release tag you want to run. The action is on tags created after this file is merged, and that same tag is the binary that gets installed. The calling workflow only needs `permissions: contents: read`.
+A workflow that pins actions to a commit can leave `version` unset. The action uses the release tag that points at that commit:
+
+```yaml
+- uses: grafana/dashboard-linter@<40-character sha> # vX.Y.Z
+  with:
+    files: dashboards
+    args: --strict
+```
+
+Renovate updates the sha and the `# vX.Y.Z` comment together. That comment is where the workflow records the release. The action is on tags created after this file is merged, and that same tag is the binary that gets installed. The calling workflow only needs `permissions: contents: read`.
 
 `files` is newline-separated dashboard files, directories, or globs such as `dashboards/*.json`. A directory is searched recursively for `*.json` (`node_modules` is skipped), and each file is linted with its own process. With no `--config`, each dashboard still uses a `.lint` file in its own directory, as the binary does. `args` is split on whitespace, so a path with spaces goes in `files` rather than in `args`.
 
@@ -56,7 +65,7 @@ jobs:
 - run: dashboard-linter lint --stdin --strict < dashboards/overview.json
 ```
 
-Set `version` when the action ref is a branch or commit, or when the binary should be a different published release than the action tag. The `version` output is the installed tag. The `bin` output is the binary path.
+Resolving a pinned commit needs `git` on the runner. The lookup uses the single release tag that points at that commit. Set `version` when the ref is a branch or an untagged commit, when several release tags point at it, or when the binary should be a different published release than the action ref. The `version` output is the installed tag. The `bin` output is the binary path.
 
 ### Docker image
 
