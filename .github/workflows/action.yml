@@ -26,6 +26,21 @@ jobs:
       - name: Script tests
         run: bash action/test.sh
 
+      - name: Pinned release commit resolves to its tag
+        env:
+          GITHUB_ACTION_REPOSITORY: grafana/dashboard-linter
+          # The repository is public. Do not send the workflow token on this lookup.
+          GITHUB_TOKEN: ""
+          GH_TOKEN: ""
+        run: |
+          # shellcheck source=action/lib.sh
+          source action/lib.sh
+          got="$(version_for_pinned_sha "63340c76001dd04e98ec0c3e5ed9f927eb3b7b68")"
+          if [ "$got" != "v0.5.0" ]; then
+            echo "expected v0.5.0 from the pinned v0.5.0 commit, got ${got}" >&2
+            exit 1
+          fi
+
       - name: Install and lint testdata
         # $/ is this repository at the commit that is running, not the
         # checked-out workspace. Checkout is still required so the linter

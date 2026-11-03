@@ -1,6 +1,7 @@
 # Composite action so a downstream workflow can pin
-# grafana/dashboard-linter@<release> instead of downloading release archives.
-# The release tag selects this action and, unless `version` is set, the binary.
+# grafana/dashboard-linter@<release> or @<commit> instead of downloading
+# release archives. The release tag, or the single release tag that points
+# at the pinned commit, selects the binary unless `version` is set.
 
 name: Dashboard Linter
 description: Install Grafana dashboard-linter and lint dashboard JSON files.
@@ -12,7 +13,7 @@ branding:
 
 inputs:
   version:
-    description: "Release to install, such as v0.4.0. Defaults to this action's ref when that ref is a release tag."
+    description: "Release to install, such as v0.4.0. When omitted, uses the release tag for this action ref. A pinned commit uses the single release tag that points at that commit."
     required: false
     default: ""
   files:
