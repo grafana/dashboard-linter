@@ -283,7 +283,7 @@ printf 'ok %s\n' "reject --stdin with files"
 
 if (
   GITHUB_ACTIONS=true
-  unset GITHUB_ACTION_REPOSITORY
+  unset ACTION_REPOSITORY GITHUB_ACTION_REPOSITORY
   unset GITHUB_ACTION_PATH
   action_repository
 ) >/dev/null 2>&1; then
@@ -292,6 +292,7 @@ if (
 fi
 if (
   GITHUB_ACTIONS=true
+  ACTION_REPOSITORY=
   GITHUB_ACTION_REPOSITORY=
   unset GITHUB_ACTION_PATH
   action_repository
@@ -301,6 +302,7 @@ if (
 fi
 assert_eq "$(
   GITHUB_ACTIONS=true
+  unset ACTION_REPOSITORY
   GITHUB_ACTION_REPOSITORY=
   unset GITHUB_ACTION_PATH
   export GITHUB_ACTION_REPOSITORY=grafana/dashboard-linter
@@ -308,14 +310,36 @@ assert_eq "$(
 )" "grafana/dashboard-linter" "repository assigned inside the step"
 assert_eq "$(
   GITHUB_ACTIONS=true
+  unset ACTION_REPOSITORY
+  GITHUB_ACTION_REPOSITORY=actions/checkout
+  GITHUB_ACTION_PATH=/home/runner/work/_actions/grafana/dashboard-linter/8ce5fef
+  action_repository
+)" "grafana/dashboard-linter" "action path wins over a stale GITHUB_ACTION_REPOSITORY"
+assert_eq "$(
+  GITHUB_ACTIONS=true
   unset GITHUB_ACTION_REPOSITORY
   GITHUB_ACTION_PATH=/home/runner/work/_actions/grafana/dashboard-linter/8ce5fef
   action_repository
 )" "grafana/dashboard-linter" "repository from action path"
 assert_eq "$(
-  unset GITHUB_ACTIONS
-  unset GITHUB_ACTION_REPOSITORY
-  unset GITHUB_ACTION_PATH
+  repository_from_action_path 'D:\a\_actions\grafana\dashboard-linter\2580d238c529bed3a2c1773ac98cba296813e977'
+)" "grafana/dashboard-linter" "repository from a windows action path"
+assert_eq "$(
+  ref_from_action_path 'D:\a\_actions\grafana\dashboard-linter\2580d238c529bed3a2c1773ac98cba296813e977'
+)" "2580d238c529bed3a2c1773ac98cba296813e977" "ref from a windows action path"
+assert_eq "$(
+  ref_from_action_path /home/runner/work/_actions/grafana/dashboard-linter/feature/foo
+)" "feature/foo" "branch ref with a slash"
+assert_fail "ref requires an actions directory" ref_from_action_path /opt/grafana/dashboard-linter/v0.4.0
+assert_eq "$(
+  GITHUB_ACTIONS=true
+  ACTION_REPOSITORY=grafana/dashboard-linter
+  GITHUB_ACTION_REPOSITORY=actions/checkout
+  GITHUB_ACTION_PATH=/home/runner/work/_actions/actions/checkout/v4
+  action_repository
+)" "grafana/dashboard-linter" "ACTION_REPOSITORY wins over the action path"
+assert_eq "$(
+  unset GITHUB_ACTIONS ACTION_REPOSITORY GITHUB_ACTION_REPOSITORY GITHUB_ACTION_PATH
   action_repository
 )" "grafana/dashboard-linter" "default repository outside Actions"
 
@@ -409,6 +433,99 @@ grep -F -q "invalid version" "$tmp/install-err" || {
 }
 printf 'ok %s\n' "install rejects latest"
 
+# action.yml must not assign the names the runner clears. The log still shows
+# the step env, but the process receives them empty (actions/runner#2525).
+if grep -E '^[[:space:]]+GITHUB_ACTION_REF:' "$root/action.yml" >/dev/null; then
+  echo "FAIL action.yml assigns GITHUB_ACTION_REF; the runner clears that name" >&2
+  exit 1
+fi
+if grep -E '^[[:space:]]+GITHUB_ACTION_REPOSITORY:' "$root/action.yml" >/dev/null; then
+  echo "FAIL action.yml assigns GITHUB_ACTION_REPOSITORY; the runner clears that name" >&2
+  exit 1
+fi
+# shellcheck disable=SC2016
+grep -F -q 'ACTION_REF: ${{ github.action_ref }}' "$root/action.yml" || {
+  echo "FAIL action.yml must copy github.action_ref to ACTION_REF" >&2
+  exit 1
+}
+# shellcheck disable=SC2016
+grep -F -q 'ACTION_REPOSITORY: ${{ github.action_repository }}' "$root/action.yml" || {
+  echo "FAIL action.yml must copy github.action_repository to ACTION_REPOSITORY" >&2
+  exit 1
+}
+if grep -F 'GITHUB_ACTION_REF:-' "$root/action/install.sh" >/dev/null; then
+  echo "FAIL install.sh reads GITHUB_ACTION_REF directly; use action_ref" >&2
+  exit 1
+fi
+grep -F -q 'action_ref' "$root/action/install.sh" || {
+  echo "FAIL install.sh must resolve the version from action_ref" >&2
+  exit 1
+}
+printf 'ok %s\n' "action ref is not a runner-cleared name"
+
+mkdir -p "$tmp/infer-bin"
+cat >"$tmp/infer-bin/curl" <<'EOF'
+#!/bin/sh
+echo "offline curl refused: $*" >&2
+exit 22
+EOF
+chmod +x "$tmp/infer-bin/curl"
+
+# run_install_ref LABEL URL_NEEDLE then env assignments. Curl is offline.
+# A resolved version reaches "Downloading <archive>" before curl fails.
+run_install_ref() {
+  local label="$1"
+  local needle="$2"
+  shift 2
+  set +e
+  # shellcheck disable=SC2031
+  env -u GITHUB_TOKEN -u GH_TOKEN \
+    GITHUB_ACTIONS=true \
+    INPUT_VERSION= \
+    PATH="$tmp/infer-bin:${PATH}" \
+    "$@" \
+    bash "$root/action/install.sh" >"$tmp/install-infer-out" 2>"$tmp/install-infer-err"
+  status=$?
+  set -e
+  [ "$status" -ne 0 ] || {
+    echo "FAIL ${label}: install should stop when the download is refused" >&2
+    exit 1
+  }
+  if ! grep -F -q "$needle" "$tmp/install-infer-out"; then
+    echo "FAIL ${label}: did not request ${needle}" >&2
+    echo "--- stdout ---" >&2
+    cat "$tmp/install-infer-out" >&2
+    echo "--- stderr ---" >&2
+    cat "$tmp/install-infer-err" >&2
+    exit 1
+  fi
+  printf 'ok %s\n' "$label"
+}
+
+run_install_ref "install reads ACTION_REF when GITHUB_ACTION_REF is empty" \
+  "releases/download/v0.4.0/dashboard-linter_" \
+  GITHUB_ACTION_REF= \
+  GITHUB_ACTION_REPOSITORY= \
+  GITHUB_ACTION_PATH= \
+  ACTION_REF=v0.4.0 \
+  ACTION_REPOSITORY=grafana/dashboard-linter
+
+run_install_ref "install reads the ref from the action directory" \
+  "releases/download/v0.4.0/dashboard-linter_" \
+  GITHUB_ACTION_REF= \
+  GITHUB_ACTION_REPOSITORY=actions/checkout \
+  ACTION_REF= \
+  ACTION_REPOSITORY= \
+  GITHUB_ACTION_PATH=/home/runner/work/_actions/grafana/dashboard-linter/v0.4.0
+
+run_install_ref "install still accepts GITHUB_ACTION_REF outside the composite quirk" \
+  "releases/download/v0.3.0/dashboard-linter_" \
+  GITHUB_ACTION_REF=v0.3.0 \
+  GITHUB_ACTION_REPOSITORY=grafana/dashboard-linter \
+  GITHUB_ACTION_PATH= \
+  ACTION_REF= \
+  ACTION_REPOSITORY=
+
 sha_v050="63340c76001dd04e98ec0c3e5ed9f927eb3b7b68"
 tagobj_v050="a81931ee153a1e10a937ac06435a4b1e936eea2f"
 other_sha="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -491,11 +608,45 @@ grep -F -q "too large" "$tmp/big-err" || {
 printf 'ok %s\n' "reject oversized tag list"
 
 got="$(
-  unset GITHUB_ACTIONS GITHUB_ACTION_REPOSITORY GITHUB_ACTION_PATH
+  unset GITHUB_ACTIONS GITHUB_ACTION_REPOSITORY GITHUB_ACTION_PATH ACTION_REPOSITORY ACTION_REF
   fetch_remote_tags() { printf '%s\n' "$tags_v050"; }
   resolve_version "" "$sha_v050" 2>/dev/null
 )"
 assert_eq "$got" "v0.5.0" "resolve_version maps a pinned sha"
+
+got="$(
+  ACTION_REF=
+  GITHUB_ACTION_REF=v2
+  GITHUB_ACTION_PATH="/home/runner/work/_actions/grafana/dashboard-linter/${sha_v050}"
+  action_ref
+)"
+assert_eq "$got" "$sha_v050" "action directory ref wins over a stale GITHUB_ACTION_REF"
+
+: >"$tmp/fetch-count"
+got="$(
+  ACTION_REF="$sha_v050"
+  GITHUB_ACTION_REF=v0.4.0
+  GITHUB_ACTION_PATH=/home/runner/work/_actions/grafana/dashboard-linter/v0.4.0
+  fetch_remote_tags() {
+    echo fetched >>"$tmp/fetch-count"
+    printf '%s\n' "$tags_v050"
+  }
+  resolve_version "" "$(action_ref)" 2>/dev/null
+)"
+assert_eq "$got" "v0.5.0" "ACTION_REF wins over the action directory"
+if [ ! -s "$tmp/fetch-count" ]; then
+  echo "FAIL ACTION_REF did not look up the pinned sha" >&2
+  exit 1
+fi
+
+got="$(
+  unset ACTION_REF
+  GITHUB_ACTION_REF=
+  GITHUB_ACTION_PATH="/home/runner/work/_actions/grafana/dashboard-linter/${sha_v050}"
+  fetch_remote_tags() { printf '%s\n' "$tags_v050"; }
+  resolve_version "" "$(action_ref)" 2>/dev/null
+)"
+assert_eq "$got" "v0.5.0" "cleared GITHUB_ACTION_REF still resolves from the action directory"
 
 got="$(
   fetch_remote_tags() { echo FETCHED >&2; return 1; }
@@ -526,7 +677,7 @@ printf 'ok %s\n' "branch ref does not list tags"
 
 lookup_err="$(
   GITHUB_ACTIONS=true
-  unset GITHUB_ACTION_REPOSITORY GITHUB_ACTION_PATH
+  unset ACTION_REPOSITORY GITHUB_ACTION_REPOSITORY GITHUB_ACTION_PATH
   fetch_remote_tags() { echo FETCHED >&2; return 1; }
   resolve_version "" "$sha_v050" 2>&1 || true
 )"

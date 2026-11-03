@@ -64,7 +64,9 @@ main() {
   local dest=""
 
   input_version="$(trim "${INPUT_VERSION:-}")"
-  version="$(resolve_version "$input_version" "${GITHUB_ACTION_REF:-}")" || exit 1
+  # action_ref, not GITHUB_ACTION_REF. The runner clears that name before this
+  # process starts, so a pinned sha otherwise looks like an unset ref.
+  version="$(resolve_version "$input_version" "$(action_ref)")" || exit 1
   os="$(detect_runner_os)" || exit 1
   arch="$(detect_runner_arch)" || exit 1
   release_asset "$version" "$os" "$arch" || exit 1
