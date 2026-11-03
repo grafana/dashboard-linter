@@ -773,11 +773,14 @@ fi
 printf 'ok %s\n' "tag lookup rejects a bad repository"
 
 : >"$GIT_LOG"
-for bad_url in \
-  "https://user:token@github.com/grafana/dashboard-linter.git" \
-  "https://github.com/grafana/foo/bar.git" \
+# A comment ends a continued for-list, so the credential-shaped URL lives in
+# an array where "# trufflehog:ignore" can share its line.
+bad_urls=(
+  "https://user:token@github.com/grafana/dashboard-linter.git" # trufflehog:ignore
+  "https://github.com/grafana/foo/bar.git"
   "HTTPS://github.com/grafana/dashboard-linter.git"
-do
+)
+for bad_url in "${bad_urls[@]}"; do
   if git_ls_remote_tags "$bad_url" >"$tmp/bad-url-out" 2>"$tmp/bad-url-err"; then
     echo "FAIL URL should be rejected: ${bad_url}" >&2
     exit 1
