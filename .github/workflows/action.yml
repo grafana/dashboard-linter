@@ -17,6 +17,10 @@ jobs:
       # Published release. This job checks the action's download, checksum,
       # and exec path. The linter itself is covered by the Test workflow.
       DASHBOARD_LINTER_VERSION: v0.4.0
+      # Commit that v0.5.0 points at. The infer step installs this pin with
+      # GITHUB_ACTION_REF cleared, which is what composite run steps do.
+      DASHBOARD_LINTER_PINNED_SHA: 63340c76001dd04e98ec0c3e5ed9f927eb3b7b68
+      DASHBOARD_LINTER_PINNED_TAG: v0.5.0
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -35,11 +39,36 @@ jobs:
           # shellcheck source=action/lib.sh
           source action/lib.sh
           export GITHUB_ACTION_REPOSITORY=grafana/dashboard-linter
-          got="$(version_for_pinned_sha "63340c76001dd04e98ec0c3e5ed9f927eb3b7b68")"
-          if [ "$got" != "v0.5.0" ]; then
-            echo "expected v0.5.0 from the pinned v0.5.0 commit, got ${got}" >&2
+          got="$(version_for_pinned_sha "$DASHBOARD_LINTER_PINNED_SHA")"
+          if [ "$got" != "$DASHBOARD_LINTER_PINNED_TAG" ]; then
+            echo "expected ${DASHBOARD_LINTER_PINNED_TAG} from the pinned commit, got ${got}" >&2
             exit 1
           fi
+
+      - name: Infer the release when GITHUB_ACTION_REF is cleared
+        env:
+          # Public repository. Do not send the workflow token on this lookup.
+          GITHUB_TOKEN: ""
+          GH_TOKEN: ""
+          INPUT_VERSION: ""
+          # actions/runner#2525 clears these inside composite run steps.
+          # Setting them in the step env does not survive into the process.
+          GITHUB_ACTION_REF: ""
+          GITHUB_ACTION_REPOSITORY: ""
+        run: |
+          export ACTION_REF="$DASHBOARD_LINTER_PINNED_SHA"
+          export ACTION_REPOSITORY=grafana/dashboard-linter
+          bash action/install.sh | tee "$RUNNER_TEMP/infer-install.txt"
+          if ! grep -F "Installed dashboard-linter ${DASHBOARD_LINTER_PINNED_TAG} " "$RUNNER_TEMP/infer-install.txt"; then
+            echo "install did not infer ${DASHBOARD_LINTER_PINNED_TAG} from ACTION_REF" >&2
+            exit 1
+          fi
+          bin="$(grep '^bin=' "$GITHUB_OUTPUT" | tail -n 1 | cut -d= -f2-)"
+          if [ ! -x "$bin" ]; then
+            echo "inferred install did not record an executable bin output" >&2
+            exit 1
+          fi
+          "$bin" rules >/dev/null
 
       - name: Install and lint testdata
         # $/ is this repository at the commit that is running, not the

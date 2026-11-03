@@ -404,10 +404,36 @@ version_for_pinned_sha() {
   printf '%s' "$version"
 }
 
+# action_ref prints the ref this action was invoked with.
+# Precedence:
+#   1. ACTION_REF, set by action.yml from github.action_ref. The GITHUB_ACTION_REF
+#      name cannot be used for that copy: composite run steps clear it after the
+#      step env is applied (https://github.com/actions/runner/issues/2525).
+#   2. The ref in GITHUB_ACTION_PATH (.../_actions/owner/name/<ref>). That path
+#      is set for composite steps even when the GitHub-prefixed variables are empty.
+#   3. GITHUB_ACTION_REF, for a non-composite caller that still has it set.
+action_ref() {
+  local ref=""
+  ref="$(trim "${ACTION_REF:-}")"
+  if [ -n "$ref" ]; then
+    printf '%s' "$ref"
+    return 0
+  fi
+  if [ -n "${GITHUB_ACTION_PATH:-}" ]; then
+    ref="$(ref_from_action_path "$GITHUB_ACTION_PATH" || true)"
+  fi
+  if [ -n "$ref" ]; then
+    printf '%s' "$ref"
+    return 0
+  fi
+  ref="$(trim "${GITHUB_ACTION_REF:-}")"
+  printf '%s' "$ref"
+}
+
 # resolve_version INPUT REF prints the release tag to install.
 # An explicit input wins. Otherwise REF may be a release tag
-# (GITHUB_ACTION_REF is "v0.4.0" when the action is pinned to that tag)
-# or the commit a single release tag points at.
+# (v0.4.0 when the action is pinned to that tag) or the commit a single
+# release tag points at. install.sh passes action_ref.
 resolve_version() {
   local input="$1"
   local ref="$2"
@@ -519,34 +545,90 @@ detect_runner_arch() {
   esac
 }
 
-# repository_from_action_path PATH prints owner/repo from an action directory
-# such as /home/runner/work/_actions/grafana/dashboard-linter/<ref>.
-repository_from_action_path() {
+# action_path_fields PATH prints owner, name, and ref on separate lines.
+# PATH is GITHUB_ACTION_PATH, for example
+# /home/runner/work/_actions/grafana/dashboard-linter/<ref>. The ref is
+# everything after owner/name, so a branch ref may contain slashes.
+# Windows separators are accepted.
+action_path_fields() {
   local path="$1"
-  local rest="${path#*_actions/}"
+  local rest=""
   local owner=""
   local name=""
-  if [ "$rest" = "$path" ]; then
+  local ref=""
+  path="${path//\\//}"
+  path="${path%/}"
+  rest="${path#*_actions/}"
+  if [ "$rest" = "$path" ] || [ -z "$rest" ]; then
     return 1
   fi
   owner="${rest%%/*}"
   rest="${rest#*/}"
+  if [ -z "$owner" ] || [ "$rest" = "$owner" ]; then
+    return 1
+  fi
   name="${rest%%/*}"
-  if [ -z "$owner" ] || [ -z "$name" ] || [ "$name" = "$rest" ]; then
+  ref="${rest#*/}"
+  if [ -z "$name" ] || [ -z "$ref" ] || [ "$ref" = "$rest" ]; then
+    return 1
+  fi
+  case "$owner" in
+    *$'\n'* | *$'\r'*) return 1 ;;
+  esac
+  case "$name" in
+    *$'\n'* | *$'\r'*) return 1 ;;
+  esac
+  case "$ref" in
+    *$'\n'* | *$'\r'*) return 1 ;;
+  esac
+  printf '%s\n%s\n%s\n' "$owner" "$name" "$ref"
+}
+
+# repository_from_action_path PATH prints owner/repo from an action directory.
+repository_from_action_path() {
+  local parts=""
+  local owner=""
+  local rest=""
+  local name=""
+  parts="$(action_path_fields "$1")" || return 1
+  owner="${parts%%$'\n'*}"
+  rest="${parts#*$'\n'}"
+  name="${rest%%$'\n'*}"
+  if [ -z "$owner" ] || [ -z "$name" ]; then
     return 1
   fi
   printf '%s/%s' "$owner" "$name"
 }
 
+# ref_from_action_path PATH prints the action ref from an action directory.
+ref_from_action_path() {
+  local parts=""
+  local rest=""
+  local ref=""
+  parts="$(action_path_fields "$1")" || return 1
+  rest="${parts#*$'\n'}"
+  ref="${rest#*$'\n'}"
+  if [ -z "$ref" ]; then
+    return 1
+  fi
+  printf '%s' "$ref"
+}
+
 action_repository() {
   local repo=""
-  repo="$(trim "${GITHUB_ACTION_REPOSITORY:-}")"
+  # ACTION_REPOSITORY is the copy action.yml makes. GITHUB_ACTION_REPOSITORY is
+  # read last: composite run steps clear it, and a previous action can leave a
+  # stale value behind (https://github.com/actions/runner/issues/803).
+  repo="$(trim "${ACTION_REPOSITORY:-}")"
   if [ -z "$repo" ] && [ -n "${GITHUB_ACTION_PATH:-}" ]; then
     repo="$(repository_from_action_path "$GITHUB_ACTION_PATH" || true)"
   fi
   if [ -z "$repo" ]; then
+    repo="$(trim "${GITHUB_ACTION_REPOSITORY:-}")"
+  fi
+  if [ -z "$repo" ]; then
     if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
-      echo "could not determine the action repository from GITHUB_ACTION_REPOSITORY or GITHUB_ACTION_PATH" >&2
+      echo "could not determine the action repository from ACTION_REPOSITORY, GITHUB_ACTION_PATH, or GITHUB_ACTION_REPOSITORY" >&2
       return 1
     fi
     repo="grafana/dashboard-linter"
