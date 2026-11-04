@@ -213,6 +213,8 @@ type FieldConfig struct {
 
 type Override struct {
 	OverrideProperties []OverrideProperty `json:"properties"`
+	SystemRef          string             `json:"__systemRef,omitempty"`
+	Matcher            any                `json:"matcher,omitempty"`
 }
 
 type OverrideProperty struct {
