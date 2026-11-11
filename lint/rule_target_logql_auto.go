@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/loki/v3/pkg/logql/syntax"
+	"github.com/grafana/loki/v4/pkg/logql/syntax"
 )
 
 func parseLogQL(expr string, variables []Template) (syntax.Expr, error) {
