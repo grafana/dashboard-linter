@@ -4,13 +4,13 @@ go 1.27.3
 
 require (
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20261013113655-af4a33e37865
-	github.com/grafana/loki/v3 v3.7.9
-	github.com/prometheus/prometheus v0.315.1
+	github.com/grafana/loki/v3 v3.7.10
+	github.com/prometheus/prometheus v0.316.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/zeitlinger/conflate v0.0.0-20240927101413-c06be92f798f
-	golang.org/x/text v0.43.0
+	golang.org/x/text v0.44.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
