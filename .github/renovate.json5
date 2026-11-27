@@ -43,6 +43,13 @@
       allowedVersions: "<=0.4.1",
     },
     {
+      // Loki v3.7.10 requires go-metrics v0.7.0. Hold Loki until our
+      // memberlist replacement no longer imports go-metrics/compat.
+      matchManagers: ["gomod"],
+      matchDepNames: ["github.com/grafana/loki/v3"],
+      allowedVersions: "<=3.7.9",
+    },
+    {
       // v0.7.0 removes go-metrics/compat, which the grafana memberlist fork
       // in the replace directive still imports.
       matchManagers: ["gomod"],
