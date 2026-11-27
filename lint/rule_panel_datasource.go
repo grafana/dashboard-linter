@@ -9,6 +9,11 @@ import (
 // entries of the datasource picker.
 const builtinDatasourceType = "datasource"
 
+// grafanaDatasourceUID is the fixed UID of the "-- Grafana --" datasource.
+// Grafana resolves any other explicit UID without looking at the type, so the
+// type alone does not make a datasource built in.
+const grafanaDatasourceUID = "grafana"
+
 // builtinDatasourceUIDs are the names that older dashboards use for the
 // built-in datasources, where the datasource is a plain string. A datasource
 // variable cannot stand in for any of them, so a panel that uses one is not
@@ -20,7 +25,7 @@ var builtinDatasourceUIDs = map[string]struct{}{
 }
 
 func isBuiltinDatasource(ds Datasource) bool {
-	if ds.Type == builtinDatasourceType {
+	if ds.Type == builtinDatasourceType && ds.UID == grafanaDatasourceUID {
 		return true
 	}
 	_, ok := builtinDatasourceUIDs[ds.UID]

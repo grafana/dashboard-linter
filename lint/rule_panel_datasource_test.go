@@ -147,6 +147,14 @@ func TestPanelDatasourceBuiltin(t *testing.T) {
 			},
 		},
 		{
+			name:       "literal uid with the built-in type",
+			datasource: map[string]interface{}{"type": "datasource", "uid": "pjNv0fYGz"},
+			result: Result{
+				Severity: Error,
+				Message:  "Dashboard 'test', panel 'bar' does not use a templated datasource, uses 'pjNv0fYGz'",
+			},
+		},
+		{
 			name:       "datasource that only looks like a built-in one",
 			datasource: "Dashboard",
 			result: Result{
