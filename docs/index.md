@@ -2,7 +2,6 @@
 All Commands:
 
 [embedmd]:# (_intermediate/help.txt)
-
 ```txt
 A command-line application to lint Grafana dashboards.
 
@@ -25,7 +24,6 @@ Use "dashboard-linter [command] --help" for more information about a command.
 ## Completion
 
 [embedmd]:# (_intermediate/completion.txt)
-
 ```txt
 Generate the autocompletion script for dashboard-linter for the specified shell.
 See each sub-command's help for details on how to use the generated script.
@@ -48,7 +46,6 @@ Use "dashboard-linter completion [command] --help" for more information about a 
 ## Lint
 
 [embedmd]:# (_intermediate/lint.txt)
-
 ```txt
 Returns warnings or errors for dashboard which do not adhere to accepted standards
 
@@ -85,6 +82,8 @@ The linter implements the following rules:
 * [target-instance-rule](./rules/target-instance-rule.md) - Checks that every PromQL query has a instance matcher.
 * `target-counter-agg-rule` - Checks that any counter metric (ending in _total) is aggregated with rate, irate, or increase.
 * `uneditable-dashboard` - Checks that the dashboard is not editable.
+* `v2-required-fields-rule` - Checks that v2 dashboards include all required spec fields.
+* [element-reference-rule](./rules/element-reference-rule.md) - Checks that layout element references resolve to defined panels, and that every panel is placed in the layout.
 
 ## Related Rules
 
